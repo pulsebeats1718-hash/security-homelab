@@ -16,21 +16,10 @@ const smooth = (a, b, v) => {
 /** Soft 0 → 1 → 0 window over [a, b] with edges of width e. */
 const win = (c, a, b, e = 0.4) => smooth(a, a + e, c) * (1 - smooth(b - e, b, c));
 
-// DEV: ?it=<seconds> freezes the idle clock for close-ups (removed before shipping)
-const DEV_T = (() => {
-  try {
-    const v = new URLSearchParams(globalThis.location?.search ?? '').get('it');
-    return v == null ? null : Number(v);
-  } catch {
-    return null;
-  }
-})();
-const clock = (t) => (DEV_T == null ? t : DEV_T);
-
 /** Idle routine: slow blink … owl head swivels … push the spectacles up … a smug chin-up. */
 const PERIOD = 10;
 const swivelAt = (c) =>
-  keys(c, [[2.1, 0], [2.32, -0.78], [2.95, -0.78], [3.2, 0.68], [3.8, 0.68], [4.1, 0]], ease.inOutCubic);
+  keys(c, [[2.1, 0], [2.33, -0.95], [2.95, -0.95], [3.22, 0.85], [3.8, 0.85], [4.1, 0]], ease.inOutCubic);
 const blinkAt = (c) => Math.max(win(c, 0.5, 1.75, 0.5), win(c, 8.3, 9.45, 0.42));
 const adjustAt = (c) => win(c, 5.1, 6.9, 0.55);
 
@@ -146,19 +135,24 @@ export default {
     head.add(patch(k, cream, 0, -27, 21, H, c, 1.015));
     const FR = H.map((r) => r * 1.02);
 
-    const E = { yaw: 28, pitch: 3, size: 0.088, tall: 1.08, lift: 0.012 };
+    const E = { yaw: 28, pitch: 3, size: 0.084, tall: 1.08, lift: 0.012 };
     k.face({
       radii: FR,
       eye: E,
       brow: { color: 0x5e3927, pitch: 27.5, yaw: 28, width: 0.085, thick: 0.017 },
       mouth: false,
-      cheeks: { yaw: 45, pitch: -14, color: 0xff9a8a, size: 0.068, opacity: 0.45 },
+      cheeks: { yaw: 46, pitch: -18, color: 0xff9a8a, size: 0.068, opacity: 0.45 },
     });
-    // big orange irises behind the pupils
+    // big orange irises with a thin dark edge behind the pupils. They keep their size when the
+    // face widens (surprised / worried) — the pupils dilate instead — so they stay inside the rims.
+    const rings = [];
     for (const eye of rig.face.eyes) {
       const ring = k.mesh(k.G.sphere(24), iris, false);
-      ring.scale.set(E.size * 1.78, E.size * E.tall * 1.7, E.size * 0.3);
-      eye.shapes.open.add(ring);
+      ring.scale.set(E.size * 1.58, E.size * E.tall * 1.52, E.size * 0.3);
+      const edge = k.mesh(k.G.sphere(24), umber, false);
+      edge.scale.set(E.size * 1.72, E.size * E.tall * 1.66, E.size * 0.12);
+      eye.shapes.open.add(edge, ring);
+      rings.push([ring, ring.scale.clone()], [edge, edge.scale.clone()]);
     }
 
     // small hooked beak
@@ -170,8 +164,8 @@ export default {
 
     // ── ear tufts poking out from under the cap ──────────────────────────
     k.both((s) => {
-      const tuft = k.at(k.group(), s * 0.43, c.y + 0.27, 0, 0, 0, -s * 1.0);
-      const main = k.at(k.cone(brown, 0.095, 0.3, 16), 0, 0.13, 0);
+      const tuft = k.at(k.group(), s * 0.43, c.y + 0.27, 0, 0, 0, -s * 0.88);
+      const main = k.at(k.cone(brown, 0.1, 0.34, 16), 0, 0.15, 0);
       main.scale.z = 0.5;
       const under = k.at(k.cone(umber, 0.068, 0.21, 14), s * 0.05, 0.075, -0.02, 0, 0, -s * 0.32);
       under.scale.z = 0.5;
@@ -183,7 +177,7 @@ export default {
     // ── round wire spectacles (a group, so they can slip down the beak) ──
     const glasses = k.at(k.group(), c.x, c.y, c.z);
     head.add(glasses);
-    const GL = { yaw: 28, pitch: 3, R: 0.162, lift: 0.058 };
+    const GL = { yaw: 28, pitch: 3, R: 0.176, lift: 0.058 };
     const inner = [];
     k.both((s) => {
       const rimG = k.onSphere(k.group(), s * GL.yaw, GL.pitch, GL.lift, FR, ORIGIN);
@@ -244,14 +238,19 @@ export default {
     let swing = 0;
     let swingV = 0;
     rig.tickers.push((t, dt, r, anim) => {
-      const c2 = clock(t) % PERIOD;
+      const c2 = t % PERIOD;
       const idle = !anim?.clip;
 
       const slip = idle ? smooth(0.8, 5.5, c2) * (1 - smooth(5.75, 6.15, c2)) : 0;
-      glasses.position.set(c.x, c.y - 0.022 * slip, c.z);
-      glasses.rotation.z = 0.05 * slip;
+      glasses.position.set(c.x, c.y - 0.03 * slip, c.z + 0.008 * slip);
+      glasses.rotation.z = 0.06 * slip;
 
       const f = r.face;
+      if (f) {
+        const ix = 1 / Math.max(1, f.sx);
+        const iy = 1 / Math.max(1, f.sy);
+        for (const [m, s0] of rings) m.scale.set(s0.x * ix, s0.y * iy, s0.z);
+      }
       const b = idle ? blinkAt(c2) : 0;
       if (f && f.current === 'neutral' && b > 0.001) {
         f.blinkPhase = 0;
@@ -278,7 +277,7 @@ export default {
   },
 
   idle(P, t) {
-    const c = clock(t) % PERIOD;
+    const c = t % PERIOD;
 
     // the book tucked under the left wing; a gentle owlish bob
     P.armLZ += 0.1;
@@ -292,12 +291,13 @@ export default {
     P.torsoY += sw * 0.07;
     P.headZ += 0.12 * win(c, 2.35, 2.95, 0.15) - 0.1 * win(c, 3.2, 3.8, 0.15);
 
-    // push the spectacles back up with the right wing tip
+    // peer over the slipping spectacles, bring the right wing tip up under the lens,
+    // nod into it and pop back up — spectacles pushed home
     const g = adjustAt(c);
     const push = win(c, 5.65, 6.25, 0.2);
-    P.armRX += g * -2.0;
-    P.armRZ += g * 0.3;
-    P.headX += g * 0.05 - push * 0.07;
+    P.armRX += g * -2.02;
+    P.armRZ += g * 0.4;
+    P.headX += 0.08 * win(c, 3.9, 5.3, 0.5) + g * 0.17 - push * 0.11;
     P.headZ += g * 0.1;
     P.headY += g * -0.12;
 
