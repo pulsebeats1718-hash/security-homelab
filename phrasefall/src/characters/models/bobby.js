@@ -100,14 +100,14 @@ export default {
     roll.scale.set(0.6 / 0.592, 0.585 / 0.592, 1);
     helmet.add(roll);
     const crown = k.at(k.group(), 0, 0.2, -0.04, -0.06, 0, 0);
-    const shell = k.lathe(navy, [[0.48, 0], [0.56, 0.1], [0.575, 0.28], [0.54, 0.48], [0.44, 0.66], [0.26, 0.79], [0, 0.83]], 36);
+    const shell = k.lathe(navy, [[0.48, 0], [0.555, 0.1], [0.565, 0.3], [0.52, 0.5], [0.41, 0.68], [0.23, 0.82], [0, 0.87]], 36);
     shell.scale.z = 1.03;
     crown.add(
       shell,
-      k.at(k.torus(navy, 0.674, 0.03, 1.396), 0, 0.1756, 0, 0, Math.PI / 2, 0.873),
-      k.at(k.ball(silver, 0.055), 0, 0.87, 0),
-      k.at(k.star(silver, 0.088, 0.055, 7, 0.022), 0, 0.22, 0.6),
-      k.at(k.ball(blue, 0.032, 0.032, 0.012), 0, 0.22, 0.618)
+      k.at(k.torus(navy, 0.565, 0.036, 1.222), 0, 0.3326, 0, 0, Math.PI / 2, 0.96),
+      k.at(k.ball(silver, 0.06), 0, 0.915, 0),
+      k.at(k.star(silver, 0.088, 0.055, 7, 0.022), 0, 0.22, 0.59),
+      k.at(k.ball(blue, 0.032, 0.032, 0.012), 0, 0.22, 0.608)
     );
     helmet.add(crown);
     helmet.add(k.at(k.ball(navy, 0.28, 0.022, 0.22), 0, 0.3, 0.45, 0.15, 0, 0));
