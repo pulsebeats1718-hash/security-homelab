@@ -102,7 +102,7 @@ const texts = new Map();
 for (const f of all) for (const e of f.list) {
   const where = rel(f.path);
   if (e?.id) (ids.get(e.id) ?? ids.set(e.id, []).get(e.id)).push(where);
-  if (e?.text) (texts.get(norm(e.text)) ?? texts.set(norm(e.text), []).get(norm(e.text))).push({ where, text: e.text });
+  if (e?.text) (texts.get(norm(e.text)) ?? texts.set(norm(e.text), []).get(norm(e.text))).push({ where, text: e.text, id: e.id });
 }
 
 let errors = 0;
@@ -126,7 +126,7 @@ for (const f of targets) {
     seenHere.add(e.id);
     const idElsewhere = (ids.get(e.id) ?? []).filter((w) => w !== name);
     if (idElsewhere.length) err(id, `id also used in ${[...new Set(idElsewhere)].join(', ')}`);
-    const sameText = (texts.get(norm(e.text ?? '')) ?? []).filter((x) => !(x.where === name && x.text === e.text));
+    const sameText = (texts.get(norm(e.text ?? '')) ?? []).filter((x) => !(x.where === name && x.id === e.id));
     if (sameText.length) err(id, `same expression as "${sameText[0].text}" in ${sameText[0].where}`);
     const allowed = TYPES_BY_STAGE[f.stage] ?? [];
     if (!allowed.includes(e.type)) err(id, `type "${e.type}" not allowed in stage ${f.stage} (use ${allowed.join(' or ')})`);

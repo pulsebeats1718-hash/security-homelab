@@ -55,7 +55,8 @@ const SPZ = 3.2;
 const defs = await Promise.all(
   ids.map(async (id) => {
     try {
-      return (await loaders[`../src/characters/models/${id}.js`]()).default;
+      // load straight from the server (cache-busted) so files created after start-up work too
+      return (await import(/* @vite-ignore */ `/src/characters/models/${id}.js?t=${Date.now()}`)).default;
     } catch (e) {
       console.error(`model "${id}" failed to load: ${e?.message ?? e}`);
       return null;
