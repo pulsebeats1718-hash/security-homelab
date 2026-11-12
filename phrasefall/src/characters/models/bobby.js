@@ -49,20 +49,22 @@ export default {
     // ── tunic: black belt + silver buckle, silver buttons, boots
     const belt = k.at(k.torus(dark, 0.43, 0.045), 0, 0.186, 0, Math.PI / 2, 0, 0);
     belt.scale.set(1.017, 0.917, 1.6);
-    torso.add(belt, k.at(k.box(silver, 0.15, 0.12, 0.05, 0.025), 0, 0.186, 0.405));
+    torso.add(belt, k.at(k.box(silver, 0.15, 0.12, 0.05, 0.025), 0, 0.186, 0.42));
     [0.465, 0.375, 0.285, 0.085].forEach((y) => torso.add(k.onTorso(k.ball(silver, 0.033, 0.033, 0.02), 0, y, 0.004)));
     k.both((s) => (s > 0 ? rig.legL : rig.legR).add(k.at(k.cyl(dark, 0.142, 0.15, 0.13, 20), 0, -0.25, 0)));
 
     // whistle on a chain from the top button, dangling on the chest
-    const whistle = k.at(k.group(), 0, 0.465, 0.3);
+    const whistle = k.at(k.group(), 0, 0.465, 0.36);
+    const chain = k.stroke(silver, 0, 0, 0.085, -0.105, 0.009);
+    chain.rotation.x = -0.3;
     whistle.add(
-      k.stroke(silver, 0, 0, 0.085, -0.105, 0.009),
-      k.at(k.cyl(silver, 0.03, 0.03, 0.1, 16), 0.1, -0.17, 0.04, 0, 0, 0.15),
+      chain,
+      k.at(k.cyl(silver, 0.03, 0.03, 0.1, 16), 0.1, -0.17, 0.05, 0, 0, 0.15),
       k.at(k.box(silver, 0.034, 0.05, 0.022, 0.008), 0.11, -0.235, 0.04, 0, 0, 0.15)
     );
     torso.add(whistle);
     rig.props.whistle = whistle;
-    rig.spring(whistle, { axis: 'z', gain: 0.1, sway: 0.06, speed: 2.2 });
+    rig.spring(whistle, { axis: 'z', gain: 0.05, sway: 0.04, speed: 2.2, max: 0.15 });
 
     // black-and-white chequered duty band on the left sleeve
     const band = k.at(k.group(), 0, -0.2, 0);
