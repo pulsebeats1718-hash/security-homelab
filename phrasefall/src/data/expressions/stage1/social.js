@@ -1,1769 +1,1173 @@
+/** Stage 1 — Everyday expressions: social life and getting things done. Schema: dev/EXPRESSION_GUIDE.md */
 export default [
   {
-    "id": "hows-it-going",
-    "text": "how's it going?",
-    "type": "everyday",
-    "level": 1,
-    "meaning": "a friendly way to ask how someone is",
-    "distractors": [
-      "a question about how fast a vehicle moves",
-      "a way to ask someone where they are heading",
-      "an offer to check someone's progress at work"
-    ],
-    "example": "Hi Sam, how's it going? Haven't seen you since the match.",
-    "synonyms": [
-      "how are things?",
-      "how are you?"
-    ],
-    "register": "Informal",
-    "context": "Casual greeting among friends and colleagues; people usually answer briefly, \"Good, you?\".",
-    "mistake": "It's a greeting, not a real request for a long report; just say \"Good, thanks, you?\"."
-  },
-  {
-    "id": "youre-welcome",
-    "text": "you're welcome",
-    "type": "everyday",
-    "level": 1,
-    "meaning": "a polite reply when someone thanks you",
-    "distractors": [
-      "a polite way to greet a new guest",
-      "an invitation to come to a party",
-      "a request that someone pays you back"
-    ],
-    "example": "\"Thanks for the lift.\" \"You're welcome, any time.\"",
-    "synonyms": [
-      "not at all",
-      "no problem"
-    ],
-    "register": "Neutral",
-    "context": "The standard reply to thanks; Britons also say \"no problem\" or \"that's all right\".",
-    "mistake": "Say \"You're welcome\" after thanks; \"Welcome\" on its own greets a guest arriving."
-  },
-  {
-    "id": "after-you",
-    "text": "after you",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "a polite way to let someone go first",
-    "distractors": [
-      "a command telling someone to follow you",
-      "a question asking who is behind you",
-      "a warning that someone is chasing you"
-    ],
-    "example": "He held the door open. \"After you,\" he said.",
-    "synonyms": [
-      "please, go ahead"
-    ],
-    "register": "Neutral",
-    "context": "Said at doors, queues and buffets; polite and slightly old-fashioned in a good way.",
-    "mistake": "Use \"After you\" to offer someone precedence; \"Behind you\" is a warning, not a courtesy."
-  },
-  {
-    "id": "sorry-to-bother-you",
-    "text": "sorry to bother you",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "polite words used before interrupting someone",
-    "distractors": [
-      "words used to end a phone call",
-      "a rude way to tell someone to leave",
-      "a way to say you feel unwell"
-    ],
-    "example": "Sorry to bother you, but is this your umbrella?",
-    "synonyms": [
-      "sorry to disturb you",
-      "excuse me"
-    ],
-    "register": "Neutral",
-    "context": "Used to start a request to a stranger or a busy colleague; very common and polite.",
-    "mistake": "Say \"bother\", not \"annoy\": \"Sorry to bother you, but...\" is the usual form."
-  },
-  {
-    "id": "could-you-do-me-a-favour",
-    "text": "could you do me a favour?",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "a polite way to ask for a small bit of help",
-    "distractors": [
-      "a way to ask if someone likes you",
-      "a request to pay a bill",
-      "a question about a gift you gave"
-    ],
-    "example": "Could you do me a favour and water the plants this weekend?",
-    "synonyms": [
-      "can I ask a favour?"
-    ],
-    "register": "Neutral",
-    "context": "Opens a request between friends or colleagues; the favour itself comes next.",
-    "mistake": "Say \"do me a favour\", not \"make me a favour\"; British spelling is \"favour\"."
-  },
-  {
-    "id": "mind-how-you-go",
-    "text": "mind how you go",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "a friendly way to say goodbye and stay safe",
-    "distractors": [
-      "a warning to watch out for a step",
-      "a way to tell someone to hurry up",
-      "a question about someone's journey plans"
-    ],
-    "example": "Right, I'm off. Mind how you go!",
-    "synonyms": [
-      "take care",
-      "look after yourself"
-    ],
-    "register": "Informal",
-    "context": "A warm farewell in England, especially in the North and Midlands, often to someone travelling.",
-    "mistake": "It's a goodbye, not a literal warning; reply \"You too\" or \"Thanks, bye\"."
-  },
-  {
-    "id": "give-me-a-shout",
-    "text": "give me a shout",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "contact me when you need help or are ready",
-    "distractors": [
-      "raise your voice at me angrily",
-      "praise me in front of others",
-      "wait for me outside the door"
-    ],
-    "example": "If you need a lift on Saturday, give me a shout.",
-    "synonyms": [
-      "let me know",
-      "give me a ring"
-    ],
-    "register": "Informal",
-    "context": "Friendly offer between friends or colleagues; the contact can be a call, text or message.",
-    "mistake": "It means \"contact me\", not literally to shout; don't say \"give me a shouting\"."
-  },
-  {
-    "id": "keep-in-touch",
-    "text": "keep in touch",
-    "type": "everyday",
-    "level": 1,
-    "meaning": "stay in contact with someone after parting",
-    "distractors": [
-      "stop talking to someone for good",
-      "meet someone every single day",
-      "write someone a long formal letter"
-    ],
-    "example": "Lovely to see you again. Let's keep in touch.",
-    "synonyms": [
-      "stay in touch",
-      "stay in contact"
-    ],
-    "register": "Neutral",
-    "context": "Said when saying goodbye to friends, old colleagues or relatives who live far away.",
-    "mistake": "Use \"in touch\": \"keep in touch\", not \"keep touching\" or \"keep in contact to me\"."
-  },
-  {
-    "id": "is-this-seat-taken",
-    "text": "is this seat taken?",
-    "type": "everyday",
-    "level": 1,
-    "meaning": "a polite question asking if you can sit there",
-    "distractors": [
-      "a question asking who paid for a ticket",
-      "a request for someone to move along",
-      "a question about whether a seat is clean"
-    ],
-    "example": "Is this seat taken? The train's packed.",
-    "synonyms": [
-      "is this seat free?",
-      "is anyone sitting here?"
-    ],
-    "register": "Neutral",
-    "context": "Used on trains, buses and in cafés; a \"no\" answer invites you to sit down.",
-    "mistake": "Say \"taken\" or \"free\", not \"busy\": \"Is this seat free?\" not \"Is this seat busy?\"."
-  },
-  {
-    "id": "keep-the-change",
-    "text": "keep the change",
-    "type": "everyday",
-    "level": 1,
-    "meaning": "let the seller have the extra money as a tip",
-    "distractors": [
-      "give me my money in smaller coins",
-      "exchange my notes for coins",
-      "tell me the price has gone down"
-    ],
-    "example": "That's £8.50? Here's a tenner, keep the change.",
-    "synonyms": [
-      "that's fine",
-      "no change needed"
-    ],
-    "register": "Neutral",
-    "context": "Said to taxi drivers, waiters and barbers after paying more than the bill.",
-    "mistake": "Say \"keep the change\", not \"keep the changes\"; \"change\" is uncountable here."
-  },
-  {
-    "id": "im-just-looking",
-    "text": "I'm just looking",
-    "type": "everyday",
-    "level": 1,
-    "meaning": "a polite way to refuse a shop assistant's help",
-    "distractors": [
-      "a reply saying you cannot see properly",
-      "a request to speak to a manager",
-      "a way to say you want to buy everything"
-    ],
-    "example": "\"Can I help you?\" \"I'm just looking, thanks.\"",
-    "synonyms": [
-      "just browsing"
-    ],
-    "register": "Neutral",
-    "context": "The classic reply when a shop assistant offers help and you're not ready to buy.",
-    "mistake": "Use the continuous form: \"I'm just looking\", not \"I just look\"."
-  },
-  {
-    "id": "sorry",
-    "text": "sorry",
-    "type": "everyday",
-    "level": 1,
-    "meaning": "a word used to apologise",
-    "distractors": [
-      "a word used to say thank you",
-      "a word used to say goodbye",
-      "a word used to ask for the bill"
-    ],
-    "example": "Sorry, I've just spilt tea on your desk.",
-    "synonyms": [
-      "I apologise",
-      "pardon me"
-    ],
-    "register": "Neutral",
-    "context": "Britons say it constantly: for bumping into people, interrupting, or when they didn't hear something.",
-    "mistake": "Don't answer \"sorry\" with \"I forgive you\"; say \"no worries\" or \"that's all right\"."
-  },
-  {
-    "id": "i-didnt-catch-that",
-    "text": "I didn't catch that",
-    "type": "everyday",
-    "level": 3,
-    "meaning": "I did not hear what you just said",
-    "distractors": [
-      "I did not like what you offered",
-      "I could not reach what you threw",
-      "I did not see you arrive"
-    ],
-    "example": "Sorry, I didn't catch that. Could you say it again?",
-    "synonyms": [
-      "pardon?",
-      "say that again"
-    ],
-    "register": "Neutral",
-    "context": "A polite way to ask someone to repeat words you missed, often on a noisy train or phone line.",
-    "mistake": "Don't say \"I didn't hear well you\"; use \"I didn't catch that\" or \"Sorry, what was that?\"."
-  },
-  {
-    "id": "ill-call-you-back",
-    "text": "I'll call you back",
-    "type": "everyday",
-    "level": 1,
-    "meaning": "I will phone you again later",
-    "distractors": [
-      "I will refuse to speak to you today",
-      "I will ask you to phone someone else",
-      "I will wait for you to arrive here"
-    ],
-    "example": "I'm on the bus. Can I call you back in ten minutes?",
-    "synonyms": [
-      "I'll ring you back"
-    ],
-    "register": "Neutral",
-    "context": "Said when you can't talk now; \"ring you back\" is the more British alternative.",
-    "mistake": "Say \"call you back\" or \"ring you back\", not \"call you again back\"."
-  },
-  {
-    "id": "drop-me-a-line",
-    "text": "drop me a line",
-    "type": "everyday",
-    "level": 3,
-    "meaning": "send me a short message or letter",
-    "distractors": [
-      "draw a straight mark for me",
-      "give me a place to stay",
-      "tell me a joke in person"
-    ],
-    "example": "Drop me a line when you've settled into the new flat.",
-    "synonyms": [
-      "send me a message",
-      "write to me"
-    ],
-    "register": "Informal",
-    "context": "Friendly request to get in touch by letter, email or text, often with a friend who is moving away.",
-    "mistake": "It means a short note, not a drawn line; it isn't used for long formal letters."
-  },
-  {
-    "id": "many-happy-returns",
-    "text": "many happy returns",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "a wish said to someone on their special day each year",
-    "distractors": [
-      "a wish said to someone leaving on holiday",
-      "a request to bring goods back to a shop",
-      "a hope that someone will come back soon"
-    ],
-    "example": "Many happy returns, Gran! Here's your card.",
-    "synonyms": [
-      "happy birthday"
-    ],
-    "register": "Neutral",
-    "context": "A traditional birthday greeting, said or written in cards, a little old-fashioned but still common.",
-    "mistake": "Used for birthdays only; don't say \"many happy returns\" at Christmas or New Year."
-  },
-  {
-    "id": "safe-journey",
-    "text": "safe journey",
-    "type": "everyday",
-    "level": 3,
-    "meaning": "a wish for a trip to go without trouble",
-    "distractors": [
-      "a warning that a road is closed",
-      "a question about how long a trip takes",
-      "an order to leave straight away"
-    ],
-    "example": "Safe journey, and text me when you land!",
-    "synonyms": [
-      "have a safe trip",
-      "travel safely"
-    ],
-    "register": "Neutral",
-    "context": "Said to friends and relatives setting off on a drive, train ride or flight.",
-    "mistake": "British speakers say \"Safe journey!\" or \"Have a good journey\", not \"Safe travel\" as a farewell."
-  },
-  {
-    "id": "speak-soon",
-    "text": "speak soon",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "a friendly way to end a call or message",
-    "distractors": [
-      "a request to talk more quietly",
-      "a warning that someone talks too much",
-      "an order to answer quickly"
-    ],
-    "example": "Great catch-up. Speak soon!",
-    "synonyms": [
-      "talk soon",
-      "bye for now"
-    ],
-    "register": "Informal",
-    "context": "A common sign-off in calls, texts and emails among friends and friendly colleagues.",
-    "mistake": "Say \"speak soon\" or \"speak to you soon\", not \"speak you soon\"."
-  },
-  {
-    "id": "all-the-best",
-    "text": "all the best",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "a warm wish for someone's future",
-    "distractors": [
-      "a statement that something is top quality",
-      "a way to choose the strongest player",
-      "a request to give your full effort"
-    ],
-    "example": "You're off to Leeds? All the best with the new job!",
-    "synonyms": [
-      "good luck",
-      "best wishes"
-    ],
-    "register": "Neutral",
-    "context": "Used when saying goodbye, ending emails, or wishing someone well before a big change.",
-    "mistake": "It's a goodbye wish, not a claim that everything is the best of all things."
-  },
-  {
-    "id": "pleased-to-meet-you",
-    "text": "pleased to meet you",
-    "type": "everyday",
-    "level": 1,
-    "meaning": "a polite thing to say on meeting someone new",
-    "distractors": [
-      "a polite way to say you are glad to leave",
-      "a question about someone's name",
-      "a way to ask for an introduction"
-    ],
-    "example": "Pleased to meet you, I'm Hannah from accounts.",
-    "synonyms": [
-      "nice to meet you",
-      "how do you do?"
-    ],
-    "register": "Neutral",
-    "context": "The standard line when you are introduced to someone for the first time, with a handshake.",
-    "mistake": "Say it only the first time; the next time, say \"good to see you\"."
-  },
-  {
-    "id": "how-do-you-do",
-    "text": "how do you do?",
-    "type": "everyday",
-    "level": 3,
-    "meaning": "a formal greeting used when meeting someone new",
-    "distractors": [
-      "a question about how someone feels today",
-      "a question asking how to do a task",
-      "a way to ask about someone's job"
-    ],
-    "example": "The Duke shook her hand. \"How do you do?\"",
-    "synonyms": [
-      "pleased to meet you"
-    ],
-    "register": "Formal",
-    "context": "Old-fashioned and formal; heard at ceremonies, in period dramas and from some older speakers.",
-    "mistake": "It's not a real question; reply with the same words, \"How do you do?\", not \"I'm fine\"."
-  },
-  {
-    "id": "whats-up",
-    "text": "what's up?",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "a casual way to ask what is wrong",
-    "distractors": [
-      "a casual way to ask where someone lives",
-      "a way to ask what is above you",
-      "a way to ask what time it is"
-    ],
-    "example": "You look worried. What's up?",
-    "synonyms": [
-      "what's wrong?",
-      "what's the matter?"
-    ],
-    "register": "Informal",
-    "context": "Used with friends and family when someone seems upset; also a youth greeting.",
-    "mistake": "Said with concern it asks about a problem; don't use it in formal emails."
-  },
-  {
-    "id": "morning",
-    "text": "morning",
-    "type": "everyday",
-    "level": 1,
-    "meaning": "a short, friendly greeting before midday",
-    "distractors": [
-      "a short farewell said at night",
-      "a request to wake someone",
-      "a word meaning early tomorrow"
-    ],
-    "example": "Morning, Dave! Tea's in the kitchen.",
-    "synonyms": [
-      "good morning"
-    ],
-    "register": "Informal",
-    "context": "Shortened from \"good morning\" and used in offices, shops and on the street.",
-    "mistake": "Use it only before midday; after lunch say \"afternoon\" instead."
-  },
-  {
-    "id": "see-you-later",
-    "text": "see you later",
-    "type": "everyday",
-    "level": 1,
-    "meaning": "a casual goodbye to someone you'll meet again",
-    "distractors": [
-      "a promise to visit someone in an hour exactly",
-      "a request for someone to look at you",
-      "a polite way to end a meeting for ever"
-    ],
-    "example": "I'm off to the shops. See you later!",
-    "synonyms": [
-      "bye for now",
-      "see you soon"
-    ],
-    "register": "Informal",
-    "context": "A friendly goodbye; it doesn't mean the same day, just \"we'll meet again\".",
-    "mistake": "It gives no real time; say \"See you at six\" if you mean a specific time."
-  },
-  {
-    "id": "see-you-around",
-    "text": "see you around",
-    "type": "everyday",
-    "level": 3,
-    "meaning": "a casual goodbye with no fixed plan to meet",
-    "distractors": [
-      "a promise to visit someone at home",
-      "an order to walk in a circle",
-      "a warning to stay close to someone"
-    ],
-    "example": "Cheers for the chat, Tom. See you around.",
-    "synonyms": [
-      "bye for now"
-    ],
-    "register": "Informal",
-    "context": "Used with neighbours or acquaintances you expect to bump into again.",
-    "mistake": "It suggests a chance meeting, so don't use it to arrange a proper meeting."
-  },
-  {
-    "id": "take-care",
-    "text": "take care",
-    "type": "everyday",
-    "level": 1,
-    "meaning": "a kind way to say goodbye and stay well",
-    "distractors": [
-      "a rule to be careful about money",
-      "a request to look after a child",
-      "a threat that someone will be in trouble"
-    ],
-    "example": "Right, I'll let you go. Take care!",
-    "synonyms": [
-      "look after yourself",
-      "mind how you go"
-    ],
-    "register": "Neutral",
-    "context": "A warm goodbye at the end of calls, visits and emails.",
-    "mistake": "Say \"take care\", not \"take cares\"; it's a goodbye wish, not an order to do a job carefully."
-  },
-  {
-    "id": "have-a-good-one",
-    "text": "have a good one",
-    "type": "everyday",
-    "level": 3,
-    "meaning": "a casual wish for someone's day or evening",
-    "distractors": [
-      "an invitation to share a meal tonight",
-      "a request to bring a good book",
-      "a wish that someone wins a game"
-    ],
-    "example": "Cheers, mate. Have a good one!",
-    "synonyms": [
-      "have a nice day",
-      "enjoy the rest of your day"
-    ],
-    "register": "Informal",
-    "context": "A breezy goodbye to shopkeepers, colleagues and friends.",
-    "mistake": "It's casual; in formal emails write \"Have a good day\" instead."
-  },
-  {
-    "id": "cheerio",
-    "text": "cheerio",
-    "type": "everyday",
-    "level": 3,
-    "meaning": "an old-fashioned, cheerful way to say goodbye",
-    "distractors": [
-      "a loud toast before a drink",
-      "a polite way to say hello",
-      "a call to start a race"
-    ],
-    "example": "Cheerio, Mrs Hill – see you on Thursday!",
-    "synonyms": [
-      "bye for now",
-      "goodbye"
-    ],
-    "register": "Informal",
-    "context": "Rather old-fashioned, but still heard from older speakers or used jokingly.",
-    "mistake": "It isn't a toast; for drinks say \"cheers\" and use \"cheerio\" only to say goodbye."
-  },
-  {
-    "id": "bye-for-now",
-    "text": "bye for now",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "a friendly goodbye that suggests you'll speak again",
-    "distractors": [
-      "a final goodbye said when you won't return",
-      "an order to leave the building",
-      "a thank-you for a recent present"
-    ],
-    "example": "Right, got to go. Bye for now!",
-    "synonyms": [
-      "see you soon",
-      "speak soon"
-    ],
-    "register": "Informal",
-    "context": "Used at the end of calls and visits when you expect more contact soon.",
-    "mistake": "It implies you'll talk again, so it isn't a final goodbye."
-  },
-  {
-    "id": "thanks-a-lot",
-    "text": "thanks a lot",
-    "type": "everyday",
-    "level": 1,
-    "meaning": "a warm way to show you are grateful",
-    "distractors": [
-      "a sarcastic comment on something small",
-      "a request for a large amount",
-      "a wish for plenty of luck"
-    ],
-    "example": "Thanks a lot for the lift, Sue.",
-    "synonyms": [
-      "thanks so much",
-      "cheers"
-    ],
-    "register": "Informal",
-    "context": "A friendly thank-you; with a sharp tone it can also be sarcastic.",
-    "mistake": "Said with a sharp tone it is sarcastic; \"thanks a lot\" with a smile is sincere."
-  },
-  {
-    "id": "thanks-a-million",
-    "text": "thanks a million",
-    "type": "everyday",
-    "level": 3,
-    "meaning": "an enthusiastic way to show deep gratitude",
-    "distractors": [
-      "a request to count a huge sum",
-      "a sarcastic way to refuse a gift",
-      "a polite way to ask for payment"
-    ],
-    "example": "You fixed my laptop? Thanks a million!",
-    "synonyms": [
-      "thanks so much",
-      "I owe you one"
-    ],
-    "register": "Informal",
-    "context": "Warm and a little Irish in flavour, but widely used in Britain too.",
-    "mistake": "Keep the number as \"a million\"; \"thanks a thousand\" isn't used."
-  },
-  {
-    "id": "much-appreciated",
-    "text": "much appreciated",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "said to show you are grateful for help",
-    "distractors": [
-      "said to show you value a high price",
-      "said to praise someone's art",
-      "said to say you noticed a rise"
-    ],
-    "example": "Thanks for covering my shift – much appreciated.",
-    "synonyms": [
-      "thanks so much",
-      "I'm grateful"
-    ],
-    "register": "Neutral",
-    "context": "A short, polite way to add warmth to thanks, in speech and emails.",
-    "mistake": "Say \"much appreciated\" as a short comment, not \"very much appreciate\"."
-  },
-  {
-    "id": "dont-mention-it",
-    "text": "don't mention it",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "a polite reply meaning it was no trouble",
-    "distractors": [
-      "a request to keep a secret",
-      "a warning not to talk about money",
-      "a rude way to refuse thanks"
-    ],
-    "example": "\"Thanks for the help.\" \"Don't mention it.\"",
-    "synonyms": [
-      "you're welcome",
-      "no problem"
-    ],
-    "register": "Neutral",
-    "context": "A modest reply to thanks, slightly formal or old-fashioned.",
-    "mistake": "It's a polite reply to thanks, not a real order to stay silent."
-  },
-  {
-    "id": "my-pleasure",
-    "text": "my pleasure",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "a polite, friendly reply to thanks",
-    "distractors": [
-      "a reply meaning you enjoy being alone",
-      "a wish for a happy holiday",
-      "an offer to pay for something"
-    ],
-    "example": "\"Thanks for hosting.\" \"My pleasure, come again soon.\"",
-    "synonyms": [
-      "you're welcome",
-      "happy to help"
-    ],
-    "register": "Neutral",
-    "context": "Said by hosts, shop staff and helpers to show the favour was no trouble.",
-    "mistake": "Say \"My pleasure\" or \"It was a pleasure\", not \"pleasure mine\" as a reply to thanks."
-  },
-  {
-    "id": "not-at-all",
-    "text": "not at all",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "a polite reply meaning it's no trouble",
-    "distractors": [
-      "a reply meaning everything is wrong",
-      "an answer meaning you refuse completely",
-      "a reply meaning you do not understand"
-    ],
-    "example": "\"Do you mind if I open the window?\" \"Not at all.\"",
-    "synonyms": [
-      "of course not",
-      "don't mention it"
-    ],
-    "register": "Neutral",
-    "context": "Answers \"Do you mind...?\" or thanks; it means \"no problem\".",
-    "mistake": "After \"Do you mind?\", \"not at all\" means yes, fine. To refuse, say \"I'd rather you didn't\"."
-  },
-  {
-    "id": "excuse-me",
-    "text": "excuse me",
-    "type": "everyday",
-    "level": 1,
-    "meaning": "a polite way to get attention or pass by",
-    "distractors": [
-      "a way to say you are not to blame",
-      "a way to ask someone to leave",
-      "a way to say you feel sick"
-    ],
-    "example": "Excuse me, is this the queue for tickets?",
-    "synonyms": [
-      "pardon me",
-      "sorry"
-    ],
-    "register": "Neutral",
-    "context": "Used before asking a stranger something or squeezing past someone.",
-    "mistake": "Use \"excuse me\" before interrupting; use \"sorry\" after bumping into someone."
-  },
-  {
-    "id": "pardon",
-    "text": "pardon?",
-    "type": "everyday",
-    "level": 3,
-    "meaning": "a polite word asking someone to say it again",
-    "distractors": [
-      "a word asking someone to forgive you",
-      "a word showing you agree strongly",
-      "a word telling someone to wait"
-    ],
-    "example": "\"Would you like a biscuit?\" \"Pardon?\" \"A biscuit!\"",
-    "synonyms": [
-      "sorry?",
-      "what was that?"
-    ],
-    "register": "Formal",
-    "context": "Polite but slightly formal; some Britons see it as posh.",
-    "mistake": "Say \"Pardon?\" with rising tone; \"What?\" on its own sounds rude."
-  },
-  {
-    "id": "i-do-apologise",
-    "text": "I do apologise",
-    "type": "everyday",
-    "level": 3,
-    "meaning": "a formal, polite way to say sorry",
-    "distractors": [
-      "a polite way to say thank you",
-      "a formal way to say goodbye",
-      "a formal way to refuse an offer"
-    ],
-    "example": "I do apologise for the delay, madam.",
-    "synonyms": [
-      "I'm very sorry",
-      "my apologies"
-    ],
-    "register": "Formal",
-    "context": "Used by staff and in formal letters; \"do\" adds emphasis.",
-    "mistake": "Use British \"-ise\" in \"apologise\"; \"do\" adds emphasis and is not a question."
-  },
-  {
-    "id": "sorry-im-late",
-    "text": "sorry I'm late",
-    "type": "everyday",
-    "level": 1,
-    "meaning": "an apology said on arriving after the agreed time",
-    "distractors": [
-      "a warning that you will arrive early",
-      "a complaint that someone else is slow",
-      "a request to start without you"
-    ],
-    "example": "Sorry I'm late, the bus never turned up.",
-    "synonyms": [
-      "apologies for the delay"
-    ],
-    "register": "Neutral",
-    "context": "The standard opening when you arrive after others.",
-    "mistake": "Say \"I'm late\", not \"I'm lately\"; \"lately\" means \"recently\"."
-  },
-  {
-    "id": "my-mistake",
-    "text": "my mistake",
-    "type": "everyday",
-    "level": 3,
-    "meaning": "an admission that you were the one in error",
-    "distractors": [
-      "a claim that someone else is wrong",
-      "a question about a wrong answer",
-      "a request to try the task again"
-    ],
-    "example": "Oh, you wanted tea? My mistake, I made coffee.",
-    "synonyms": [
-      "my bad",
-      "I was wrong"
-    ],
-    "register": "Informal",
-    "context": "A quick, light way to admit a small error without fuss.",
-    "mistake": "Say \"my mistake\", not \"my mistaken\"; \"mistake\" is a noun."
-  },
-  {
-    "id": "would-you-mind",
-    "text": "would you mind?",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "a polite way to ask for a favour or permission",
-    "distractors": [
-      "a polite way to ask if someone is upset",
-      "a polite way to ask for someone's name",
-      "a polite way to ask about someone's plans"
-    ],
-    "example": "Would you mind closing the window? It's freezing.",
-    "synonyms": [
-      "do you mind?",
-      "could you possibly?"
-    ],
-    "register": "Formal",
-    "context": "A very polite request form, often followed by -ing.",
-    "mistake": "Follow with -ing: \"Would you mind closing...?\", not \"Would you mind to close...?\"."
-  },
-  {
-    "id": "can-i-have-a-word",
-    "text": "can I have a word?",
-    "type": "everyday",
-    "level": 3,
-    "meaning": "a request to talk to someone privately for a moment",
-    "distractors": [
-      "a request to borrow a dictionary",
-      "a request for someone to spell a name",
-      "a request to read something aloud"
-    ],
-    "example": "Jo, can I have a word before the meeting?",
-    "synonyms": [
-      "could I speak to you?",
-      "got a minute?"
-    ],
-    "register": "Neutral",
-    "context": "Often signals a serious talk at work; the tone decides how worrying it sounds.",
-    "mistake": "It often signals a serious talk; say \"Have you got a minute?\" for a lighter request."
-  },
-  {
-    "id": "could-i-have-the-bill-please",
-    "text": "could I have the bill, please?",
-    "type": "everyday",
-    "level": 1,
-    "meaning": "a polite request for the amount you owe",
-    "distractors": [
-      "a polite request for a menu",
-      "a polite request for a table",
-      "a polite request for some water"
-    ],
-    "example": "That was lovely. Could we have the bill, please?",
-    "synonyms": [
-      "can we pay, please?"
-    ],
-    "register": "Neutral",
-    "context": "The normal way to ask to pay in a British restaurant or café.",
-    "mistake": "In Britain say \"the bill\", not \"the check\"; \"check\" is the American word."
-  },
-  {
-    "id": "its-my-round",
-    "text": "it's my round",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "it is my turn to buy the drinks",
-    "distractors": [
-      "it is my turn to play the game",
-      "it is my turn to drive the car",
-      "it is my turn to tell the story"
-    ],
-    "example": "Same again, everyone? It's my round.",
-    "synonyms": [
-      "I'll get these",
-      "my shout"
-    ],
-    "register": "Informal",
-    "context": "Core pub custom: each person buys drinks for the whole group in turn.",
-    "mistake": "Say \"it's my round\", not \"my turn of drinks\"; \"a round\" is a set of drinks for the group."
-  },
-  {
-    "id": "same-again-please",
-    "text": "same again, please",
-    "type": "everyday",
-    "level": 3,
-    "meaning": "a request for another of what you just had",
-    "distractors": [
-      "a request to repeat a sentence",
-      "a request for a different drink",
-      "a request for the bill again"
-    ],
-    "example": "Pint of bitter? Same again, please.",
-    "synonyms": [
-      "another one, please"
-    ],
-    "register": "Informal",
-    "context": "Heard at bars and cafés when ordering another of the same drink.",
-    "mistake": "Say \"same again\", not \"the same again\"; it's short and complete."
-  },
-  {
-    "id": "its-on-me",
-    "text": "it's on me",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "I will pay for it",
-    "distractors": [
-      "I will carry it for you",
-      "I have put it on myself",
-      "I will wear it today"
-    ],
-    "example": "Put your wallet away – dinner's on me.",
-    "synonyms": [
-      "I'm paying",
-      "I'll get this"
-    ],
-    "register": "Informal",
-    "context": "Said when you offer to pay for someone else's meal or drink.",
-    "mistake": "Say \"on me\", not \"on mine\"; it means the cost is mine."
-  },
-  {
-    "id": "let-me-know",
-    "text": "let me know",
-    "type": "everyday",
-    "level": 1,
-    "meaning": "tell me when you have news or have decided",
-    "distractors": [
-      "allow me to meet someone",
-      "give me a chance to leave",
-      "teach me about a topic"
-    ],
-    "example": "Let me know if you can make Friday.",
-    "synonyms": [
-      "tell me",
-      "keep me posted"
-    ],
-    "register": "Neutral",
-    "context": "Very common in invitations, emails and work chat.",
-    "mistake": "Say \"let me know\", not \"let me to know\"; no \"to\" after \"let\"."
-  },
-  {
-    "id": "shall-we-say-seven",
-    "text": "shall we say seven?",
-    "type": "everyday",
-    "level": 3,
-    "meaning": "a polite way to suggest a time",
-    "distractors": [
-      "a question about what to say aloud",
-      "a request to count to seven",
-      "a question about someone's age"
-    ],
-    "example": "Dinner on Friday – shall we say seven?",
-    "synonyms": [
-      "how about seven?",
-      "would seven suit?"
-    ],
-    "register": "Neutral",
-    "context": "A polite, slightly formal way to propose a time or price.",
-    "mistake": "Use \"shall we say\" to suggest, not \"will we say\"; \"shall\" is the polite form."
-  },
-  {
-    "id": "how-about-friday",
-    "text": "how about Friday?",
-    "type": "everyday",
-    "level": 1,
-    "meaning": "a casual way to suggest a day or time",
-    "distractors": [
-      "a question about how someone's Friday was",
-      "a question about what someone does on Fridays",
-      "a request to cancel the plan"
-    ],
-    "example": "I can't do Thursday. How about Friday?",
-    "synonyms": [
-      "what about Friday?",
-      "would Friday suit?"
-    ],
-    "register": "Neutral",
-    "context": "The usual way to propose another option when planning.",
-    "mistake": "Say \"How about Friday?\", not \"How about on Friday?\"; skip \"on\" here."
-  },
-  {
-    "id": "are-you-free-on-saturday",
-    "text": "are you free on Saturday?",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "a question asking if someone has no plans then",
-    "distractors": [
-      "a question about whether something costs nothing",
-      "a question about if a seat is empty",
-      "a question about Saturday's weather"
-    ],
-    "example": "Are you free on Saturday? We're having a barbecue.",
-    "synonyms": [
-      "are you around on Saturday?",
-      "have you got plans?"
-    ],
-    "register": "Neutral",
-    "context": "Starts an invitation; \"free\" here means \"not busy\".",
-    "mistake": "Here \"free\" means \"not busy\", not \"costing nothing\"; say \"Are you free?\" for plans."
-  },
-  {
-    "id": "lets-make-it-friday",
-    "text": "let's make it Friday",
-    "type": "everyday",
-    "level": 3,
-    "meaning": "let's agree on that day for our plan",
-    "distractors": [
-      "let's build something on that day",
-      "let's forget about doing it then",
-      "let's hope it's not that day"
-    ],
-    "example": "Monday's no good, so let's make it Friday.",
-    "synonyms": [
-      "shall we say Friday?",
-      "Friday it is"
-    ],
-    "register": "Neutral",
-    "context": "Used to settle a date or time after some discussion.",
-    "mistake": "Use \"make it\" to fix a time; \"let's do Friday\" is less natural."
-  },
-  {
-    "id": "ill-be-there",
-    "text": "I'll be there",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "I promise to come to the place or event",
-    "distractors": [
-      "I will wait somewhere else",
-      "I will arrive after everyone",
-      "I might come if I have time"
-    ],
-    "example": "Quiz night at eight? I'll be there.",
-    "synonyms": [
-      "I'll come",
-      "see you there"
-    ],
-    "register": "Neutral",
-    "context": "A simple, firm yes to an invitation or meeting.",
-    "mistake": "Say \"I'll be there\", not \"I'll be in there\"; use \"there\" without a preposition."
-  },
-  {
-    "id": "sounds-good",
-    "text": "sounds good",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "a way to say you like a suggestion",
-    "distractors": [
-      "a comment on the volume of music",
-      "a way to refuse an idea politely",
-      "a way to say you cannot hear well"
-    ],
-    "example": "\"Pizza on Friday?\" \"Sounds good to me.\"",
-    "synonyms": [
-      "sounds great",
-      "that works"
-    ],
-    "register": "Informal",
-    "context": "A quick, friendly way to agree to plans.",
-    "mistake": "Say \"sounds good\", not \"sounds well\"; after \"sounds\" use an adjective."
-  },
-  {
-    "id": "that-works-for-me",
-    "text": "that works for me",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "I am happy with that arrangement",
-    "distractors": [
-      "I am too busy to join",
-      "I think that machine is fixed",
-      "I have finished my job already"
-    ],
-    "example": "Half six at the pub? That works for me.",
-    "synonyms": [
-      "that suits me",
-      "fine by me"
-    ],
-    "register": "Neutral",
-    "context": "Used to accept times, dates and plans in friendly or work settings.",
-    "mistake": "Say \"works for me\", not \"works to me\"; use \"for\" with the person."
-  },
-  {
-    "id": "cant-wait",
-    "text": "can't wait",
-    "type": "everyday",
-    "level": 1,
-    "meaning": "I am very excited about something coming",
-    "distractors": [
-      "I am unable to be patient with you",
-      "I refuse to delay the plans",
-      "I am too busy to stay"
-    ],
-    "example": "Holiday on Friday! Can't wait!",
-    "synonyms": [
-      "I'm so excited",
-      "I'm really looking forward to it"
-    ],
-    "register": "Informal",
-    "context": "Short for \"I can't wait\"; common in texts and chat before an event.",
-    "mistake": "Say \"I can't wait to see you\", not \"I can't wait seeing you\"."
-  },
-  {
-    "id": "see-you-there",
-    "text": "see you there",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "a casual way to say you'll both attend",
-    "distractors": [
-      "a question about whether you saw something",
-      "a warning that someone will find you",
-      "a way to say you will not come"
-    ],
-    "example": "Gig at eight. See you there!",
-    "synonyms": [
-      "see you then"
-    ],
-    "register": "Informal",
-    "context": "Said after agreeing to go to the same event or place.",
-    "mistake": "It's a plan to meet at an event; say \"See you then\" when you mean a time."
-  },
-  {
-    "id": "happy-birthday",
-    "text": "happy birthday",
-    "type": "everyday",
-    "level": 1,
-    "meaning": "a greeting said on someone's special day each year",
-    "distractors": [
-      "a greeting for the first day of a year",
-      "a greeting for a wedding anniversary",
-      "a greeting for the end of school"
-    ],
-    "example": "Happy birthday, Ellie! Did you get my card?",
-    "synonyms": [
-      "many happy returns"
-    ],
-    "register": "Neutral",
-    "context": "Said, sung and written in cards and messages.",
-    "mistake": "Say \"Happy birthday!\" without \"for you\"; \"Happy birthday to you\" is the song."
-  },
-  {
-    "id": "congratulations",
-    "text": "congratulations",
-    "type": "everyday",
-    "level": 1,
-    "meaning": "a word said to praise someone's success",
-    "distractors": [
-      "a word said to sympathise with failure",
-      "a word said to start a speech",
-      "a word said to complain about a result"
-    ],
-    "example": "You passed your driving test? Congratulations!",
-    "synonyms": [
-      "well done",
-      "good for you"
-    ],
-    "register": "Neutral",
-    "context": "Said for passing exams, new jobs, engagements, babies and other good news.",
-    "mistake": "Say \"Congratulations on your job\", not \"for your job\"; it's always plural."
-  },
-  {
-    "id": "good-luck",
-    "text": "good luck",
-    "type": "everyday",
-    "level": 1,
-    "meaning": "a wish that someone will succeed",
-    "distractors": [
-      "a warning that something will go wrong",
-      "a statement that someone has won",
-      "a request to try again later"
-    ],
-    "example": "Interview today? Good luck – you'll be brilliant.",
-    "synonyms": [
-      "all the best",
-      "best of luck"
-    ],
-    "register": "Neutral",
-    "context": "Said before exams, interviews, matches and big events.",
-    "mistake": "Say \"good luck\", not \"good lucks\"; \"luck\" is uncountable."
-  },
-  {
-    "id": "bless-you",
-    "text": "bless you",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "what you say when someone sneezes",
-    "distractors": [
-      "what you say when someone coughs loudly",
-      "what you say when someone leaves a church",
-      "what you say when someone gets a present"
-    ],
-    "example": "\"Atchoo!\" \"Bless you!\" \"Thanks, it's this cold.\"",
-    "synonyms": [
-      "God bless you"
-    ],
-    "register": "Neutral",
-    "context": "An automatic reply to a sneeze, and a warm remark of thanks or affection in some regions.",
-    "mistake": "Say it after a sneeze, not after a cough or a yawn; reply \"thank you\"."
-  },
-  {
-    "id": "enjoy-your-meal",
-    "text": "enjoy your meal",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "a polite wish said before someone eats",
-    "distractors": [
-      "a polite order to eat quickly",
-      "a polite request to pay now",
-      "a polite way to ask if food was good"
-    ],
-    "example": "Here are your starters – enjoy your meal.",
-    "synonyms": [
-      "have a nice meal"
-    ],
-    "register": "Neutral",
-    "context": "Said by waiters and hosts when serving food.",
-    "mistake": "Say \"enjoy your meal\", not \"enjoy the eat\"; \"meal\" is the noun."
-  },
-  {
-    "id": "what-can-i-get-you",
-    "text": "what can I get you?",
-    "type": "everyday",
-    "level": 1,
-    "meaning": "a question a host or server asks about your order",
-    "distractors": [
-      "a question about what someone wants to sell",
-      "a question about what someone has lost",
-      "a question about who someone wants to meet"
-    ],
-    "example": "Evening! What can I get you?",
-    "synonyms": [
-      "what would you like?",
-      "what'll it be?"
-    ],
-    "register": "Neutral",
-    "context": "Heard at bars, cafés and in people's homes when drinks are offered.",
-    "mistake": "In a pub order at the bar: \"A pint of lager, please\", not \"I want a pint\"."
-  },
-  {
-    "id": "ill-have-the-same",
-    "text": "I'll have the same",
-    "type": "everyday",
-    "level": 3,
-    "meaning": "I would like what the other person ordered",
-    "distractors": [
-      "I will cook the same dish myself",
-      "I will copy your work later",
-      "I will keep the same seat"
-    ],
-    "example": "Soup of the day? I'll have the same, please.",
-    "synonyms": [
-      "same for me"
-    ],
-    "register": "Neutral",
-    "context": "Used when ordering after a friend and choosing the same dish or drink.",
-    "mistake": "Say \"I'll have the same\", not \"I'll take the same as\"; \"have\" is usual for orders."
-  },
-  {
-    "id": "do-you-take-cards",
-    "text": "do you take cards?",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "a question asking if you can pay by bank card",
-    "distractors": [
-      "a question asking if you can take a taxi",
-      "a question asking if someone plays games",
-      "a question asking if you can borrow money"
-    ],
-    "example": "Do you take cards, or is it cash only?",
-    "synonyms": [
-      "can I pay by card?"
-    ],
-    "register": "Neutral",
-    "context": "Asked in small shops, market stalls and pubs.",
-    "mistake": "Say \"Do you take cards?\" or \"Can I pay by card?\", not \"Do you accept to pay?\"."
-  },
-  {
-    "id": "have-you-got-any-change",
-    "text": "have you got any change?",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "a question asking for coins or small notes",
-    "distractors": [
-      "a question asking if prices have dropped",
-      "a question asking if someone altered a plan",
-      "a question asking for a refund"
-    ],
-    "example": "Have you got any change for the car park machine?",
-    "synonyms": [
-      "have you got any coins?"
-    ],
-    "register": "Neutral",
-    "context": "British speakers say \"have you got\" for everyday questions.",
-    "mistake": "Here \"change\" means coins and is uncountable; say \"any change\", not \"any changes\"."
-  },
-  {
-    "id": "how-much-is-that",
-    "text": "how much is that?",
-    "type": "everyday",
-    "level": 1,
-    "meaning": "a question asking the cost of something",
-    "distractors": [
-      "a question asking how big something is",
-      "a question asking how heavy something is",
-      "a question asking how old something is"
-    ],
-    "example": "That jumper's lovely. How much is that?",
-    "synonyms": [
-      "how much is it?",
-      "what does it cost?"
-    ],
-    "register": "Neutral",
-    "context": "The basic shopping question; use \"are they?\" for plural things.",
-    "mistake": "Say \"How much is it?\", not \"How much costs it?\"; \"cost\" isn't used with \"is\"."
-  },
-  {
-    "id": "is-that-everything",
-    "text": "is that everything?",
-    "type": "everyday",
-    "level": 3,
-    "meaning": "a shop worker's question asking if you need more",
-    "distractors": [
-      "a question asking if you have paid already",
-      "a question asking if you want a bag",
-      "a question asking if the shop is open"
-    ],
-    "example": "That's £12.40. Is that everything?",
-    "synonyms": [
-      "anything else?"
-    ],
-    "register": "Neutral",
-    "context": "Said by cashiers and waiters; \"that's all, thanks\" is a normal reply.",
-    "mistake": "It's said by staff; answer \"That's all, thanks\", not \"Yes, everything\"."
-  },
-  {
-    "id": "id-like-a-refund",
-    "text": "I'd like a refund",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "a request to get your money back",
-    "distractors": [
-      "a request to see a bigger size",
-      "a request to wrap a present",
-      "a request to speak to a new customer"
-    ],
-    "example": "It stopped working in a week, so I'd like a refund.",
-    "synonyms": [
-      "I want my money back"
-    ],
-    "register": "Neutral",
-    "context": "Polite way to ask a shop to return your payment.",
-    "mistake": "\"I'd like\" is polite; \"I want a refund\" sounds blunt. Add \"please\"."
-  },
-  {
-    "id": "have-you-got-this-in-a-medium",
-    "text": "have you got this in a medium?",
-    "type": "everyday",
-    "level": 3,
-    "meaning": "a question asking if a shop has another size",
-    "distractors": [
-      "a question asking if the item is half price",
-      "a question asking if the item is real",
-      "a question asking if the item is in the window"
-    ],
-    "example": "This is lovely – have you got this in a medium?",
-    "synonyms": [
-      "do you have this in my size?"
-    ],
-    "register": "Neutral",
-    "context": "Used in clothes and shoe shops for sizes and colours.",
-    "mistake": "Say \"in a medium\", not \"on a medium\"; use \"in\" for sizes and colours."
-  },
-  {
-    "id": "sorry-wrong-number",
-    "text": "sorry, wrong number",
-    "type": "everyday",
-    "level": 3,
-    "meaning": "words said after calling someone by mistake",
-    "distractors": [
-      "words said when someone is not answering",
-      "words said to ask for a phone number",
-      "words said when the line is bad"
-    ],
-    "example": "Hello? Oh, sorry, wrong number.",
-    "synonyms": [
-      "I've dialled the wrong number"
-    ],
-    "register": "Neutral",
-    "context": "Short phone phrase after reaching the wrong person.",
-    "mistake": "Say \"wrong number\", not \"false number\"."
-  },
-  {
-    "id": "can-you-hear-me",
-    "text": "can you hear me?",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "a question checking your voice is clear to them",
-    "distractors": [
-      "a question asking if someone is shouting",
-      "a question asking if someone agrees with you",
-      "a question asking someone to speak louder"
-    ],
-    "example": "Hello? Can you hear me? The signal's terrible.",
-    "synonyms": [
-      "is that clear?"
-    ],
-    "register": "Neutral",
-    "context": "Used on calls, video meetings and in noisy places.",
-    "mistake": "Say \"Can you hear me?\", not \"Do you hear me?\", which sounds angry."
-  },
-  {
-    "id": "youre-breaking-up",
-    "text": "you're breaking up",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "your voice keeps cutting out on a bad signal",
-    "distractors": [
-      "you are ending a relationship with me",
-      "you are making a loud noise outside",
-      "you are telling me bad news"
-    ],
-    "example": "Sorry, you're breaking up – can you call me back?",
-    "synonyms": [
-      "you're cutting out"
-    ],
-    "register": "Informal",
-    "context": "Said on mobile and video calls with a poor connection.",
-    "mistake": "On a call it means a poor signal, not the end of a relationship."
-  },
-  {
-    "id": "leave-a-message",
-    "text": "leave a message",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "a request to record words for someone to hear later",
-    "distractors": [
-      "a request to read a note aloud",
-      "a request to send a parcel",
-      "a request to ring the doorbell"
-    ],
-    "example": "I'm not in, so please leave a message after the tone.",
-    "synonyms": [
-      "leave a voicemail"
-    ],
-    "register": "Neutral",
-    "context": "Heard in voicemail greetings and from receptionists.",
-    "mistake": "Say \"leave a message\", not \"let a message\"; \"leave\" means put it there for later."
-  },
-  {
-    "id": "can-i-take-a-message",
-    "text": "can I take a message?",
-    "type": "everyday",
-    "level": 3,
-    "meaning": "an offer to pass on news to someone who's out",
-    "distractors": [
-      "an offer to send a text to your phone",
-      "an offer to take your gift away",
-      "a request to give your name"
-    ],
-    "example": "He's in a meeting. Can I take a message?",
-    "synonyms": [
-      "would you like to leave a message?"
-    ],
-    "register": "Neutral",
-    "context": "Said by receptionists and colleagues answering someone else's phone.",
-    "mistake": "The person answering asks it; say \"Can I leave a message?\" when you are calling."
-  },
-  {
-    "id": "ill-text-you",
-    "text": "I'll text you",
-    "type": "everyday",
-    "level": 1,
-    "meaning": "I will send you a message on my phone",
-    "distractors": [
-      "I will make a spoken phone call to you",
-      "I will write you a long letter",
-      "I will send you an email at work"
-    ],
-    "example": "On my way now – I'll text you when I'm outside.",
-    "synonyms": [
-      "I'll message you"
-    ],
-    "register": "Informal",
-    "context": "Common in arrangements; \"text\" is a verb as well as a noun.",
-    "mistake": "Say \"I'll text you\", not \"I'll text to you\"; \"text\" takes the person directly."
-  },
-  {
-    "id": "please-hold",
-    "text": "please hold",
-    "type": "everyday",
-    "level": 3,
-    "meaning": "a phone request to wait on the line",
-    "distractors": [
-      "a request to carry something for someone",
-      "a request to speak more quietly",
-      "a request to end the call"
-    ],
-    "example": "Please hold while I put you through to the manager.",
-    "synonyms": [
-      "hold the line",
-      "one moment, please"
-    ],
-    "register": "Formal",
-    "context": "Heard in call centres and switchboards.",
-    "mistake": "Say \"please hold\" on the phone; in a shop say \"one moment, please\"."
-  },
-  {
-    "id": "mind-the-gap",
-    "text": "mind the gap",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "a warning to watch the space at the platform edge",
-    "distractors": [
-      "a warning to keep a seat free",
-      "a warning to buy a ticket first",
-      "a warning to speak quietly on a train"
-    ],
-    "example": "Mind the gap as you leave the train, please.",
-    "synonyms": [
-      "watch the gap"
-    ],
-    "register": "Neutral",
-    "context": "Famous London Underground announcement; also used jokingly for any gap.",
-    "mistake": "Say \"mind the gap\", not \"mind of the gap\"; \"mind\" means \"be careful of\"."
-  },
-  {
-    "id": "single-or-return",
-    "text": "single or return?",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "a ticket seller's question about one-way or both-way travel",
-    "distractors": [
-      "a question about first or second class",
-      "a question about a window or aisle seat",
-      "a question about cash or card"
-    ],
-    "example": "To Manchester? Single or return?",
-    "synonyms": [
-      "one way or both ways?"
-    ],
-    "register": "Neutral",
-    "context": "Asked when buying a train, bus or coach ticket.",
-    "mistake": "In Britain it's \"a return\", not \"a round trip\"; \"single\" means one way only."
-  },
-  {
-    "id": "whats-the-time",
-    "text": "what's the time?",
-    "type": "everyday",
-    "level": 1,
-    "meaning": "a question asking what hour it is",
-    "distractors": [
-      "a question asking how long something takes",
-      "a question asking when something begins",
-      "a question asking how late someone is"
-    ],
-    "example": "Sorry, what's the time? My phone's died.",
-    "synonyms": [
-      "have you got the time?",
-      "what time is it?"
-    ],
-    "register": "Neutral",
-    "context": "The ordinary way to ask for the time in Britain.",
-    "mistake": "Say \"What's the time?\", not \"What hour is it?\"."
-  },
-  {
-    "id": "a-quarter-past-four",
-    "text": "a quarter past four",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "15 minutes after the hour",
-    "distractors": [
-      "45 minutes after the hour",
-      "15 minutes before the hour",
-      "30 minutes after the hour"
-    ],
-    "example": "The film starts at a quarter past eight.",
-    "synonyms": [
-      "four fifteen"
-    ],
-    "register": "Neutral",
-    "context": "Standard way to tell the time in speech.",
-    "mistake": "Say \"a quarter past four\" (4.15), not \"a quarter to four\", which is 3.45."
-  },
-  {
-    "id": "half-seven",
-    "text": "half seven",
-    "type": "everyday",
-    "level": 3,
-    "meaning": "7.30 in everyday British speech",
-    "distractors": [
-      "6.30 in everyday British speech",
-      "7.15 in everyday British speech",
-      "7.45 in everyday British speech"
-    ],
-    "example": "Tea's at half seven, so don't be late.",
-    "synonyms": [
-      "half past seven",
-      "seven thirty"
-    ],
-    "register": "Informal",
-    "context": "Short, spoken form of \"half past seven\".",
-    "mistake": "It means 7.30; learners from some languages wrongly hear it as 6.30."
-  },
-  {
-    "id": "id-love-to",
-    "text": "I'd love to",
-    "type": "everyday",
-    "level": 1,
-    "meaning": "a warm way to accept an invitation",
-    "distractors": [
-      "a warm way to say you love someone",
-      "a warm way to refuse a gift",
-      "a warm way to say goodbye"
-    ],
-    "example": "\"Come for tea on Sunday?\" \"I'd love to, thanks.\"",
-    "synonyms": [
-      "yes, please",
-      "that'd be lovely"
-    ],
-    "register": "Neutral",
-    "context": "A polite, enthusiastic yes to invitations.",
-    "mistake": "Don't add \"but\" unless refusing: \"I'd love to, but I can't\" is a polite no."
-  },
-  {
-    "id": "im-afraid-i-cant",
-    "text": "I'm afraid I can't",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "a polite way to say you are unable to do it",
-    "distractors": [
-      "a polite way to say you are scared of it",
-      "a polite way to say you don't understand",
-      "a polite way to say you hope to try"
-    ],
-    "example": "I'm afraid I can't make Friday – I'm working.",
-    "synonyms": [
-      "sorry, I can't",
-      "unfortunately not"
-    ],
-    "register": "Neutral",
-    "context": "Softens a refusal in conversation and at work.",
-    "mistake": "Here \"afraid\" means \"sorry to say\"; it has nothing to do with fear."
-  },
-  {
-    "id": "thanks-for-having-me",
-    "text": "thanks for having me",
-    "type": "everyday",
-    "level": 3,
-    "meaning": "a polite thing to say to a host when leaving",
-    "distractors": [
-      "a polite thing to say when you hire someone",
-      "a polite thing to say when you give a gift",
-      "a polite thing to say when you join a team"
-    ],
-    "example": "Lovely evening – thanks for having me.",
-    "synonyms": [
-      "thanks for inviting me"
-    ],
-    "register": "Neutral",
-    "context": "Said at the end of a visit, party or stay.",
-    "mistake": "It's said by the guest; say \"thanks for coming\" when you are the host."
-  },
-  {
-    "id": "get-well-soon",
-    "text": "get well soon",
-    "type": "everyday",
-    "level": 1,
-    "meaning": "a wish for a sick person to recover quickly",
-    "distractors": [
-      "a wish for a sick person to rest all day",
-      "a wish for a friend to visit a doctor",
-      "a wish for someone to avoid an illness"
-    ],
-    "example": "Sorry you've got flu – get well soon!",
-    "synonyms": [
-      "hope you feel better"
-    ],
-    "register": "Neutral",
-    "context": "Written on cards and said to friends who are unwell.",
-    "mistake": "Say \"get well soon\", not \"be well soon\"; it's often written on cards."
-  },
-  {
-    "id": "happy-christmas",
-    "text": "happy Christmas",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "a seasonal greeting said in December",
-    "distractors": [
-      "a greeting said on the last day of the year",
-      "a greeting said on a birthday",
-      "a greeting said at Easter"
-    ],
-    "example": "Happy Christmas, everyone! See you in the new year.",
-    "synonyms": [
-      "merry Christmas",
-      "season's greetings"
-    ],
-    "register": "Neutral",
-    "context": "Both \"Happy Christmas\" and \"Merry Christmas\" are used in Britain; Happy is slightly more traditional.",
-    "mistake": "Write Christmas with a capital C, and don't say \"Happy Christmases\"."
-  },
-  {
-    "id": "best-wishes",
-    "text": "best wishes",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "a polite sign-off in cards and letters",
-    "distractors": [
-      "a request for someone's opinion",
-      "a way to say you hope to win",
-      "a toast made when drinking"
-    ],
-    "example": "I signed the card \"Best wishes\" and added my name.",
-    "synonyms": [
-      "kind regards",
-      "all the best"
-    ],
-    "register": "Neutral",
-    "context": "A warm sign-off for cards and friendly emails.",
-    "mistake": "Say \"best wishes\", not \"best wish\"; it's always plural."
-  },
-  {
-    "id": "have-a-nice-weekend",
-    "text": "have a nice weekend",
-    "type": "everyday",
-    "level": 1,
-    "meaning": "a friendly goodbye said on a Friday",
-    "distractors": [
-      "a friendly goodbye said on a Monday",
-      "a polite request to work on Saturday",
-      "a polite order to rest on Sunday"
-    ],
-    "example": "Right, that's me done. Have a nice weekend!",
-    "synonyms": [
-      "enjoy your weekend"
-    ],
-    "register": "Neutral",
-    "context": "Said on Friday afternoons at work and school.",
-    "mistake": "Say \"at the weekend\" in British English, not \"on the weekend\"."
-  },
-  {
-    "id": "good-night",
-    "text": "good night",
-    "type": "everyday",
-    "level": 1,
-    "meaning": "a farewell said before bed or late in the evening",
-    "distractors": [
-      "a greeting said when you meet at night",
-      "a wish said before an exam",
-      "a request to turn off a light"
-    ],
-    "example": "Right, I'm off to bed. Good night!",
-    "synonyms": [
-      "sleep well",
-      "night night"
-    ],
-    "register": "Neutral",
-    "context": "Said when leaving someone late or going to bed.",
-    "mistake": "Use \"good night\" only for leaving or going to bed; use \"good evening\" to greet."
-  },
-  {
-    "id": "sleep-well",
-    "text": "sleep well",
-    "type": "everyday",
-    "level": 2,
-    "meaning": "a kind wish that someone rests properly overnight",
-    "distractors": [
-      "a request to keep quiet at night",
-      "a wish that someone dreams of you",
-      "an order to go to bed now"
-    ],
-    "example": "Big day tomorrow – sleep well!",
-    "synonyms": [
-      "sleep tight",
-      "good night"
-    ],
-    "register": "Neutral",
-    "context": "A gentle goodnight wish to family, friends and guests.",
-    "mistake": "Say \"sleep well\", not \"sleep good\"; \"well\" is the adverb."
-  }
+    id: 'hows-it-going',
+    text: "how's it going?",
+    type: 'everyday',
+    level: 1,
+    meaning: "a friendly way to ask about someone's wellbeing",
+    distractors: ['a question about how fast a vehicle moves', 'a way to ask someone where they are heading', "an offer to check someone's progress at work"],
+    example: "Hi Sam, how's it going? Haven't seen you since the match.",
+    synonyms: ['how are things?', 'how are you?'],
+    register: 'Informal',
+    context: 'Casual greeting among friends and colleagues; people usually answer briefly, "Good, you?".',
+    mistake: 'It\'s a greeting, not a real request for a long report; just say "Good, thanks, you?".',
+  },
+  {
+    id: 'youre-welcome',
+    text: "you're welcome",
+    type: 'everyday',
+    level: 1,
+    meaning: 'a polite reply when someone thanks you',
+    distractors: ['a polite way to greet a new guest', 'an invitation to come to a party', 'a request that someone pays you back'],
+    example: '"Thanks for the lift." "You\'re welcome, any time."',
+    synonyms: ['not at all', 'no problem'],
+    register: 'Neutral',
+    context: 'The standard reply to thanks; Britons also say "no problem" or "that\'s all right".',
+    mistake: 'Say "You\'re welcome" after thanks; "Welcome" on its own greets a guest arriving.',
+  },
+  {
+    id: 'after-you',
+    text: 'after you',
+    type: 'everyday',
+    level: 2,
+    meaning: 'a polite way to let someone go first',
+    distractors: ['a command telling someone to follow you', 'a question asking who is behind you', 'a warning that someone is chasing you'],
+    example: 'He held the door open. "After you," he said.',
+    synonyms: ['please, go ahead'],
+    register: 'Neutral',
+    context: 'Said at doors, queues and buffets; polite and slightly old-fashioned in a good way.',
+    mistake: 'Use "After you" to offer someone precedence; "Behind you" is a warning, not a courtesy.',
+  },
+  {
+    id: 'sorry-to-bother-you',
+    text: 'sorry to bother you',
+    type: 'everyday',
+    level: 2,
+    meaning: 'polite words used before interrupting someone',
+    distractors: ['words used to end a phone call', 'a rude way to tell someone to leave', 'a way to say you feel unwell'],
+    example: 'Sorry to bother you, but is this your umbrella?',
+    synonyms: ['sorry to disturb you', 'excuse me'],
+    register: 'Neutral',
+    context: 'Used to start a request to a stranger or a busy colleague; very common and polite.',
+    mistake: 'Say "bother", not "annoy": "Sorry to bother you, but..." is the usual form.',
+  },
+  {
+    id: 'could-you-do-me-a-favour',
+    text: 'could you do me a favour?',
+    type: 'everyday',
+    level: 2,
+    meaning: 'a polite way to ask for a small bit of help',
+    distractors: ['a way to ask if someone likes you', 'a request to pay a bill', 'a question about a gift you gave'],
+    example: 'Could you do me a favour and water the plants this weekend?',
+    synonyms: ['can I ask a favour?'],
+    register: 'Neutral',
+    context: 'Opens a request between friends or colleagues; the favour itself comes next.',
+    mistake: 'Say "do me a favour", not "make me a favour"; British spelling is "favour".',
+  },
+  {
+    id: 'mind-how-you-go',
+    text: 'mind how you go',
+    type: 'everyday',
+    level: 2,
+    meaning: 'a friendly way to say goodbye and stay safe',
+    distractors: ['a warning to watch out for a step', 'a way to tell someone to hurry up', "a question about someone's journey plans"],
+    example: "Right, I'm off. Mind how you go!",
+    synonyms: ['take care', 'look after yourself'],
+    register: 'Informal',
+    context: 'A warm farewell in England, especially in the North and Midlands, often to someone travelling.',
+    mistake: 'It\'s a goodbye, not a literal warning; reply "You too" or "Thanks, bye".',
+  },
+  {
+    id: 'give-me-a-shout',
+    text: 'give me a shout',
+    type: 'everyday',
+    level: 2,
+    meaning: 'contact me when you need help or are ready',
+    distractors: ['raise your voice at me angrily', 'praise me in front of others', 'wait for me outside the door'],
+    example: 'If you need a lift on Saturday, give me a shout.',
+    synonyms: ['let me know', 'give me a ring'],
+    register: 'Informal',
+    context: 'Friendly offer between friends or colleagues; the contact can be a call, text or message.',
+    mistake: 'It means "contact me", not literally to shout; don\'t say "give me a shouting".',
+  },
+  {
+    id: 'keep-in-touch',
+    text: 'keep in touch',
+    type: 'everyday',
+    level: 1,
+    meaning: 'stay in contact with someone after parting',
+    distractors: ['stop talking to someone for good', 'meet someone every single day', 'write someone a long formal letter'],
+    example: "Lovely to see you again. Let's keep in touch.",
+    synonyms: ['stay in touch', 'stay in contact'],
+    register: 'Neutral',
+    context: 'Said when saying goodbye to friends, old colleagues or relatives who live far away.',
+    mistake: 'Use "in touch": "keep in touch", not "keep touching" or "keep in contact to me".',
+  },
+  {
+    id: 'is-this-seat-taken',
+    text: 'is this seat taken?',
+    type: 'everyday',
+    level: 1,
+    meaning: 'a polite question asking if you can sit there',
+    distractors: ['a question asking who paid for a ticket', 'a request for someone to move along', 'a question about whether a seat is clean'],
+    example: "Is this seat taken? The train's packed.",
+    synonyms: ['is this seat free?', 'is anyone sitting here?'],
+    register: 'Neutral',
+    context: 'Used on trains, buses and in cafés; a "no" answer invites you to sit down.',
+    mistake: 'Say "taken" or "free", not "busy": "Is this seat free?" not "Is this seat busy?".',
+  },
+  {
+    id: 'keep-the-change',
+    text: 'keep the change',
+    type: 'everyday',
+    level: 1,
+    meaning: 'let the seller have the extra money as a tip',
+    distractors: ['give me my money in smaller coins', 'exchange my notes for coins', 'tell me the price has gone down'],
+    example: "That's £8.50? Here's a tenner, keep the change.",
+    synonyms: ["that's fine", 'no change needed'],
+    register: 'Neutral',
+    context: 'Said to taxi drivers, waiters and barbers after paying more than the bill.',
+    mistake: 'Say "keep the change", not "keep the changes"; "change" is uncountable here.',
+  },
+  {
+    id: 'im-just-looking',
+    text: "I'm just looking",
+    type: 'everyday',
+    level: 1,
+    meaning: "a polite way to refuse a shop assistant's help",
+    distractors: ['a reply saying you cannot see properly', 'a request to speak to a manager', 'a way to say you want to buy everything'],
+    example: '"Can I help you?" "I\'m just looking, thanks."',
+    synonyms: ['just browsing'],
+    register: 'Neutral',
+    context: "The classic reply when a shop assistant offers help and you're not ready to buy.",
+    mistake: 'Use the continuous form: "I\'m just looking", not "I just look".',
+  },
+  {
+    id: 'sorry',
+    text: 'sorry',
+    type: 'everyday',
+    level: 1,
+    meaning: 'a word used to apologise',
+    distractors: ['a word used to say thank you', 'a word used to say goodbye', 'a word used to ask for the bill'],
+    example: "Sorry, I've just spilt tea on your desk.",
+    synonyms: ['I apologise', 'pardon me'],
+    register: 'Neutral',
+    context: "Britons say it constantly: for bumping into people, interrupting, or when they didn't hear something.",
+    mistake: 'Don\'t answer "sorry" with "I forgive you"; say "no worries" or "that\'s all right".',
+  },
+  {
+    id: 'i-didnt-catch-that',
+    text: "I didn't catch that",
+    type: 'everyday',
+    level: 3,
+    meaning: 'I did not hear what you just said',
+    distractors: ['I did not like what you offered', 'I could not reach what you threw', 'I did not see you arrive'],
+    example: "Sorry, I didn't catch that. Could you say it again?",
+    synonyms: ['pardon?', 'say that again'],
+    register: 'Neutral',
+    context: 'A polite way to ask someone to repeat words you missed, often on a noisy train or phone line.',
+    mistake: 'Don\'t say "I didn\'t hear well you"; use "I didn\'t catch that" or "Sorry, what was that?".',
+  },
+  {
+    id: 'ill-call-you-back',
+    text: "I'll call you back",
+    type: 'everyday',
+    level: 1,
+    meaning: 'I will phone you again later',
+    distractors: ['I will refuse to speak to you today', 'I will ask you to phone someone else', 'I will wait for you to arrive here'],
+    example: "I'm on the bus. Can I call you back in ten minutes?",
+    synonyms: ["I'll ring you back"],
+    register: 'Neutral',
+    context: 'Said when you can\'t talk now; "ring you back" is the more British alternative.',
+    mistake: 'Say "call you back" or "ring you back", not "call you again back".',
+  },
+  {
+    id: 'drop-me-a-line',
+    text: 'drop me a line',
+    type: 'everyday',
+    level: 3,
+    meaning: 'send me a short message or letter',
+    distractors: ['draw a straight mark for me', 'give me a place to stay', 'tell me a joke in person'],
+    example: "Drop me a line when you've settled into the new flat.",
+    synonyms: ['send me a message', 'write to me'],
+    register: 'Informal',
+    context: 'Friendly request to get in touch by letter, email or text, often with a friend who is moving away.',
+    mistake: "It means a short note, not a drawn line; it isn't used for long formal letters.",
+  },
+  {
+    id: 'many-happy-returns',
+    text: 'many happy returns',
+    type: 'everyday',
+    level: 2,
+    meaning: 'a wish said to someone on their special day each year',
+    distractors: ['a wish said to someone leaving on holiday', 'a request to bring goods back to a shop', 'a hope that someone will come back soon'],
+    example: "Many happy returns, Gran! Here's your card.",
+    synonyms: ['happy birthday'],
+    register: 'Neutral',
+    context: 'A traditional birthday greeting, said or written in cards, a little old-fashioned but still common.',
+    mistake: 'Used for birthdays only; don\'t say "many happy returns" at Christmas or New Year.',
+  },
+  {
+    id: 'safe-journey',
+    text: 'safe journey',
+    type: 'everyday',
+    level: 3,
+    meaning: 'a wish for a trip to go without trouble',
+    distractors: ['a warning that a road is closed', 'a question about how long a trip takes', 'an order to leave straight away'],
+    example: 'Safe journey, and text me when you land!',
+    synonyms: ['have a safe trip', 'travel safely'],
+    register: 'Neutral',
+    context: 'Said to friends and relatives setting off on a drive, train ride or flight.',
+    mistake: 'British speakers say "Safe journey!" or "Have a good journey", not "Safe travel" as a farewell.',
+  },
+  {
+    id: 'speak-soon',
+    text: 'speak soon',
+    type: 'everyday',
+    level: 2,
+    meaning: 'a friendly way to end a call or message',
+    distractors: ['a request to talk more quietly', 'a warning that someone talks too much', 'an order to answer quickly'],
+    example: 'Great catch-up. Speak soon!',
+    synonyms: ['talk soon', 'bye for now'],
+    register: 'Informal',
+    context: 'A common sign-off in calls, texts and emails among friends and friendly colleagues.',
+    mistake: 'Say "speak soon" or "speak to you soon", not "speak you soon".',
+  },
+  {
+    id: 'all-the-best',
+    text: 'all the best',
+    type: 'everyday',
+    level: 2,
+    meaning: "a warm wish for someone's future",
+    distractors: ['a statement that something is top quality', 'a way to choose the strongest player', 'a request to give your full effort'],
+    example: "You're off to Leeds? All the best with the new job!",
+    synonyms: ['good luck', 'best wishes'],
+    register: 'Neutral',
+    context: 'Used when saying goodbye, ending emails, or wishing someone well before a big change.',
+    mistake: "It's a goodbye wish, not a claim that everything is the best of all things.",
+  },
+  {
+    id: 'pleased-to-meet-you',
+    text: 'pleased to meet you',
+    type: 'everyday',
+    level: 1,
+    meaning: 'a polite thing to say on being introduced',
+    distractors: ['a polite way to say you are glad to leave', "a question about someone's name", 'a way to ask for an introduction'],
+    example: "Pleased to meet you, I'm Hannah from accounts.",
+    synonyms: ['nice to meet you', 'how do you do?'],
+    register: 'Neutral',
+    context: 'The standard line when you are introduced to someone for the first time, with a handshake.',
+    mistake: 'Say it only the first time; the next time, say "good to see you".',
+  },
+  {
+    id: 'how-do-you-do',
+    text: 'how do you do?',
+    type: 'everyday',
+    level: 3,
+    meaning: 'a formal greeting used when meeting someone new',
+    distractors: ['a question about how someone feels today', 'a question asking how to do a task', "a way to ask about someone's job"],
+    example: 'The Duke shook her hand. "How do you do?"',
+    synonyms: ['pleased to meet you'],
+    register: 'Formal',
+    context: 'Old-fashioned and formal; heard at ceremonies, in period dramas and from some older speakers.',
+    mistake: 'It\'s not a real question; reply with the same words, "How do you do?", not "I\'m fine".',
+  },
+  {
+    id: 'whats-up',
+    text: "what's up?",
+    type: 'everyday',
+    level: 2,
+    meaning: 'a casual way to ask about a problem',
+    distractors: ['a casual way to ask where someone lives', 'a way to ask what is above you', 'a way to ask what time it is'],
+    example: "You look worried. What's up?",
+    synonyms: ["what's wrong?", "what's the matter?"],
+    register: 'Informal',
+    context: 'Used with friends and family when someone seems upset; also a youth greeting.',
+    mistake: "Said with concern it asks about a problem; don't use it in formal emails.",
+  },
+  {
+    id: 'morning',
+    text: 'morning',
+    type: 'everyday',
+    level: 1,
+    meaning: 'a short, friendly greeting before midday',
+    distractors: ['a short farewell said at night', 'a request to wake someone', 'a word meaning early tomorrow'],
+    example: "Morning, Dave! Tea's in the kitchen.",
+    synonyms: ['good morning'],
+    register: 'Informal',
+    context: 'Shortened from "good morning" and used in offices, shops and on the street.',
+    mistake: 'Use it only before midday; after lunch say "afternoon" instead.',
+  },
+  {
+    id: 'see-you-later',
+    text: 'see you later',
+    type: 'everyday',
+    level: 1,
+    meaning: "a casual goodbye to someone you'll meet again",
+    distractors: ['a promise to visit someone in an hour exactly', 'a request for someone to look at you', 'a polite way to end a meeting for ever'],
+    example: "I'm off to the shops. See you later!",
+    synonyms: ['bye for now', 'see you soon'],
+    register: 'Informal',
+    context: 'A friendly goodbye; it doesn\'t mean the same day, just "we\'ll meet again".',
+    mistake: 'It gives no real time; say "See you at six" if you mean a specific time.',
+  },
+  {
+    id: 'see-you-around',
+    text: 'see you around',
+    type: 'everyday',
+    level: 3,
+    meaning: 'a casual goodbye with no fixed plan to meet',
+    distractors: ['a promise to visit someone at home', 'an order to walk in a circle', 'a warning to stay close to someone'],
+    example: 'Cheers for the chat, Tom. See you around.',
+    synonyms: ['bye for now'],
+    register: 'Informal',
+    context: 'Used with neighbours or acquaintances you expect to bump into again.',
+    mistake: "It suggests a chance meeting, so don't use it to arrange a proper meeting.",
+  },
+  {
+    id: 'take-care',
+    text: 'take care',
+    type: 'everyday',
+    level: 1,
+    meaning: 'a kind way to say goodbye and stay well',
+    distractors: ['a rule to be careful about money', 'a request to look after a child', 'a threat that someone will be in trouble'],
+    example: "Right, I'll let you go. Take care!",
+    synonyms: ['look after yourself', 'mind how you go'],
+    register: 'Neutral',
+    context: 'A warm goodbye at the end of calls, visits and emails.',
+    mistake: 'Say "take care", not "take cares"; it\'s a goodbye wish, not an order to do a job carefully.',
+  },
+  {
+    id: 'have-a-good-one',
+    text: 'have a good one',
+    type: 'everyday',
+    level: 3,
+    meaning: "a casual wish for someone's day or evening",
+    distractors: ['an invitation to share a meal tonight', 'a request to bring a good book', 'a wish that someone wins a game'],
+    example: 'Cheers, mate. Have a good one!',
+    synonyms: ['have a nice day', 'enjoy the rest of your day'],
+    register: 'Informal',
+    context: 'A breezy goodbye to shopkeepers, colleagues and friends.',
+    mistake: 'It\'s casual; in formal emails write "Have a good day" instead.',
+  },
+  {
+    id: 'cheerio',
+    text: 'cheerio',
+    type: 'everyday',
+    level: 3,
+    meaning: 'a cheerful, old-fashioned goodbye',
+    distractors: ['a loud toast before a drink', 'a polite way to say hello', 'a call to start a race'],
+    example: 'Cheerio, Mrs Hill – see you on Thursday!',
+    synonyms: ['bye for now', 'goodbye'],
+    register: 'Informal',
+    context: 'Rather old-fashioned, but still heard from older speakers or used jokingly.',
+    mistake: 'It isn\'t a toast; for drinks say "cheers" and use "cheerio" only to say goodbye.',
+  },
+  {
+    id: 'bye-for-now',
+    text: 'bye for now',
+    type: 'everyday',
+    level: 2,
+    meaning: "a friendly goodbye that suggests you'll speak again",
+    distractors: ["a final goodbye said when you won't return", 'an order to leave the building', 'a thank-you for a recent present'],
+    example: 'Right, got to go. Bye for now!',
+    synonyms: ['see you soon', 'speak soon'],
+    register: 'Informal',
+    context: 'Used at the end of calls and visits when you expect more contact soon.',
+    mistake: "It implies you'll talk again, so it isn't a final goodbye.",
+  },
+  {
+    id: 'thanks-a-lot',
+    text: 'thanks a lot',
+    type: 'everyday',
+    level: 1,
+    meaning: 'a warm way to show you are grateful',
+    distractors: ['a sarcastic comment on something small', 'a request for a large amount', 'a wish for plenty of luck'],
+    example: 'Thanks a lot for the lift, Sue.',
+    synonyms: ['thanks so much', 'cheers'],
+    register: 'Informal',
+    context: 'A friendly thank-you; with a sharp tone it can also be sarcastic.',
+    mistake: 'Said with a sharp tone it is sarcastic; "thanks a lot" with a smile is sincere.',
+  },
+  {
+    id: 'thanks-a-million',
+    text: 'thanks a million',
+    type: 'everyday',
+    level: 3,
+    meaning: 'an enthusiastic way to show deep gratitude',
+    distractors: ['a request to count a huge sum', 'a sarcastic way to refuse a gift', 'a polite way to ask for payment'],
+    example: 'You fixed my laptop? Thanks a million!',
+    synonyms: ['thanks so much', 'I owe you one'],
+    register: 'Informal',
+    context: 'Warm and a little Irish in flavour, but widely used in Britain too.',
+    mistake: 'Keep the number as "a million"; "thanks a thousand" isn\'t used.',
+  },
+  {
+    id: 'much-appreciated',
+    text: 'much appreciated',
+    type: 'everyday',
+    level: 2,
+    meaning: 'said to show you are grateful for help',
+    distractors: ['said to show you value a high price', "said to praise someone's art", 'said to say you noticed a rise'],
+    example: 'Thanks for covering my shift – much appreciated.',
+    synonyms: ['thanks so much', "I'm grateful"],
+    register: 'Neutral',
+    context: 'A short, polite way to add warmth to thanks, in speech and emails.',
+    mistake: 'Say "much appreciated" as a short comment, not "very much appreciate".',
+  },
+  {
+    id: 'dont-mention-it',
+    text: "don't mention it",
+    type: 'everyday',
+    level: 2,
+    meaning: 'a polite reply meaning it was no trouble',
+    distractors: ['a request to keep a secret', 'a warning not to talk about money', 'a rude way to refuse thanks'],
+    example: '"Thanks for the help." "Don\'t mention it."',
+    synonyms: ["you're welcome", 'no problem'],
+    register: 'Neutral',
+    context: 'A modest reply to thanks, slightly formal or old-fashioned.',
+    mistake: "It's a polite reply to thanks, not a real order to stay silent.",
+  },
+  {
+    id: 'my-pleasure',
+    text: 'my pleasure',
+    type: 'everyday',
+    level: 2,
+    meaning: 'a polite, friendly reply to thanks',
+    distractors: ['a reply meaning you enjoy being alone', 'a wish for a happy holiday', 'an offer to pay for something'],
+    example: '"Thanks for hosting." "My pleasure, come again soon."',
+    synonyms: ["you're welcome", 'happy to help'],
+    register: 'Neutral',
+    context: 'Said by hosts, shop staff and helpers to show the favour was no trouble.',
+    mistake: 'Say "My pleasure" or "It was a pleasure", not "pleasure mine" as a reply to thanks.',
+  },
+  {
+    id: 'not-at-all',
+    text: 'not at all',
+    type: 'everyday',
+    level: 2,
+    meaning: "a polite reply meaning it's no trouble",
+    distractors: ['a reply meaning everything is wrong', 'an answer meaning you refuse completely', 'a reply meaning you do not understand'],
+    example: '"Do you mind if I open the window?" "Not at all."',
+    synonyms: ['of course not', "don't mention it"],
+    register: 'Neutral',
+    context: 'Answers "Do you mind...?" or thanks; it means "no problem".',
+    mistake: 'After "Do you mind?", "not at all" means yes, fine. To refuse, say "I\'d rather you didn\'t".',
+  },
+  {
+    id: 'excuse-me',
+    text: 'excuse me',
+    type: 'everyday',
+    level: 1,
+    meaning: 'a polite way to get attention or pass by',
+    distractors: ['a way to say you are not to blame', 'a way to ask someone to leave', 'a way to say you feel sick'],
+    example: 'Excuse me, is this the queue for tickets?',
+    synonyms: ['pardon me', 'sorry'],
+    register: 'Neutral',
+    context: 'Used before asking a stranger something or squeezing past someone.',
+    mistake: 'Use "excuse me" before interrupting; use "sorry" after bumping into someone.',
+  },
+  {
+    id: 'pardon',
+    text: 'pardon?',
+    type: 'everyday',
+    level: 3,
+    meaning: 'a polite word asking someone to say it again',
+    distractors: ['a word asking someone to forgive you', 'a word showing you agree strongly', 'a word telling someone to wait'],
+    example: '"Would you like a biscuit?" "Pardon?" "A biscuit!"',
+    synonyms: ['sorry?', 'what was that?'],
+    register: 'Formal',
+    context: 'Polite but slightly formal; some Britons see it as posh.',
+    mistake: 'Say "Pardon?" with rising tone; "What?" on its own sounds rude.',
+  },
+  {
+    id: 'i-do-apologise',
+    text: 'I do apologise',
+    type: 'everyday',
+    level: 3,
+    meaning: 'a formal, polite way to say sorry',
+    distractors: ['a polite way to say thank you', 'a formal way to say goodbye', 'a formal way to refuse an offer'],
+    example: 'I do apologise for the delay, madam.',
+    synonyms: ["I'm very sorry", 'my apologies'],
+    register: 'Formal',
+    context: 'Used by staff and in formal letters; "do" adds emphasis.',
+    mistake: 'Use British "-ise" in "apologise"; "do" adds emphasis and is not a question.',
+  },
+  {
+    id: 'sorry-im-late',
+    text: "sorry I'm late",
+    type: 'everyday',
+    level: 1,
+    meaning: 'an apology said on arriving after the agreed time',
+    distractors: ['a warning that you will arrive early', 'a complaint that someone else is slow', 'a request to start without you'],
+    example: "Sorry I'm late, the bus never turned up.",
+    synonyms: ['apologies for the delay'],
+    register: 'Neutral',
+    context: 'The standard opening when you arrive after others.',
+    mistake: 'Say "I\'m late", not "I\'m lately"; "lately" means "recently".',
+  },
+  {
+    id: 'my-mistake',
+    text: 'my mistake',
+    type: 'everyday',
+    level: 3,
+    meaning: 'an admission that you were the one in error',
+    distractors: ['a claim that someone else is wrong', 'a question about a wrong answer', 'a request to try the task again'],
+    example: 'Oh, you wanted tea? My mistake, I made coffee.',
+    synonyms: ['my bad', 'I was wrong'],
+    register: 'Informal',
+    context: 'A quick, light way to admit a small error without fuss.',
+    mistake: 'Say "my mistake", not "my mistaken"; "mistake" is a noun.',
+  },
+  {
+    id: 'would-you-mind',
+    text: 'would you mind?',
+    type: 'everyday',
+    level: 2,
+    meaning: 'a polite way to ask for a favour or permission',
+    distractors: ['a polite way to ask if someone is upset', "a polite way to ask for someone's name", "a polite way to ask about someone's plans"],
+    example: "Would you mind closing the window? It's freezing.",
+    synonyms: ['do you mind?', 'could you possibly?'],
+    register: 'Formal',
+    context: 'A very polite request form, often followed by -ing.',
+    mistake: 'Follow with -ing: "Would you mind closing...?", not "Would you mind to close...?".',
+  },
+  {
+    id: 'can-i-have-a-word',
+    text: 'can I have a word?',
+    type: 'everyday',
+    level: 3,
+    meaning: 'a request to talk to someone privately for a moment',
+    distractors: ['a request to borrow a dictionary', 'a request for someone to spell a name', 'a request to read something aloud'],
+    example: 'Jo, can I have a word before the meeting?',
+    synonyms: ['could I speak to you?', 'got a minute?'],
+    register: 'Neutral',
+    context: 'Often signals a serious talk at work; the tone decides how worrying it sounds.',
+    mistake: 'It often signals a serious talk; say "Have you got a minute?" for a lighter request.',
+  },
+  {
+    id: 'could-i-have-the-bill-please',
+    text: 'could I have the bill, please?',
+    type: 'everyday',
+    level: 1,
+    meaning: 'a polite request for the amount you owe',
+    distractors: ['a polite request for a menu', 'a polite request for a table', 'a polite request for some water'],
+    example: 'That was lovely. Could we have the bill, please?',
+    synonyms: ['can we pay, please?'],
+    register: 'Neutral',
+    context: 'The normal way to ask to pay in a British restaurant or café.',
+    mistake: 'In Britain say "the bill", not "the check"; "check" is the American word.',
+  },
+  {
+    id: 'its-my-round',
+    text: "it's my round",
+    type: 'everyday',
+    level: 2,
+    meaning: 'it is my turn to buy the drinks',
+    distractors: ['it is my turn to play the game', 'it is my turn to drive the car', 'it is my turn to tell the story'],
+    example: "Same again, everyone? It's my round.",
+    synonyms: ["I'll get these", 'my shout'],
+    register: 'Informal',
+    context: 'Core pub custom: each person buys drinks for the whole group in turn.',
+    mistake: 'Say "it\'s my round", not "my turn of drinks"; "a round" is a set of drinks for the group.',
+  },
+  {
+    id: 'same-again-please',
+    text: 'same again, please',
+    type: 'everyday',
+    level: 3,
+    meaning: 'a request for another of what you just had',
+    distractors: ['a request to repeat a sentence', 'a request for a different drink', 'a request for the bill again'],
+    example: 'Pint of bitter? Same again, please.',
+    synonyms: ['another one, please'],
+    register: 'Informal',
+    context: 'Heard at bars and cafés when ordering another of the same drink.',
+    mistake: 'Say "same again", not "the same again"; it\'s short and complete.',
+  },
+  {
+    id: 'its-on-me',
+    text: "it's on me",
+    type: 'everyday',
+    level: 2,
+    meaning: 'I will pay for it',
+    distractors: ['I will carry it for you', 'I have put it on myself', 'I will wear it today'],
+    example: "Put your wallet away – dinner's on me.",
+    synonyms: ["I'm paying", "I'll get this"],
+    register: 'Informal',
+    context: "Said when you offer to pay for someone else's meal or drink.",
+    mistake: 'Say "on me", not "on mine"; it means the cost is mine.',
+  },
+  {
+    id: 'let-me-know',
+    text: 'let me know',
+    type: 'everyday',
+    level: 1,
+    meaning: 'tell me when you have news or have decided',
+    distractors: ['allow me to meet someone', 'give me a chance to leave', 'teach me about a topic'],
+    example: 'Let me know if you can make Friday.',
+    synonyms: ['tell me', 'keep me posted'],
+    register: 'Neutral',
+    context: 'Very common in invitations, emails and work chat.',
+    mistake: 'Say "let me know", not "let me to know"; no "to" after "let".',
+  },
+  {
+    id: 'shall-we-say-seven',
+    text: 'shall we say seven?',
+    type: 'everyday',
+    level: 3,
+    meaning: 'a polite way to suggest a time',
+    distractors: ['a question about what to say aloud', 'a request to count to seven', "a question about someone's age"],
+    example: 'Dinner on Friday – shall we say seven?',
+    synonyms: ['how about seven?', 'would seven suit?'],
+    register: 'Neutral',
+    context: 'A polite, slightly formal way to propose a time or price.',
+    mistake: 'Use "shall we say" to suggest, not "will we say"; "shall" is the polite form.',
+  },
+  {
+    id: 'how-about-friday',
+    text: 'how about Friday?',
+    type: 'everyday',
+    level: 1,
+    meaning: 'a casual way to suggest a day or time',
+    distractors: ["a question about how someone's Friday was", 'a question about what someone does on Fridays', 'a request to cancel the plan'],
+    example: "I can't do Thursday. How about Friday?",
+    synonyms: ['what about Friday?', 'would Friday suit?'],
+    register: 'Neutral',
+    context: 'The usual way to propose another option when planning.',
+    mistake: 'Say "How about Friday?", not "How about on Friday?"; skip "on" here.',
+  },
+  {
+    id: 'are-you-free-on-saturday',
+    text: 'are you free on Saturday?',
+    type: 'everyday',
+    level: 2,
+    meaning: 'a question asking if someone has no plans then',
+    distractors: ['a question about whether something costs nothing', 'a question about if a seat is empty', "a question about Saturday's weather"],
+    example: "Are you free on Saturday? We're having a barbecue.",
+    synonyms: ['are you around on Saturday?', 'have you got plans?'],
+    register: 'Neutral',
+    context: 'Starts an invitation; "free" here means "not busy".',
+    mistake: 'Here "free" means "not busy", not "costing nothing"; say "Are you free?" for plans.',
+  },
+  {
+    id: 'lets-make-it-friday',
+    text: "let's make it Friday",
+    type: 'everyday',
+    level: 3,
+    meaning: 'we agree on that day for our plan',
+    distractors: ["let's build something on that day", "let's forget about doing it then", "let's hope it's not that day"],
+    example: "Monday's no good, so let's make it Friday.",
+    synonyms: ['shall we say Friday?', 'Friday it is'],
+    register: 'Neutral',
+    context: 'Used to settle a date or time after some discussion.',
+    mistake: 'Use "make it" to fix a time; "let\'s do Friday" is less natural.',
+  },
+  {
+    id: 'ill-be-there',
+    text: "I'll be there",
+    type: 'everyday',
+    level: 2,
+    meaning: 'I promise to come to the place or event',
+    distractors: ['I will wait somewhere else', 'I will arrive after everyone', 'I might come if I have time'],
+    example: "Quiz night at eight? I'll be there.",
+    synonyms: ["I'll come", 'see you there'],
+    register: 'Neutral',
+    context: 'A simple, firm yes to an invitation or meeting.',
+    mistake: 'Say "I\'ll be there", not "I\'ll be in there"; use "there" without a preposition.',
+  },
+  {
+    id: 'sounds-good',
+    text: 'sounds good',
+    type: 'everyday',
+    level: 2,
+    meaning: 'a way to say you like a suggestion',
+    distractors: ['a comment on the volume of music', 'a way to refuse an idea politely', 'a way to say you cannot hear well'],
+    example: '"Pizza on Friday?" "Sounds good to me."',
+    synonyms: ['sounds great', 'that works'],
+    register: 'Informal',
+    context: 'A quick, friendly way to agree to plans.',
+    mistake: 'Say "sounds good", not "sounds well"; after "sounds" use an adjective.',
+  },
+  {
+    id: 'that-works-for-me',
+    text: 'that works for me',
+    type: 'everyday',
+    level: 2,
+    meaning: 'I am happy with that arrangement',
+    distractors: ['I am too busy to join', 'I think that machine is fixed', 'I have finished my job already'],
+    example: 'Half six at the pub? That works for me.',
+    synonyms: ['that suits me', 'fine by me'],
+    register: 'Neutral',
+    context: 'Used to accept times, dates and plans in friendly or work settings.',
+    mistake: 'Say "works for me", not "works to me"; use "for" with the person.',
+  },
+  {
+    id: 'cant-wait',
+    text: "can't wait",
+    type: 'everyday',
+    level: 1,
+    meaning: 'I am very excited about something coming',
+    distractors: ['I am unable to be patient with you', 'I refuse to delay the plans', 'I am too busy to stay'],
+    example: "Holiday on Friday! Can't wait!",
+    synonyms: ["I'm so excited", "I'm really looking forward to it"],
+    register: 'Informal',
+    context: 'Short for "I can\'t wait"; common in texts and chat before an event.',
+    mistake: 'Say "I can\'t wait to see you", not "I can\'t wait seeing you".',
+  },
+  {
+    id: 'see-you-there',
+    text: 'see you there',
+    type: 'everyday',
+    level: 2,
+    meaning: "a casual way to say you'll both attend",
+    distractors: ['a question about whether you saw something', 'a warning that someone will find you', 'a way to say you will not come'],
+    example: 'Gig at eight. See you there!',
+    synonyms: ['see you then'],
+    register: 'Informal',
+    context: 'Said after agreeing to go to the same event or place.',
+    mistake: 'It\'s a plan to meet at an event; say "See you then" when you mean a time.',
+  },
+  {
+    id: 'happy-birthday',
+    text: 'happy birthday',
+    type: 'everyday',
+    level: 1,
+    meaning: "a greeting said on someone's special day each year",
+    distractors: ['a greeting for the first day of a year', 'a greeting for a wedding anniversary', 'a greeting for the end of school'],
+    example: 'Happy birthday, Ellie! Did you get my card?',
+    synonyms: ['many happy returns'],
+    register: 'Neutral',
+    context: 'Said, sung and written in cards and messages.',
+    mistake: 'Say "Happy birthday!" without "for you"; "Happy birthday to you" is the song.',
+  },
+  {
+    id: 'congratulations',
+    text: 'congratulations',
+    type: 'everyday',
+    level: 1,
+    meaning: "a word said to praise someone's success",
+    distractors: ['a word said to sympathise with failure', 'a word said to start a speech', 'a word said to complain about a result'],
+    example: 'You passed your driving test? Congratulations!',
+    synonyms: ['well done', 'good for you'],
+    register: 'Neutral',
+    context: 'Said for passing exams, new jobs, engagements, babies and other good news.',
+    mistake: 'Say "Congratulations on your job", not "for your job"; it\'s always plural.',
+  },
+  {
+    id: 'good-luck',
+    text: 'good luck',
+    type: 'everyday',
+    level: 1,
+    meaning: 'a wish that someone will succeed',
+    distractors: ['a warning that something will go wrong', 'a statement that someone has won', 'a request to try again later'],
+    example: "Interview today? Good luck – you'll be brilliant.",
+    synonyms: ['all the best', 'best of luck'],
+    register: 'Neutral',
+    context: 'Said before exams, interviews, matches and big events.',
+    mistake: 'Say "good luck", not "good lucks"; "luck" is uncountable.',
+  },
+  {
+    id: 'bless-you',
+    text: 'bless you',
+    type: 'everyday',
+    level: 2,
+    meaning: 'what you say when someone sneezes',
+    distractors: ['what you say when someone coughs loudly', 'what you say when someone leaves a church', 'what you say when someone gets a present'],
+    example: '"Atchoo!" "Bless you!" "Thanks, it\'s this cold."',
+    synonyms: ['God bless you'],
+    register: 'Neutral',
+    context: 'An automatic reply to a sneeze, and a warm remark of thanks or affection in some regions.',
+    mistake: 'Say it after a sneeze, not after a cough or a yawn; reply "thank you".',
+  },
+  {
+    id: 'enjoy-your-meal',
+    text: 'enjoy your meal',
+    type: 'everyday',
+    level: 2,
+    meaning: 'a polite wish said before someone eats',
+    distractors: ['a polite order to eat quickly', 'a polite request to pay now', 'a polite way to ask if food was good'],
+    example: 'Here are your starters – enjoy your meal.',
+    synonyms: ['have a nice meal'],
+    register: 'Neutral',
+    context: 'Said by waiters and hosts when serving food.',
+    mistake: 'Say "enjoy your meal", not "enjoy the eat"; "meal" is the noun.',
+  },
+  {
+    id: 'what-can-i-get-you',
+    text: 'what can I get you?',
+    type: 'everyday',
+    level: 1,
+    meaning: 'a question a host or server asks about your order',
+    distractors: ['a question about what someone wants to sell', 'a question about what someone has lost', 'a question about who someone wants to meet'],
+    example: 'Evening! What can I get you?',
+    synonyms: ['what would you like?', "what'll it be?"],
+    register: 'Neutral',
+    context: "Heard at bars, cafés and in people's homes when drinks are offered.",
+    mistake: 'In a pub order at the bar: "A pint of lager, please", not "I want a pint".',
+  },
+  {
+    id: 'ill-have-the-same',
+    text: "I'll have the same",
+    type: 'everyday',
+    level: 3,
+    meaning: 'I would like what the other person ordered',
+    distractors: ['I will cook the same dish myself', 'I will copy your work later', 'I will keep the same seat'],
+    example: "Soup of the day? I'll have the same, please.",
+    synonyms: ['same for me'],
+    register: 'Neutral',
+    context: 'Used when ordering after a friend and choosing the same dish or drink.',
+    mistake: 'Say "I\'ll have the same", not "I\'ll take the same as"; "have" is usual for orders.',
+  },
+  {
+    id: 'do-you-take-cards',
+    text: 'do you take cards?',
+    type: 'everyday',
+    level: 2,
+    meaning: 'a question asking if you can pay with plastic',
+    distractors: ['a question asking if you can take a taxi', 'a question asking if someone plays games', 'a question asking if you can borrow money'],
+    example: 'Do you take cards, or is it cash only?',
+    synonyms: ['can I pay by card?'],
+    register: 'Neutral',
+    context: 'Asked in small shops, market stalls and pubs.',
+    mistake: 'Say "Do you take cards?" or "Can I pay by card?", not "Do you accept to pay?".',
+  },
+  {
+    id: 'have-you-got-any-change',
+    text: 'have you got any change?',
+    type: 'everyday',
+    level: 2,
+    meaning: 'a question asking for coins or small notes',
+    distractors: ['a question asking if prices have dropped', 'a question asking if someone altered a plan', 'a question asking for a refund'],
+    example: 'Have you got any change for the car park machine?',
+    synonyms: ['have you got any coins?'],
+    register: 'Neutral',
+    context: 'British speakers say "have you got" for everyday questions.',
+    mistake: 'Here "change" means coins and is uncountable; say "any change", not "any changes".',
+  },
+  {
+    id: 'how-much-is-that',
+    text: 'how much is that?',
+    type: 'everyday',
+    level: 1,
+    meaning: 'a question asking the cost of something',
+    distractors: ['a question asking how big something is', 'a question asking how heavy something is', 'a question asking how old something is'],
+    example: "That jumper's lovely. How much is that?",
+    synonyms: ['how much is it?', 'what does it cost?'],
+    register: 'Neutral',
+    context: 'The basic shopping question; use "are they?" for plural things.',
+    mistake: 'Say "How much is it?", not "How much costs it?"; "cost" isn\'t used with "is".',
+  },
+  {
+    id: 'is-that-everything',
+    text: 'is that everything?',
+    type: 'everyday',
+    level: 3,
+    meaning: "a shop worker's question asking if you need more",
+    distractors: ['a question asking if you have paid already', 'a question asking if you want a bag', 'a question asking if the shop is open'],
+    example: "That's £12.40. Is that everything?",
+    synonyms: ['anything else?'],
+    register: 'Neutral',
+    context: 'Said by cashiers and waiters; "that\'s all, thanks" is a normal reply.',
+    mistake: 'It\'s said by staff; answer "That\'s all, thanks", not "Yes, everything".',
+  },
+  {
+    id: 'id-like-a-refund',
+    text: "I'd like a refund",
+    type: 'everyday',
+    level: 2,
+    meaning: 'a request to get your money back',
+    distractors: ['a request to see a bigger size', 'a request to wrap a present', 'a request to speak to a new customer'],
+    example: "It stopped working in a week, so I'd like a refund.",
+    synonyms: ['I want my money back'],
+    register: 'Neutral',
+    context: 'Polite way to ask a shop to return your payment.',
+    mistake: '"I\'d like" is polite; "I want a refund" sounds blunt. Add "please".',
+  },
+  {
+    id: 'have-you-got-this-in-a-medium',
+    text: 'have you got this in a medium?',
+    type: 'everyday',
+    level: 3,
+    meaning: 'a question asking if a shop has another size',
+    distractors: ['a question asking if the item is half price', 'a question asking if the item is real', 'a question asking if the item is in the window'],
+    example: 'This is lovely – have you got this in a medium?',
+    synonyms: ['do you have this in my size?'],
+    register: 'Neutral',
+    context: 'Used in clothes and shoe shops for sizes and colours.',
+    mistake: 'Say "in a medium", not "on a medium"; use "in" for sizes and colours.',
+  },
+  {
+    id: 'sorry-wrong-number',
+    text: 'sorry, wrong number',
+    type: 'everyday',
+    level: 3,
+    meaning: 'words said after calling someone by mistake',
+    distractors: ['words said when someone is not answering', 'words said to ask for a phone number', 'words said when the line is bad'],
+    example: 'Hello? Oh, sorry, wrong number.',
+    synonyms: ["I've dialled the wrong number"],
+    register: 'Neutral',
+    context: 'Short phone phrase after reaching the wrong person.',
+    mistake: 'Say "wrong number", not "false number".',
+  },
+  {
+    id: 'can-you-hear-me',
+    text: 'can you hear me?',
+    type: 'everyday',
+    level: 2,
+    meaning: 'a question checking your voice is clear to them',
+    distractors: ['a question asking if someone is shouting', 'a question asking if someone agrees with you', 'a question asking someone to speak louder'],
+    example: "Hello? Can you hear me? The signal's terrible.",
+    synonyms: ['is that clear?'],
+    register: 'Neutral',
+    context: 'Used on calls, video meetings and in noisy places.',
+    mistake: 'Say "Can you hear me?", not "Do you hear me?", which sounds angry.',
+  },
+  {
+    id: 'youre-breaking-up',
+    text: "you're breaking up",
+    type: 'everyday',
+    level: 2,
+    meaning: 'your voice keeps cutting out on a bad signal',
+    distractors: ['you are ending a relationship with me', 'you are making a loud noise outside', 'you are telling me bad news'],
+    example: "Sorry, you're breaking up – can you call me back?",
+    synonyms: ["you're cutting out"],
+    register: 'Informal',
+    context: 'Said on mobile and video calls with a poor connection.',
+    mistake: 'On a call it means a poor signal, not the end of a relationship.',
+  },
+  {
+    id: 'leave-a-message',
+    text: 'leave a message',
+    type: 'everyday',
+    level: 2,
+    meaning: 'a request to record words for later',
+    distractors: ['a request to read a note aloud', 'a request to send a parcel', 'a request to ring the doorbell'],
+    example: "I'm not in, so please leave a message after the tone.",
+    synonyms: ['leave a voicemail'],
+    register: 'Neutral',
+    context: 'Heard in voicemail greetings and from receptionists.',
+    mistake: 'Say "leave a message", not "let a message"; "leave" means put it there for later.',
+  },
+  {
+    id: 'can-i-take-a-message',
+    text: 'can I take a message?',
+    type: 'everyday',
+    level: 3,
+    meaning: "an offer to pass on news to someone who's out",
+    distractors: ['an offer to send a text to your phone', 'an offer to take your gift away', 'a request to give your name'],
+    example: "He's in a meeting. Can I take a message?",
+    synonyms: ['would you like to leave a message?'],
+    register: 'Neutral',
+    context: "Said by receptionists and colleagues answering someone else's phone.",
+    mistake: 'The person answering asks it; say "Can I leave a message?" when you are calling.',
+  },
+  {
+    id: 'ill-text-you',
+    text: "I'll text you",
+    type: 'everyday',
+    level: 1,
+    meaning: 'I will send you a message on my phone',
+    distractors: ['I will make a spoken phone call to you', 'I will write you a long letter', 'I will send you an email at work'],
+    example: "On my way now – I'll text you when I'm outside.",
+    synonyms: ["I'll message you"],
+    register: 'Informal',
+    context: 'Common in arrangements; "text" is a verb as well as a noun.',
+    mistake: 'Say "I\'ll text you", not "I\'ll text to you"; "text" takes the person directly.',
+  },
+  {
+    id: 'please-hold',
+    text: 'please hold',
+    type: 'everyday',
+    level: 3,
+    meaning: 'a phone request to wait on the line',
+    distractors: ['a request to carry something for someone', 'a request to speak more quietly', 'a request to end the call'],
+    example: 'Please hold while I put you through to the manager.',
+    synonyms: ['hold the line', 'one moment, please'],
+    register: 'Formal',
+    context: 'Heard in call centres and switchboards.',
+    mistake: 'Say "please hold" on the phone; in a shop say "one moment, please".',
+  },
+  {
+    id: 'mind-the-gap',
+    text: 'mind the gap',
+    type: 'everyday',
+    level: 2,
+    meaning: 'a warning to watch the space at the platform edge',
+    distractors: ['a warning to keep a seat free', 'a warning to buy a ticket first', 'a warning to speak quietly on a train'],
+    example: 'Mind the gap as you leave the train, please.',
+    synonyms: ['watch the gap'],
+    register: 'Neutral',
+    context: 'Famous London Underground announcement; also used jokingly for any gap.',
+    mistake: 'Say "mind the gap", not "mind of the gap"; "mind" means "be careful of".',
+  },
+  {
+    id: 'single-or-return',
+    text: 'single or return?',
+    type: 'everyday',
+    level: 2,
+    meaning: 'a question about one-way or two-way travel',
+    distractors: ['a question about first or second class', 'a question about a window or aisle seat', 'a question about cash or card'],
+    example: 'To Manchester? Single or return?',
+    synonyms: ['one way or both ways?'],
+    register: 'Neutral',
+    context: 'Asked when buying a train, bus or coach ticket.',
+    mistake: 'In Britain it\'s "a return", not "a round trip"; "single" means one way only.',
+  },
+  {
+    id: 'whats-the-time',
+    text: "what's the time?",
+    type: 'everyday',
+    level: 1,
+    meaning: 'a question asking the hour of the day',
+    distractors: ['a question asking how long something takes', 'a question asking when something begins', 'a question asking how late someone is'],
+    example: "Sorry, what's the time? My phone's died.",
+    synonyms: ['have you got the time?', 'what time is it?'],
+    register: 'Neutral',
+    context: 'The ordinary way to ask for the time in Britain.',
+    mistake: 'Say "What\'s the time?", not "What hour is it?".',
+  },
+  {
+    id: 'a-quarter-past-four',
+    text: 'a quarter past four',
+    type: 'everyday',
+    level: 2,
+    meaning: '15 minutes after the hour',
+    distractors: ['45 minutes after the hour', '15 minutes before the hour', '30 minutes after the hour'],
+    example: 'The film starts at a quarter past eight.',
+    synonyms: ['four fifteen'],
+    register: 'Neutral',
+    context: 'Standard way to tell the time in speech.',
+    mistake: 'Say "a quarter past four" (4.15), not "a quarter to four", which is 3.45.',
+  },
+  {
+    id: 'half-seven',
+    text: 'half seven',
+    type: 'everyday',
+    level: 3,
+    meaning: '7.30 in everyday British speech',
+    distractors: ['6.30 in everyday British speech', '7.15 in everyday British speech', '7.45 in everyday British speech'],
+    example: "Tea's at half seven, so don't be late.",
+    synonyms: ['half past seven', 'seven thirty'],
+    register: 'Informal',
+    context: 'Short, spoken form of "half past seven".',
+    mistake: 'It means 7.30; learners from some languages wrongly hear it as 6.30.',
+  },
+  {
+    id: 'id-love-to',
+    text: "I'd love to",
+    type: 'everyday',
+    level: 1,
+    meaning: 'a warm way to accept an invitation',
+    distractors: ['a warm way to say you love someone', 'a warm way to refuse a gift', 'a warm way to say goodbye'],
+    example: '"Come for tea on Sunday?" "I\'d love to, thanks."',
+    synonyms: ['yes, please', "that'd be lovely"],
+    register: 'Neutral',
+    context: 'A polite, enthusiastic yes to invitations.',
+    mistake: 'Don\'t add "but" unless refusing: "I\'d love to, but I can\'t" is a polite no.',
+  },
+  {
+    id: 'im-afraid-i-cant',
+    text: "I'm afraid I can't",
+    type: 'everyday',
+    level: 2,
+    meaning: 'a polite way to say you are unable to do it',
+    distractors: ['a polite way to say you are scared of it', "a polite way to say you don't understand", 'a polite way to say you hope to try'],
+    example: "I'm afraid I can't make Friday – I'm working.",
+    synonyms: ["sorry, I can't", 'unfortunately not'],
+    register: 'Neutral',
+    context: 'Softens a refusal in conversation and at work.',
+    mistake: 'Here "afraid" means "sorry to say"; it has nothing to do with fear.',
+  },
+  {
+    id: 'thanks-for-having-me',
+    text: 'thanks for having me',
+    type: 'everyday',
+    level: 3,
+    meaning: 'a polite thing to say to a host when leaving',
+    distractors: ['a polite thing to say when you hire someone', 'a polite thing to say when you give a gift', 'a polite thing to say when you join a team'],
+    example: 'Lovely evening – thanks for having me.',
+    synonyms: ['thanks for inviting me'],
+    register: 'Neutral',
+    context: 'Said at the end of a visit, party or stay.',
+    mistake: 'It\'s said by the guest; say "thanks for coming" when you are the host.',
+  },
+  {
+    id: 'get-well-soon',
+    text: 'get well soon',
+    type: 'everyday',
+    level: 1,
+    meaning: 'a wish for a sick person to recover quickly',
+    distractors: ['a wish for a sick person to rest all day', 'a wish for a friend to visit a doctor', 'a wish for someone to avoid an illness'],
+    example: "Sorry you've got flu – get well soon!",
+    synonyms: ['hope you feel better'],
+    register: 'Neutral',
+    context: 'Written on cards and said to friends who are unwell.',
+    mistake: 'Say "get well soon", not "be well soon"; it\'s often written on cards.',
+  },
+  {
+    id: 'happy-christmas',
+    text: 'happy Christmas',
+    type: 'everyday',
+    level: 2,
+    meaning: 'a seasonal greeting said in December',
+    distractors: ['a greeting said on the last day of the year', 'a greeting said on a birthday', 'a greeting said at Easter'],
+    example: 'Happy Christmas, everyone! See you in the new year.',
+    synonyms: ['merry Christmas', "season's greetings"],
+    register: 'Neutral',
+    context: 'Both "Happy Christmas" and "Merry Christmas" are used in Britain; Happy is slightly more traditional.',
+    mistake: 'Write Christmas with a capital C, and don\'t say "Happy Christmases".',
+  },
+  {
+    id: 'best-wishes',
+    text: 'best wishes',
+    type: 'everyday',
+    level: 2,
+    meaning: 'a polite sign-off in cards and letters',
+    distractors: ["a request for someone's opinion", 'a way to say you hope to win', 'a toast made when drinking'],
+    example: 'I signed the card "Best wishes" and added my name.',
+    synonyms: ['kind regards', 'all the best'],
+    register: 'Neutral',
+    context: 'A warm sign-off for cards and friendly emails.',
+    mistake: 'Say "best wishes", not "best wish"; it\'s always plural.',
+  },
+  {
+    id: 'have-a-nice-weekend',
+    text: 'have a nice weekend',
+    type: 'everyday',
+    level: 1,
+    meaning: 'a friendly goodbye said on a Friday',
+    distractors: ['a friendly goodbye said on a Monday', 'a polite request to work on Saturday', 'a polite order to rest on Sunday'],
+    example: "Right, that's me done. Have a nice weekend!",
+    synonyms: ['enjoy your weekend'],
+    register: 'Neutral',
+    context: 'Said on Friday afternoons at work and school.',
+    mistake: 'Say "at the weekend" in British English, not "on the weekend".',
+  },
+  {
+    id: 'good-night',
+    text: 'good night',
+    type: 'everyday',
+    level: 1,
+    meaning: 'a farewell said before bed or late in the evening',
+    distractors: ['a greeting said when you meet at night', 'a wish said before an exam', 'a request to turn off a light'],
+    example: "Right, I'm off to bed. Good night!",
+    synonyms: ['sleep well', 'night night'],
+    register: 'Neutral',
+    context: 'Said when leaving someone late or going to bed.',
+    mistake: 'Use "good night" only for leaving or going to bed; use "good evening" to greet.',
+  },
+  {
+    id: 'sleep-well',
+    text: 'sleep well',
+    type: 'everyday',
+    level: 2,
+    meaning: 'a kind wish for a restful night',
+    distractors: ['a request to keep quiet at night', 'a wish that someone dreams of you', 'an order to go to bed now'],
+    example: 'Big day tomorrow – sleep well!',
+    synonyms: ['sleep tight', 'good night'],
+    register: 'Neutral',
+    context: 'A gentle goodnight wish to family, friends and guests.',
+    mistake: 'Say "sleep well", not "sleep good"; "well" is the adverb.',
+  },
 ];
