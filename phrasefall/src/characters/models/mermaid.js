@@ -24,27 +24,27 @@ export default {
     const pearl = k.mat(0xfff3ea, { rough: 0.14, rim: 0.85 });
     const starMat = k.mat(0xffa94a, { rough: 0.5 });
 
-    const rig = k.biped({ skin, top: coral, sleeve: skin, hand: skin, noLegs: true, legLen: 0.441, torso: [1, 1, 0.94] });
+    const rig = k.biped({ skin, top: coral, sleeve: skin, hand: skin, noLegs: true, legLen: 0.471, torso: [1, 1, 0.94] });
     const { head, torso } = rig;
     const c = rig.headCenter;
 
     // ── hair: dark curls, tilted cap, side-swept fringe, long locks drifting behind ──
-    head.add(k.at(k.dome(hair, 0.6, 0.555, 0.565, 0.5), 0, c.y, 0, -0.48, 0, 0));
-    const curl = (r, yaw, pitch, lift, sy = 0.88) => head.add(k.onSphere(k.ball(hair, r, r * sy, r), yaw, pitch, lift));
-    curl(0.2, 0, 70, 0.02);
-    curl(0.19, 75, 45, 0.0);
-    curl(0.19, -60, 48, 0.0);
-    curl(0.13, -28, 40, -0.02);
-    k.both((s) => curl(0.19, s * 82, -5, 0.0, 1));
-    [[180, -18, 0, 0], [140, -24, 0.32, 1.2], [-140, -24, -0.32, 2.3]].forEach(([yaw, pitch, out, ph]) => {
+    head.add(k.at(k.dome(hair, 0.61, 0.57, 0.58, 0.5), 0, c.y, 0, -0.48, 0, 0));
+    const curl = (r, yaw, pitch, lift, sy = 0.9) => head.add(k.onSphere(k.ball(hair, r, r * sy, r), yaw, pitch, lift));
+    curl(0.22, 0, 72, 0.02);
+    k.both((s) => curl(0.2, s * 58, 50, 0.0));
+    k.both((s) => curl(0.2, s * 128, 40, 0.0));
+    curl(0.13, -26, 40, -0.02);
+    k.both((s) => curl(0.18, s * 80, 2, 0.0, 1));
+    // long curly lengths behind the shoulders, drifting as if under water
+    [[110, -30, 0.28, 0.55, 0.4], [-110, -30, -0.28, 0.55, 1.9], [180, -18, 0, 0.3, 3.1]].forEach(([yaw, pitch, out, back, ph]) => {
       const lock = k.onSphere(k.group(), yaw, pitch, -0.04);
-      const hang = k.at(k.group(), 0, 0, 0);
+      const hang = k.group();
       lock.add(hang);
-      // hang points down the back, drifting outwards as if under water
       hang.quaternion.copy(lock.quaternion).invert();
-      hang.rotateX(0.3);
+      hang.rotateX(back);
       hang.rotateZ(out);
-      hang.add(k.at(k.ball(hair, 0.17, 0.15, 0.16), 0, -0.1, 0), k.at(k.ball(hair, 0.13, 0.13, 0.12), 0, -0.29, -0.03));
+      hang.add(k.at(k.ball(hair, 0.16, 0.15, 0.15), 0, -0.07, 0), k.at(k.ball(hair, 0.13, 0.13, 0.12), 0, -0.25, -0.02));
       head.add(lock);
       rig.spring(hang, { axis: 'x', gain: 0.1, sway: 0.09, speed: 1.1, phase: ph, k: 40, d: 4 });
       rig.spring(hang, { axis: 'z', gain: 0.02, sway: 0.07, speed: 0.8, phase: ph + 1, k: 40, d: 4 });
@@ -60,14 +60,10 @@ export default {
       cheeks: { color: 0xff7a6a, opacity: 0.42 },
     });
 
-    // ── coral wrap top: sash band with a bow at the left hip, pearl necklace ──
+    // ── coral wrap top with a sash band, pearl necklace ──
     const band = k.lathe(coralDark, [[0.408, 0.13], [0.428, 0.165], [0.425, 0.21], [0.4, 0.245]], 36);
     band.scale.z = 0.94;
     torso.add(band);
-    const bow = k.onTorso(k.group(), 62, 0.19, 0.035);
-    k.both((s) => bow.add(k.at(k.ball(coralDark, 0.062, 0.042, 0.026), s * 0.052, 0.008, 0, 0, 0, s * 0.45)));
-    bow.add(k.ball(coralDark, 0.03, 0.03, 0.028));
-    torso.add(bow);
     for (let i = -3; i <= 3; i++) {
       const yaw = i * 20;
       torso.add(k.onTorso(k.ball(pearl, i === 0 ? 0.042 : 0.033), yaw, 0.47 + 0.055 * (yaw / 60) ** 2, 0.022));
@@ -95,17 +91,17 @@ export default {
       m.position.set(Math.sin(a) * (r + 0.004), y, Math.cos(a) * (r + 0.004) * zs);
       parent.add(m);
     };
-    [-48, -16, 16, 48].forEach((yaw) => scaleArc(T0, aqua, 0.052, 0.382, 0.02, yaw, 0.35, 0.94));
-    [-32, 0, 32].forEach((yaw) => scaleArc(T0, aqua, 0.052, 0.352, -0.05, yaw, 0.35, 0.94));
+    [-32, 0, 32].forEach((yaw) => scaleArc(T0, aqua, 0.052, 0.382, 0.02, yaw, 0.35, 0.94));
+    [-16, 16].forEach((yaw) => scaleArc(T0, aqua, 0.052, 0.352, -0.05, yaw, 0.35, 0.94));
     [-19, 0, 19].forEach((yaw) => scaleArc(T1, peach, 0.045, 0.27, 0.0, yaw, 0.3));
 
     // fin: coral cuff, two big flukes with peach centres
-    const fin = k.at(k.group(), 0, -0.16, 0, 0, 0, 0.75);
+    const fin = k.scale(k.at(k.group(), 0, -0.16, 0, 0, 0, 0.75), 1.22);
     T2.add(fin);
-    fin.add(k.at(k.torus(coral, 0.13, 0.04), 0, 0.03, 0, Math.PI / 2, 0, 0), k.at(k.ball(coral, 0.1, 0.09, 0.07), 0, -0.05, 0));
+    fin.add(k.at(k.torus(coral, 0.12, 0.04), 0, 0.02, 0, Math.PI / 2, 0, 0));
     k.both((s) => {
-      const lobe = k.at(k.group(), 0, -0.05, 0, 0, 0, s * 0.55);
-      lobe.add(k.at(k.ball(coral, 0.11, 0.21, 0.035), 0, -0.19, 0), k.at(k.ball(peach, 0.065, 0.13, 0.045), 0, -0.22, 0));
+      const lobe = k.at(k.group(), 0, -0.02, 0, 0, 0, s * 0.52);
+      lobe.add(k.at(k.ball(coral, 0.11, 0.21, 0.035), 0, -0.17, 0), k.at(k.ball(peach, 0.065, 0.13, 0.045), 0, -0.2, 0));
       fin.add(lobe);
     });
 
@@ -115,15 +111,15 @@ export default {
     rig.spring(fin, { axis: 'z', gain: 0.12, sway: 0.16, speed: 1.4, phase: -2.1, k: 40, d: 4 });
     rig.spring(fin, { axis: 'x', gain: 0.1, sway: 0.12, speed: 2.2, phase: 0.5, k: 40, d: 4 });
 
-    // ── a pearl twirling above her right palm (kept upright, whatever the arm does) ──
+    // ── a pearl twirling above her raised left palm (kept upright, whatever the arm does) ──
     const twirl = k.group();
-    rig.handR.add(twirl);
+    rig.handL.add(twirl);
     const spin = k.ball(pearl, 0.05);
     twirl.add(spin);
     const qa = new THREE.Quaternion();
     const qb = new THREE.Quaternion();
     rig.tickers.push((t) => {
-      rig.handR.getWorldQuaternion(qa).invert();
+      rig.handL.getWorldQuaternion(qa).invert();
       rig.pivot.getWorldQuaternion(qb);
       twirl.quaternion.copy(qa).multiply(qb);
       const a = t * 5.2;
@@ -150,14 +146,14 @@ export default {
     // the tail sways and swishes; springs carry the wave down to the fin
     P.tailZ += Math.sin(t * 1.4) * 0.12;
     P.tailX += Math.sin(t * 1.1 + 0.4) * 0.07;
-    // right hand up at her side, twirling a pearl she can't stop admiring
-    P.armRZ += -1.25 + Math.sin(t * 1.3) * 0.05;
-    P.armRX += -0.3;
-    P.headY += -0.22 + Math.sin(t * 0.6) * 0.05;
-    P.headZ += -0.07;
-    P.headX += -0.04;
-    // left arm floats out for balance
-    P.armLZ += 0.6 + Math.sin(t * 1.05) * 0.1;
-    P.armLX += -0.12 + Math.sin(t * 0.85) * 0.08;
+    // left hand raised up-and-out, twirling a pearl she can't stop admiring
+    P.armLZ += 1.53 + Math.sin(t * 1.3) * 0.05;
+    P.armLX += 0.22;
+    P.headY += 0.2 + Math.sin(t * 0.6) * 0.05;
+    P.headZ += 0.07;
+    P.headX += -0.05;
+    // right arm floats out for balance
+    P.armRZ += -0.43 + Math.sin(t * 1.05) * 0.08;
+    P.armRX += -0.15 + Math.sin(t * 0.85) * 0.08;
   },
 };
