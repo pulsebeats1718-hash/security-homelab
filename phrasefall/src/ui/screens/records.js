@@ -31,7 +31,7 @@ export function createRecords(app) {
           stat(String(d.totals.games), 'Games played'),
           stat(formatScore(d.totals.score), 'Total points'),
           stat(answered ? `${Math.round((d.totals.correct / answered) * 100)}%` : '–', 'Accuracy'),
-          stat(`${save.masteredCount}/${TOTAL_EXPRESSIONS}`, 'Mastered'),
+          stat(`${save.masteredCount}/${TOTAL_EXPRESSIONS.toLocaleString('en-GB')}`, 'Mastered'),
           stat(`${d.unlocked.length}/${CHARACTERS.length}`, 'Characters')
         ),
         save.persistent ? null : h('p.about', 'Your browser is blocking saved data here, so progress will last only until this page is closed.')

@@ -143,7 +143,7 @@ export class Save {
   /** Lifetime stats used by unlock rules. */
   progress() {
     const d = this.data;
-    return { score: d.best.score, streak: d.best.streak, stage: d.best.stage, games: d.totals.games, correct: d.totals.correct, mastered: this.masteredCount, total: d.totals.score };
+    return { score: d.best.score, streak: d.best.streak, stage: d.best.stage, games: d.totals.games, correct: d.totals.correct, seen: this.seenIds.length, mastered: this.masteredCount, total: d.totals.score };
   }
 
   /**

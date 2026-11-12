@@ -31,7 +31,7 @@ export function createCollection(app) {
 
   function render() {
     const seen = save.seenIds.filter((id) => getExpression(id)).length;
-    progressText.textContent = `${seen} / ${TOTAL_EXPRESSIONS}`;
+    progressText.textContent = `${seen.toLocaleString('en-GB')} / ${TOTAL_EXPRESSIONS.toLocaleString('en-GB')}`;
     meter.style.width = `${(seen / TOTAL_EXPRESSIONS) * 100}%`;
     clear(tabs);
     for (const t of TABS) tabs.append(h(`button.tab${t.id === tab ? '.is-on' : ''}`, { onclick: () => ((tab = t.id), render()) }, t.label, h('span.tab__n', idsFor(t).length)));

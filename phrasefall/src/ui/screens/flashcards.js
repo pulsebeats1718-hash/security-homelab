@@ -38,6 +38,7 @@ export function createFlashcards(app) {
 
   const tabs = h('div.tabs');
   const type = h('span.fc__type');
+  const lvl = h('span.fc__lvl', { title: 'Difficulty' });
   const expr = h('h3.fc__expr');
   const back = h('div.fc__face.fc__back');
   const card = h(
@@ -45,7 +46,7 @@ export function createFlashcards(app) {
     { tabindex: '0', role: 'button', 'aria-label': 'Flashcard — tap to flip', onclick: flip },
     h(
       'div.fc__face.fc__front',
-      type,
+      h('div.fc__meta', type, lvl),
       expr,
       h('span.fc__tap', icon('hand'), 'Tap to see the meaning'),
       h('button.fc__say', { 'aria-label': 'Listen', 'data-quiet': '1', onclick: (e) => (e.stopPropagation(), deck[pos] && speak(getExpression(deck[pos]).text)) }, icon('sound'))
@@ -120,6 +121,8 @@ export function createFlashcards(app) {
     card.classList.remove('is-flipped');
     if (dir) retrigger(card, dir > 0 ? 'is-swap-l' : 'is-swap-r');
     type.textContent = `${TYPE_LABELS[e.type] ?? e.type} · Stage ${e.stage}`;
+    clear(lvl).append(...[1, 2, 3].map((n) => h(`i${n <= e.level ? '.is-on' : ''}`)));
+    lvl.setAttribute('aria-label', ['', 'Core', 'Common', 'Advanced'][e.level] ?? '');
     expr.textContent = e.text;
     clear(back).append(
       h('h3', e.text),

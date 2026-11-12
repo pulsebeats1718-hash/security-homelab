@@ -11,6 +11,7 @@ export const ICONS = {
   lock: { d: '<rect x="5" y="11" width="14" height="10" rx="2.800"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>' },
   check: { d: '<path d="M5 12.800l4.500 4.500L19 7.500"/>' },
   x: { d: '<path d="M6 6l12 12M18 6L6 18"/>' },
+  grid: { d: '<rect x="4" y="4" width="6.500" height="6.500" rx="1.800"/><rect x="13.500" y="4" width="6.500" height="6.500" rx="1.800"/><rect x="4" y="13.500" width="6.500" height="6.500" rx="1.800"/><rect x="13.500" y="13.500" width="6.500" height="6.500" rx="1.800"/>' },
   back: { d: '<path d="M14.500 5l-7 7 7 7"/>' },
   next: { d: '<path d="M9.500 5l7 7-7 7"/>' },
   sound: { d: '<path d="M4 9.500v5h3.500l4.500 4v-13l-4.500 4z"/><path d="M15.500 9a4.200 4.200 0 0 1 0 6M18.300 6.500a7.800 7.800 0 0 1 0 11"/>' },

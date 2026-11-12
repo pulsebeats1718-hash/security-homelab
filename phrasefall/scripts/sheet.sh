@@ -2,10 +2,11 @@
 # Character review sheet: renders the given characters in 8 standard views and
 # stitches them into one image.
 #   scripts/sheet.sh fox,robot out.png
-# Needs the dev server:  npm run dev   (http://localhost:5173)
+# Needs a dev server: npx vite --config dev/vite.nohmr.config.js  (port 5174, no hot reload)
 set -euo pipefail
 IDS="$1"; OUT="$2"
-BASE="http://localhost:5173/dev/characters.html?ids=$IDS"
+PORT="${PORT:-5174}"
+BASE="http://localhost:$PORT/dev/characters.html?ids=$IDS"
 TMP="$(mktemp -d)"
 N=$(echo "$IDS" | tr ',' '\n' | wc -l)
 W=$(( N * 330 + 80 )); [ "$W" -lt 700 ] && W=700

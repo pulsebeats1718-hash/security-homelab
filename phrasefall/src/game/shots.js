@@ -20,9 +20,18 @@ export const shots = {
   },
 
   /** Character collection: a close turntable view. */
-  select(s) {
-    if (portrait(s)) return { fx: 0, fy: 1.1, fz: 0, yaw: 0, pitch: 0.09, span: 6.4, ox: 0, oy: -s.height * 0.115, drift: 0.35 };
-    return { fx: 0, fy: 1.1, fz: 0, yaw: 0, pitch: 0.09, span: 4.7, ox: -s.width * 0.17, oy: -s.height * 0.02, drift: 0.35 };
+  /** `area` (portrait only): the free band { top, bottom } in px between the header and the info panel. */
+  select(s, area) {
+    if (portrait(s)) {
+      const top = area?.top ?? s.height * 0.1;
+      const bottom = area?.bottom ?? s.height * 0.62;
+      // fit ~2.75 units (feet to hat tip, plus shadow) into the band, and never wider than the screen allows
+      const ppu = clamp(Math.min((bottom - top) / 2.95, s.width / 2.7), 40, 400);
+      const feetY = bottom - 0.3 * ppu;
+      const focusY = feetY - 1.1 * ppu;
+      return { fx: 0, fy: 1.1, fz: 0, yaw: 0, pitch: 0.09, span: s.height / ppu, ox: 0, oy: focusY - s.height / 2, drift: 0.35 };
+    }
+    return { fx: 0, fy: 1.1, fz: 0, yaw: 0, pitch: 0.09, span: s.height < 520 ? 5.4 : 4.7, ox: -Math.min(202, s.width * 0.2), oy: -s.height * 0.02, drift: 0.35 };
   },
 
   /** Overlays (flashcards, collection, settings): the scene pulls back behind the panel. */

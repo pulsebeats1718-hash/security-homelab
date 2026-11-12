@@ -752,6 +752,7 @@ svg.ico.fill {
 .thumb img {
   position: absolute;
   inset: -4px -4px 0;
+  max-width: none;
   width: calc(100% + 8px);
   height: calc(100% + 4px);
   object-fit: cover;
@@ -795,6 +796,64 @@ svg.ico.fill {
   background: var(--mint);
 }
 
+.chars__grid {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  padding: calc(var(--st) + 12px) var(--sr) calc(var(--sb) + 12px) var(--sl);
+  background: rgba(15, 10, 50, 0.62);
+}
+.chars__gridpanel {
+  width: min(100%, 760px);
+  max-height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 12px;
+  padding: 16px 16px 18px;
+  animation: answer-in 0.35s var(--ease-back) both;
+}
+.chars__gridpanel .bar__title {
+  text-shadow: none;
+}
+.chars__gridlist {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 12px 10px;
+  align-content: start;
+  padding: 4px 2px 6px;
+}
+.gcell {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.gcell .thumb {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+}
+.gcell .thumb.is-current {
+  transform: none;
+}
+.gcell:active .thumb {
+  transform: scale(0.96);
+}
+.gcell__name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 600 0.78rem/1.1 var(--display);
+  color: var(--text-dim);
+}
+.gcell.is-current .gcell__name {
+  color: var(--gold);
+}
+
 @media (orientation: portrait), (max-width: 760px) {
   .chars {
     grid-template-columns: 1fr;
@@ -831,7 +890,8 @@ svg.ico.fill {
     border-radius: 16px;
   }
   .chars__hint {
-    bottom: 2px;
+    top: 0;
+    bottom: auto;
   }
 }
 @media (max-height: 520px) and (orientation: landscape) {
@@ -1620,6 +1680,8 @@ svg.ico.fill {
 }
 .tabs {
   display: flex;
+  flex: none;
+  min-height: 44px;
   gap: 7px;
   overflow-x: auto;
   scrollbar-width: none;
@@ -1743,9 +1805,30 @@ svg.ico.fill {
   padding: 20px 20px 26px;
   text-align: center;
 }
-.fc__type {
+.fc__meta {
   justify-self: start;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   max-width: calc(100% - 54px);
+  min-width: 0;
+}
+.fc__lvl {
+  flex: none;
+  display: inline-flex;
+  gap: 3px;
+}
+.fc__lvl i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cream-3);
+}
+.fc__lvl i.is-on {
+  background: var(--coral);
+}
+.fc__type {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

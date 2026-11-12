@@ -39,7 +39,7 @@ export function createMenu(app) {
     const seen = save.seenIds.length;
     sub.chars.textContent = `${d.unlocked.length} of ${CHARACTERS.length} unlocked`;
     sub.cards.textContent = seen ? `${seen} to review` : 'Play to collect';
-    sub.coll.textContent = `${save.masteredCount} of ${TOTAL_EXPRESSIONS} mastered`;
+    sub.coll.textContent = `${save.masteredCount.toLocaleString('en-GB')} of ${TOTAL_EXPRESSIONS.toLocaleString('en-GB')} mastered`;
     sub.best.textContent = d.best.score ? formatScore(d.best.score) : 'No games yet';
     bestChip.textContent = d.best.score ? `Best ${formatScore(d.best.score)}` : 'Set your first record';
     const def = getCharacter(d.character);

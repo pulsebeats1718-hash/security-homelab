@@ -154,7 +154,7 @@ export class Game {
   // ── questions ───────────────────────────────────────────────────────────
   _refillDeck() {
     const save = this.save;
-    const weigh = (e) => {
+    let weigh = (e) => {
       const s = save.stat(e.id);
       if (!s || !s.seen) return 2;
       if (s.practise) return 3;
@@ -162,7 +162,13 @@ export class Game {
       if (save.isMastered(e.id)) return 0.6;
       return 1.2;
     };
-    let pool = BY_STAGE[this.stageIndex].filter((e) => !this.used.has(e.id));
+    // harder expressions (level 2, then 3) join the mix as the player discovers more of the stage
+    const stageList = BY_STAGE[this.stageIndex];
+    const found = stageList.reduce((n, e) => n + (save.stat(e.id)?.seen ? 1 : 0), 0);
+    const levelFactor = [1, 1, clamp(0.25 + found / 40, 0.25, 1), clamp(0.1 + found / 100, 0.1, 1)];
+    const base = weigh;
+    weigh = (e) => base(e) * (levelFactor[e.level] ?? 1);
+    let pool = stageList.filter((e) => !this.used.has(e.id));
     if (!pool.length) {
       // endless final stage: draw from the whole game once its own list is used up
       pool = BY_STAGE.flat().filter((e) => !this.used.has(e.id));

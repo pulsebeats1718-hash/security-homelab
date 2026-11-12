@@ -20,19 +20,70 @@ export function createCharacters(app) {
   const lock = h('div.chars__lock', h('div.chars__lock-row', icon('lock'), lockText), h('div.meter', lockMeter));
   const select = h('button.btn.btn--gold.chars__select', { 'data-quiet': '1', onclick: choose });
   const strip = h('div.chars__strip.scroll');
+  const info = h('div.chars__info', title, name, blurb, lock, select);
   const thumbs = new Map();
+
+  // ── all-characters grid ────────────────────────────────────────────────
+  const gridList = h('div.chars__gridlist.scroll');
+  const gridCells = new Map();
+  const gridCount = h('span.chip');
+  const gridOverlay = h(
+    'div.chars__grid.hit',
+    { hidden: true, onclick: (e) => e.target === gridOverlay && closeGrid() },
+    h(
+      'div.panel.chars__gridpanel',
+      h('header.bar', h('div.bar__title', 'All characters'), gridCount, h('button.iconbtn', { 'aria-label': 'Close', 'data-sound': 'back', onclick: () => closeGrid() }, icon('x'))),
+      gridList
+    )
+  );
+  function openGrid() {
+    clear(gridList);
+    gridCells.clear();
+    CHARACTERS.forEach((def, i) => {
+      const unlocked = save.isUnlocked(def.id);
+      const t = app.thumbs.get(def.id);
+      const pic = h(
+        `span.thumb${unlocked ? '' : '.is-locked'}${i === index ? '.is-current' : ''}`,
+        t ? h('img', { src: unlocked ? t.normal : t.locked, alt: '', draggable: 'false' }) : null,
+        !unlocked ? h('span.thumb__badge', icon('lock')) : def.id === save.data.character ? h('span.thumb__badge', icon('check')) : null
+      );
+      gridCells.set(def.id, pic);
+      gridList.append(
+        h(
+          `button.gcell${i === index ? '.is-current' : ''}`,
+          { 'aria-label': unlocked ? def.name : `${def.title} (locked)`, 'data-quiet': '1', onclick: () => (closeGrid(), go(i)) },
+          pic,
+          h('span.gcell__name', unlocked ? def.name : def.title)
+        )
+      );
+    });
+    gridCount.textContent = `${save.data.unlocked.length} / ${CHARACTERS.length} unlocked`;
+    gridOverlay.hidden = false;
+    gridList.querySelector('.is-current')?.scrollIntoView({ block: 'center' });
+    audio.play('whoosh');
+  }
+  function closeGrid() {
+    gridOverlay.hidden = true;
+  }
 
   const el = h(
     'section.chars',
-    h('header.bar', h('button.iconbtn', { 'aria-label': 'Back', 'data-sound': 'back', onclick: () => ui.go('menu') }, icon('back')), h('div.bar__title', 'Characters'), count),
+    h(
+      'header.bar.chars__bar',
+      h('button.iconbtn', { 'aria-label': 'Back', 'data-sound': 'back', onclick: () => ui.go('menu') }, icon('back')),
+      h('div.bar__title', 'Characters'),
+      count,
+      h('button.iconbtn', { 'aria-label': 'Show all characters', onclick: () => openGrid() }, icon('grid'))
+    ),
     h(
       'div.chars__arrows',
       h('button.iconbtn', { 'aria-label': 'Previous character', 'data-quiet': '1', onclick: () => step(-1) }, icon('back')),
       h('button.iconbtn', { 'aria-label': 'Next character', 'data-quiet': '1', onclick: () => step(1) }, icon('next'))
     ),
     h('div.chars__stagewrap', h('div.chars__hint', 'Drag to turn')),
-    h('div.chars__info', title, name, blurb, lock, select),
-    strip
+    info,
+    strip,
+    gridOverlay
   );
 
   function buildStrip() {
@@ -116,12 +167,22 @@ export function createCharacters(app) {
     render(false);
   }
 
+  /** Frame the turntable in the space the interface leaves free. */
+  function frame(seconds) {
+    const bar = el.querySelector('.chars__bar')?.getBoundingClientRect();
+    const box = info.getBoundingClientRect();
+    const area = bar && box.height ? { top: bar.bottom + 16, bottom: box.top - 6 } : null;
+    app.stage.setShot(shots.select(app.stage, area), seconds);
+  }
+
   // portraits arrive in the background after start-up
   app.events.on('thumb', (id) => {
-    const btn = thumbs.get(id);
     const t = app.thumbs.get(id);
-    if (!btn || !t || btn.querySelector('img')) return;
-    btn.prepend(h('img', { src: save.isUnlocked(id) ? t.normal : t.locked, alt: '', draggable: 'false' }));
+    if (!t) return;
+    for (const holder of [thumbs.get(id), gridCells.get(id)]) {
+      if (!holder || holder.querySelector('img')) continue;
+      holder.prepend(h('img', { src: save.isUnlocked(id) ? t.normal : t.locked, alt: '', draggable: 'false' }));
+    }
   });
 
   // drag the stage to turn the character
@@ -169,23 +230,27 @@ export function createCharacters(app) {
       hero.autoReturn = false;
       hero.spin = 0;
       hero.spinVel = 0;
-      app.stage.setShot(shots.select(app.stage), 0.9);
       render(false);
+      frame(0.9);
     },
     hide() {
+      closeGrid();
       hero.dragging = false;
       hero.face();
       hero.spin = 0;
       hero.set(save.data.character, { effect: false, clip: null });
     },
     relayout() {
-      app.stage.setShot(shots.select(app.stage), 0.3);
+      frame(0.3);
     },
     key(e) {
       if (e.key === 'ArrowLeft') step(-1);
       else if (e.key === 'ArrowRight') step(1);
       else if (e.key === 'Enter') choose();
-      else if (e.key === 'Escape') ui.go('menu');
+      else if (e.key === 'Escape') {
+        if (!gridOverlay.hidden) closeGrid();
+        else ui.go('menu');
+      }
     },
   };
 }

@@ -1,6 +1,8 @@
 import { h, icon, clear } from '../dom.js';
 import { shots } from '../../game/shots.js';
-import { PACE } from '../../data/stages.js';
+import { PACE, STAGES } from '../../data/stages.js';
+import { TOTAL_EXPRESSIONS } from '../../data/expressions/index.js';
+import { CHARACTERS } from '../../characters/index.js';
 
 /** Settings: independent music and sound controls, pace, graphics and accessibility. */
 export function createSettings(app) {
@@ -111,7 +113,7 @@ export function createSettings(app) {
         quality.row,
         h('div.set', h('span.set__ico', icon('wind')), h('span.set__label', 'Reduce motion'), motion, h('p.set__note', 'Calms screen shake and camera drift.')),
         resetRow,
-        h('p.about', 'Phrasefall · 150 British English expressions across five stages. Music and sound are synthesised live in your browser.')
+        h('p.about', `Phrasefall · ${TOTAL_EXPRESSIONS.toLocaleString('en-GB')} British English expressions across ${STAGES.length} stages, ${CHARACTERS.length} characters to collect. Music and sound are synthesised live in your browser.`)
       )
     )
   );

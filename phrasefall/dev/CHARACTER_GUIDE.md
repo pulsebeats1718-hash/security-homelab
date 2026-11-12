@@ -97,7 +97,9 @@ Useful signs:
 
 ## Checking your work
 
-The dev server runs at http://localhost:5173 (start with `npm run dev` if it is not up).
+A preview server without hot reload runs at http://localhost:5174 (check with
+`curl -s -o /dev/null -w "%{http_code}" http://localhost:5174/`). If it is not up, start it detached:
+`nohup setsid npx vite --config dev/vite.nohmr.config.js > /tmp/vite-preview.log 2>&1 < /dev/null &`
 
 ```bash
 scripts/sheet.sh ninja,pirate /path/to/out.png
@@ -109,9 +111,14 @@ clean: no parts floating or poking through, face readable, silhouette distinct, 
 harmonious. For a close look at one thing:
 
 ```
-http://localhost:5173/dev/characters.html?ids=ninja&zoom=1.6&yaw=30&expr=happy
+http://localhost:5174/dev/characters.html?ids=ninja&zoom=1.6&yaw=30&expr=happy
    other params: clip=<name>&u=<0..1>, gaze=1, worry=1, sil=1, bg=dark, pitch=<deg>, cy=<y>
 node scripts/shot.cjs "<url>" out.png 900 700 1500
 ```
 
 `shot.cjs` prints browser console errors — a model that throws is reported there.
+Rendering is software-only (no GPU), so a sheet takes a minute or two; plan your
+iterations rather than re-rendering after every tiny tweak.
+
+Finish each character completely — passing all eight views — before starting the
+next, so that finished work is always usable even if you are interrupted.
