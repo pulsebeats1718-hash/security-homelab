@@ -115,6 +115,7 @@ for (const f of targets) {
   const warn = (id, msg) => out.push(`  ⚠ ${id}: ${msg}`);
   if (f.loadError) err('(file)', `could not load: ${f.loadError}`);
   const seenHere = new Set();
+  let longestCount = 0;
   for (const e of f.list) {
     checked++;
     const id = e?.id ?? '(no id)';
@@ -145,10 +146,11 @@ for (const f of targets) {
         else if (d.length > LIMITS.meaning) err(id, `distractor ${i + 1} is ${d.length} chars (max ${LIMITS.meaning})`);
         if (/[.!]$/.test(d)) err(id, `distractor ${i + 1} should not end with punctuation`);
       });
-      const lens = [e.meaning, ...e.distractors].map((s) => String(s).length);
-      if (e.meaning.length === Math.max(...lens) && e.meaning.length > 1.6 * Math.min(...lens.slice(1)) + 8) {
-        err(id, 'meaning is much longer than every distractor (gives the answer away)');
+      const longestWrong = Math.max(...e.distractors.map((d) => String(d).length));
+      if (String(e.meaning).length > longestWrong + 6) {
+        err(id, `meaning is ${String(e.meaning).length - longestWrong} chars longer than the longest distractor (gives the answer away; keep it within 6)`);
       }
+      if (String(e.meaning).length > longestWrong) longestCount++;
     }
     if (/[.!]$/.test(e.meaning ?? '')) err(id, 'meaning should not end with punctuation');
     if (!Array.isArray(e.synonyms) || e.synonyms.length < 1 || e.synonyms.length > 3) err(id, 'needs 1–3 synonyms');
@@ -166,6 +168,10 @@ for (const f of targets) {
       const shared = keys.filter((k) => k.length >= 3 && meaningWords.includes(k));
       if (shared.length) warn(id, `meaning repeats "${shared.join('", "')}" from the expression (gives the answer away)`);
     }
+  }
+  // the right answer should not usually be the longest option (by chance it would be about 1 in 4)
+  if (f.list.length >= 20 && longestCount / f.list.length > 0.4) {
+    out.push(`  ⚠ (file): the meaning is the longest option in ${Math.round((longestCount / f.list.length) * 100)}% of entries — players learn to pick the longest answer; aim for under 40%`);
   }
   const nErr = out.filter((l) => l.includes('✗')).length;
   errors += nErr;

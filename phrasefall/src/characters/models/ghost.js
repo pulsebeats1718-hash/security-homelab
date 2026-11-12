@@ -26,7 +26,7 @@ export default {
 
   build(k) {
     const { THREE } = k;
-    const sheet = k.mat(0xdde6ff, { rough: 0.5, rim: 0.95, rimPower: 2.1, emissive: 0x9fd8ff, emissiveIntensity: 0.05 });
+    const sheet = k.mat(0xd5dffd, { rough: 0.5, rim: 0.95, rimPower: 2.1, emissive: 0x9fd8ff, emissiveIntensity: 0.05 });
     const ink = k.mat(0x262150, { rough: 0.25, rim: 0.15 });
     const bow = k.mat(0xef4f7d, { rough: 0.45 });
     const bowDark = k.mat(0xc23462, { rough: 0.5 });
