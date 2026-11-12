@@ -1,3 +1,4 @@
+/** Stage 4 — Set phrases: binomials, trinomials and as … as … similes. Schema: dev/EXPRESSION_GUIDE.md */
 export default [
   {
     id: 'bits-and-bobs',

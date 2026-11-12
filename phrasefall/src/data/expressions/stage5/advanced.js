@@ -1,3 +1,4 @@
+/** Stage 5 — Advanced idioms: literary, formal and distinctly British. Schema: dev/EXPRESSION_GUIDE.md */
 export default [
   {
     id: 'a-curates-egg',

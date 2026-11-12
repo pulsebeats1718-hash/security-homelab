@@ -1,3 +1,4 @@
+/** Stage 3 — Idioms: weather, nature, time and things around the house. Schema: dev/EXPRESSION_GUIDE.md */
 export default [
   {
     id: 'behind-closed-doors',

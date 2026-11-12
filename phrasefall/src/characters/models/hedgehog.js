@@ -92,8 +92,8 @@ export default {
 
     // the head: a brown shell over the back and crown leaves a cream face mask; spines sit in
     // rows around the shell's axis (theta from the back-top, phi round it: 0 = forehead, + = left)
-    head.add(patch(k, brown, 180, 22, 102, H, c, 1.012));
-    const ps = k.surface(H, 180, 22).pos;
+    head.add(patch(k, brown, 180, 28, 116, H, c, 1.012));
+    const ps = k.surface(H, 180, 28).pos;
     const B = new THREE.Vector3(ps.x / H[0], ps.y / H[1], ps.z / H[2]).normalize();
     const U = new THREE.Vector3(0, 1, 0).addScaledVector(B, -B.y).normalize();
     const XA = new THREE.Vector3(1, 0, 0);
@@ -110,13 +110,14 @@ export default {
     };
     const headDroop = new THREE.Vector3(0, -0.15, -0.35);
     [
-      [94, [0, 30, -30, 90, -90, 122, -122]],
-      [60, [28, -28, 85, -85, 140, -140, 180]],
-      [26, [0, 120, -120]],
+      [106, [0, 25, -25, 85, -85]],
+      [72, [22, -22, 68, -68, 115, -115, 160, -160]],
+      [38, [0, 75, -75, 150, -150]],
+      [0, [0]],
     ].forEach(([theta, phis], r) =>
       phis.forEach((phi, i) => {
         const { pos, n } = onHead(theta, phi);
-        plant(head, pos, n, headDroop, r === 0 ? 0.92 : 1, 1, (r + i) % 3 === 0 ? tan : brown);
+        plant(head, pos, n, headDroop, r === 0 ? 0.8 : 0.9, 0.88, (r + i) % 3 === 0 ? tan : brown);
       })
     );
 
@@ -124,22 +125,21 @@ export default {
     const bodyDroop = new THREE.Vector3(0, -0.45, -0.1);
     const probe = new THREE.Object3D();
     [
-      [0.06, [148, 180, 212]],
-      [0.24, [126, 154, 180, 206, 234]],
-      [0.42, [138, 166, 194, 222]],
-      [0.56, [158, 202]],
+      [0.1, [140, 180, 220]],
+      [0.28, [122, 160, 200, 238]],
+      [0.46, [140, 180, 220]],
     ].forEach(([y, yaws], r) =>
       yaws.forEach((yaw, i) => {
         k.onTorso(probe, yaw, y, 0);
         const n = new THREE.Vector3(0, 0, 1).applyQuaternion(probe.quaternion);
-        plant(torso, probe.position.clone(), n, bodyDroop, 0.85, 0.92, (r + i) % 3 === 1 ? tan : brown);
+        plant(torso, probe.position.clone(), n, bodyDroop, 0.82, 0.95, (r + i) % 3 === 1 ? tan : brown);
       })
     );
 
     // tiny round ears peeking out at the hairline
     k.both((s) => {
-      const { pos, n } = onHead(100, s * 60, 0.025);
-      const ear = k.ball(paw, 0.085, 0.08, 0.045);
+      const { pos, n } = onHead(108, s * 52, 0.03);
+      const ear = k.group(k.ball(cream, 0.095, 0.09, 0.045), k.at(k.ball(paw, 0.058, 0.055, 0.02), 0, 0, 0.032));
       ear.position.copy(pos);
       ear.quaternion.setFromUnitVectors(FWD, _d.copy(n).add(new THREE.Vector3(0, 0, 0.5)).normalize());
       head.add(ear);
@@ -147,29 +147,29 @@ export default {
 
     // ── pointed snout with a black button nose (a group, so it can sniff) ──
     const snout = k.at(k.group(), 0, c.y - 0.13, 0.36);
-    const SR = [0.14, 0.12, 0.21];
-    const SC = new THREE.Vector3(0, 0, 0.07);
-    const button = k.at(k.ball(nose, 0.062, 0.05, 0.05), 0, 0.022, 0.275);
+    const SR = [0.13, 0.11, 0.23];
+    const SC = new THREE.Vector3(0, 0, 0.08);
+    const button = k.at(k.ball(nose, 0.062, 0.05, 0.05), 0, 0.02, 0.305);
     snout.add(k.at(k.ball(cream, ...SR), SC.x, SC.y, SC.z), button);
     head.add(snout);
 
     k.face({
       eye: { yaw: 25, pitch: 10, size: 0.082, tall: 1.25 },
-      brow: { color: 0x5e3b2a },
+      brow: { color: 0x5e3b2a, pitch: 21 },
       mouth: { parent: snout, center: SC, radii: SR, pitch: -20, width: 0.062, lift: 0.004 },
       cheeks: { yaw: 43, pitch: -6, color: 0xff9e8f, size: 0.07 },
     });
 
     // ── a red apple stuck on the spines ──────────────────────────────────
     {
-      const { pos, n } = onHead(70, -40, 0.15);
+      const { pos, n } = onHead(82, -38, 0.12);
       const apple = k.group();
       apple.position.copy(pos);
       apple.quaternion.setFromUnitVectors(UP, _d.copy(n).add(UP).normalize());
       apple.add(
-        k.ball(red, 0.125, 0.112, 0.125),
-        k.at(k.cap(limb, 0.013, 0.075), 0.005, 0.12, 0, 0, 0, -0.2),
-        k.at(k.ball(wool, 0.055, 0.014, 0.03), 0.05, 0.125, 0, 0, 0.4, -0.45)
+        k.ball(red, 0.135, 0.122, 0.135),
+        k.at(k.cap(limb, 0.014, 0.08), 0.005, 0.13, 0, 0, 0, -0.2),
+        k.at(k.ball(wool, 0.06, 0.015, 0.032), 0.055, 0.135, 0, 0, 0.4, -0.45)
       );
       head.add(apple);
       rig.props.apple = apple;
@@ -239,5 +239,14 @@ export default {
     // a contented little waddle in between
     P.hipsY += Math.abs(Math.sin(t * 1.9)) * 0.006;
     P.headZ += Math.sin(t * 0.8) * 0.03;
+  },
+
+  constrain(P) {
+    // short arms raised up and out would vanish into the spiky head: keep raised paws out to
+    // the side and a little forward, in front of the spines
+    P.armLZ = Math.min(P.armLZ, 2.0);
+    P.armRZ = Math.max(P.armRZ, -2.0);
+    P.armLX = Math.max(P.armLX, 0.42 * smooth(1.2, 1.9, P.armLZ));
+    P.armRX = Math.max(P.armRX, 0.42 * smooth(1.2, 1.9, -P.armRZ));
   },
 };

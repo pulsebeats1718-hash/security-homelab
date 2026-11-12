@@ -76,6 +76,7 @@ export default {
     // a lolling tongue for happy panting (shown whenever the mouth is open)
     const tongue = k.at(k.ball(pink, 0.045, 0.065, 0.025), 0, -0.058, 0.022, -0.6, 0, 0);
     rig.face.mouth.root.add(tongue);
+    const tongueY = tongue.scale.y;
 
     // fluffy round rear with white "trousers" and a stubby tuft (wiggles on the tail joint)
     const rear = rig.joint('tail', k.at(k.group(), 0, 0.16, 0));
@@ -116,7 +117,7 @@ export default {
       tongue.visible = face.mouth.shapes.open.visible;
       const pant = on ? Math.sin(t * 12) : 0;
       face.mouth.root.scale.y = 1 + 0.12 * pant;
-      tongue.scale.y = 1 + 0.15 * pant;
+      tongue.scale.y = tongueY * (1 + 0.15 * pant);
     });
 
     return rig;

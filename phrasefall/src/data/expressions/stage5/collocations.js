@@ -1,3 +1,4 @@
+/** Stage 5 — Advanced collocations (C1–C2). Schema: dev/EXPRESSION_GUIDE.md */
 export default [
   {
     id: 'allay-fears',
