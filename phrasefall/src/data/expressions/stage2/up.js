@@ -1,4 +1,4 @@
-
+/** Stage 2 — Phrasal verbs whose first particle is UP. Schema: dev/EXPRESSION_GUIDE.md */
 export default [
   {
     id: 'come-up-with',
