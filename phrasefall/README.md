@@ -9,12 +9,17 @@ four options before they land.
 - **Five stages** – everyday expressions → phrasal verbs → idioms → set phrases →
   advanced expressions and collocations. Each stage is faster and moves the world
   on through the day, from sunrise to a starlit aurora.
-- **20 collectable characters** – real-time 3D, each with its own idle animation
-  and reactions. Purely cosmetic; unlocked by playing.
+- **35 collectable characters** – real-time 3D, each with its own idle animation
+  and reactions. Purely cosmetic; unlocked by playing (score, streaks, stages,
+  expressions discovered and mastered).
 - **Learning built in** – every expression you meet becomes a flashcard (meaning,
   example, synonyms, register and context, common mistake). *My Collection* tracks
   what you have mastered, got wrong, flagged to practise or marked as a favourite.
-- **150 British English expressions**, each with hand-written wrong answers.
+- **1,685 British English expressions** – 210 everyday expressions, 485 phrasal
+  verbs, 480 idioms, 260 set phrases and 250 advanced idioms and collocations –
+  each with three plausible wrong answers, an example, synonyms, register, context
+  and a common learner mistake. Every expression has a difficulty level; harder
+  ones join a stage as the player discovers more of it.
 
 ## Run it
 
@@ -23,7 +28,7 @@ npm install
 npm run dev            # http://localhost:5173
 npm run build          # static site in dist/
 npm run build:single   # one self-contained HTML file in dist-single/
-npm run check:data     # validate the expression database
+npm run check:data     # validate the expression database (see below)
 ```
 
 Requires Node 18+. The only runtime dependency is [three.js](https://threejs.org);
@@ -45,7 +50,7 @@ src/
   main.js                 boot and wiring
   core/                   stage (renderer, camera shots, frame loop), save data, events, maths
   data/
-    expressions/          stage1.js … stage5.js — the expression database
+    expressions/          stage1/ … stage5/ — the expression database, one folder per stage
     stages.js             pace, goals and scoring rules
     roster.js             character order and unlock rules
   characters/
@@ -68,14 +73,17 @@ they talk through a small event bus (`game:question`, `game:answered`,
 
 ### Add expressions
 
-Append objects to a file in `src/data/expressions/` (or add a new stage file and
-list it in `index.js`), then run `npm run check:data`.
+Every file in `src/data/expressions/stageN/` is loaded automatically and belongs
+to stage N. Append objects to a file, or drop a new file into a stage folder, then
+validate. Schema, style rules, levels and which file owns which kind of
+expression: `dev/EXPRESSION_GUIDE.md`.
 
 ```js
 {
   id: 'break-the-ice',
   text: 'break the ice',
   type: 'idiom',                      // everyday | phrasal | idiom | set-phrase | collocation | advanced
+  level: 1,                           // 1 core · 2 common · 3 less common
   meaning: 'help people relax when they first meet',
   distractors: ['…', '…', '…'],       // three plausible wrong answers
   example: 'Sam told a silly joke to break the ice.',
@@ -86,6 +94,19 @@ list it in `index.js`), then run `npm run check:data`.
 }
 ```
 
+```bash
+node scripts/check-expressions.mjs                 # validate everything
+node scripts/check-expressions.mjs <file>          # one file, duplicates checked against all
+node scripts/check-expressions.mjs --find ice      # is it already in the game?
+node scripts/check-expressions.mjs --stats         # counts per stage, file and level
+echo '{ "break-the-ice": { "example": "…" } }' | node scripts/patch-expressions.mjs <file> -
+```
+
+The patch tool applies corrections by id and rewrites the file in house style.
+The validator rejects duplicates across files, over-long or missing fields, wrong
+types for the stage, and answers that give themselves away by being much longer
+than the wrong options.
+
 ### Add a character
 
 1. Create `src/characters/models/<id>.js` — see `dev/CHARACTER_GUIDE.md` and any
@@ -93,7 +114,10 @@ list it in `index.js`), then run `npm run check:data`.
 2. Add `{ id, rule }` to `src/data/roster.js` to place it in the collection and
    give it an unlock rule.
 
-Preview while you work at `http://localhost:5173/dev/characters.html?ids=<id>`.
+Preview while you work at `http://localhost:5173/dev/characters.html?ids=<id>`,
+or render a review sheet of eight views (front, back, side, cheer, attack, hit,
+KO, locked) with `scripts/sheet.sh <ids> out.png` against the preview server
+(`npx vite --config dev/vite.nohmr.config.js`).
 
 ### Stages, pace and scoring
 
@@ -117,3 +141,8 @@ correct answer, the number of answers that clears a stage, and the points.
   devices and is lost if site data is cleared.
 - Flashcard pronunciation uses the browser's speech synthesis, so the voice
   depends on the device.
+- **Content was written and fact-checked with AI assistance.** Every expression
+  went through a separate accuracy review (wrong answers that were really another
+  sense, invented "common mistakes", Americanisms, unclear examples), and the
+  validator enforces the format. A review by an experienced English teacher is
+  still recommended before a commercial release.

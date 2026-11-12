@@ -30,6 +30,16 @@ export function createResults(app) {
   );
 
   const stat = (num, label) => h('div.stat', h('div.stat__num', num), h('div.stat__label', label));
+  // portraits render in the background and may arrive after the results appear
+  const pendingThumbs = new Map();
+  app.events.on('thumb', (id) => {
+    const img = pendingThumbs.get(id);
+    const t = app.thumbs.get(id);
+    if (img && t) {
+      img.src = t.normal;
+      pendingThumbs.delete(id);
+    }
+  });
   let timers = [];
   const later = (ms, fn) => timers.push(setTimeout(fn, ms));
 
@@ -56,11 +66,12 @@ export function createResults(app) {
       clear(body);
       r.unlocked.forEach((id, i) => {
         const def = getCharacter(id);
-        const thumb = app.thumbs.get(id);
         later(1100 + i * 650 + (r.newBest ? 900 : 0), () => {
-          body.prepend(
-            h('div.unlock', thumb ? h('img', { src: thumb.normal, alt: '' }) : h('div'), h('div', h('div.unlock__eyebrow', 'NEW CHARACTER'), h('div.unlock__name', `${def.name} — ${def.title}`)))
-          );
+          const img = h('img', { alt: '' });
+          const thumb = app.thumbs.get(id);
+          if (thumb) img.src = thumb.normal;
+          else pendingThumbs.set(id, img);
+          body.prepend(h('div.unlock', img, h('div', h('div.unlock__eyebrow', 'NEW CHARACTER'), h('div.unlock__name', `${def.name} — ${def.title}`))));
           audio.play('unlock');
         });
       });
