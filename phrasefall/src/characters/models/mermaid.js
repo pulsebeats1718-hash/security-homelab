@@ -30,10 +30,14 @@ export default {
 
     // ── hair: dark curls, tilted cap, side-swept fringe, long locks drifting behind ──
     head.add(k.at(k.dome(hair, 0.61, 0.57, 0.58, 0.5), 0, c.y, 0, -0.48, 0, 0));
-    const curl = (r, yaw, pitch, lift, sy = 0.9) => head.add(k.onSphere(k.ball(hair, r, r * sy, r), yaw, pitch, lift));
-    curl(0.22, 0, 72, 0.02);
-    k.both((s) => curl(0.2, s * 58, 50, 0.0));
-    k.both((s) => curl(0.2, s * 128, 40, 0.0));
+    // big soft volume behind the hairline, curls half-sunk into it
+    const HC = new THREE.Vector3(0, c.y + 0.14, -0.2);
+    const HR = [0.62, 0.52, 0.58];
+    head.add(k.at(k.ball(hair, ...HR, 32), HC.x, HC.y, HC.z));
+    const curl = (r, yaw, pitch, lift, sy = 0.9, radii, center) => head.add(k.onSphere(k.ball(hair, r, r * sy, r), yaw, pitch, lift, radii, center));
+    curl(0.2, 0, 55, -0.07, 0.85, HR, HC);
+    k.both((s) => curl(0.19, s * 60, 35, -0.07, 0.9, HR, HC));
+    k.both((s) => curl(0.19, s * 125, 20, -0.07, 0.9, HR, HC));
     curl(0.13, -26, 40, -0.02);
     k.both((s) => curl(0.18, s * 80, 2, 0.0, 1));
     // long curly lengths behind the shoulders, drifting as if under water
@@ -114,8 +118,9 @@ export default {
     // ── a pearl twirling above her raised left palm (kept upright, whatever the arm does) ──
     const twirl = k.group();
     rig.handL.add(twirl);
-    const spin = k.ball(pearl, 0.05);
-    twirl.add(spin);
+    const spin = k.ball(pearl, 0.06);
+    const sheen = k.halo(0xfff2e8, 0.26, 0.45);
+    twirl.add(spin, sheen);
     const qa = new THREE.Quaternion();
     const qb = new THREE.Quaternion();
     rig.tickers.push((t) => {
@@ -123,7 +128,8 @@ export default {
       rig.pivot.getWorldQuaternion(qb);
       twirl.quaternion.copy(qa).multiply(qb);
       const a = t * 5.2;
-      spin.position.set(Math.cos(a) * 0.07, 0.17 + Math.sin(a * 2) * 0.012, Math.sin(a) * 0.07);
+      spin.position.set(Math.cos(a) * 0.07, 0.16 + Math.sin(a * 2) * 0.012, Math.sin(a) * 0.07);
+      sheen.position.copy(spin.position);
     });
 
     return rig;
@@ -147,7 +153,7 @@ export default {
     P.tailZ += Math.sin(t * 1.4) * 0.12;
     P.tailX += Math.sin(t * 1.1 + 0.4) * 0.07;
     // left hand raised up-and-out, twirling a pearl she can't stop admiring
-    P.armLZ += 1.53 + Math.sin(t * 1.3) * 0.05;
+    P.armLZ += 1.63 + Math.sin(t * 1.3) * 0.05;
     P.armLX += 0.22;
     P.headY += 0.2 + Math.sin(t * 0.6) * 0.05;
     P.headZ += 0.07;
