@@ -9,8 +9,9 @@ PORT="${PORT:-5174}"
 BASE="http://localhost:$PORT/dev/characters.html?ids=$IDS"
 TMP="$(mktemp -d)"
 N=$(echo "$IDS" | tr ',' '\n' | wc -l)
-W=$(( N * 330 + 80 )); [ "$W" -lt 700 ] && W=700
-shot() { node "$(dirname "$0")/shot.cjs" "$BASE$2" "$TMP/$1.png" "$W" 470 "${3:-1400}" | grep -v '^saved' || true; }
+# SMALL=1 renders compact views (cheaper to look at); default is full size
+if [ "${SMALL:-0}" = "1" ]; then W=$(( N * 230 + 70 )); [ "$W" -lt 300 ] && W=300; H=290; else W=$(( N * 330 + 80 )); [ "$W" -lt 700 ] && W=700; H=470; fi
+shot() { node "$(dirname "$0")/shot.cjs" "$BASE$2" "$TMP/$1.png" "$W" "$H" "${3:-1400}" | grep -v '^saved' || true; }
 shot 1-front "" 2200
 shot 2-back "&yaw=155"
 shot 3-side "&yaw=80"

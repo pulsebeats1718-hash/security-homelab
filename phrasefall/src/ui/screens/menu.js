@@ -10,7 +10,8 @@ export function createMenu(app) {
   const heroName = h('div.menu__hero-name');
   const heroTitle = h('span.chip');
   const bestChip = h('span');
-  const foot = h('div.menu__foot', h('span.chip.chip--gold', icon('trophy'), bestChip));
+  const foundChip = h('span');
+  const foot = h('div.menu__foot', h('span.chip.chip--gold', icon('trophy'), bestChip), h('span.chip', icon('book'), foundChip));
 
   const tile = (ico, label, subEl, color, go) =>
     h('button.tile', { style: { '--tile': color }, onclick: go }, h('span.tile__ico', icon(ico)), h('span.tile__label', label), subEl);
@@ -42,6 +43,7 @@ export function createMenu(app) {
     sub.coll.textContent = `${save.masteredCount.toLocaleString('en-GB')} of ${TOTAL_EXPRESSIONS.toLocaleString('en-GB')} mastered`;
     sub.best.textContent = d.best.score ? formatScore(d.best.score) : 'No games yet';
     bestChip.textContent = d.best.score ? `Best ${formatScore(d.best.score)}` : 'Set your first record';
+    foundChip.textContent = `${seen.toLocaleString('en-GB')} / ${TOTAL_EXPRESSIONS.toLocaleString('en-GB')} expressions`;
     const def = getCharacter(d.character);
     heroName.textContent = def.name;
     heroTitle.textContent = def.title;

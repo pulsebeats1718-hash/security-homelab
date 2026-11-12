@@ -16,6 +16,8 @@ const dataDir = join(root, 'src/data/expressions');
 const TYPES_BY_STAGE = { 1: ['everyday'], 2: ['phrasal'], 3: ['idiom'], 4: ['set-phrase'], 5: ['collocation', 'advanced'] };
 const REGISTERS = new Set(['Very informal', 'Informal', 'Neutral', 'Formal']);
 const LIMITS = { text: 34, meaning: 56, example: 120, context: 140, mistake: 150 };
+// common function words and light verbs: sharing these is not a giveaway
+const FUNCTION_WORDS = new Set(['that', 'this', 'what', 'have', 'with', 'from', 'into', 'onto', 'they', 'them', 'their', 'there', 'then', 'than', 'when', 'where', 'which', 'will', 'would', 'could', 'should', 'been', 'were', 'more', 'most', 'much', 'very', 'just', 'some', 'about', 'over', 'under', 'down', 'make', 'made', 'take', 'took', 'give', 'gave', 'keep', 'come', 'came', 'goes', 'going', 'does', 'done', "don't", "isn't", "it's", "i'm", "you're", "can't", "won't", 'even', 'also', 'only', 'like', 'well']);
 const STOP = new Set(['the', 'a', 'an', 'to', 'of', 'in', 'on', 'at', 'and', 'or', 'it', 'is', 'be', 'your', 'my', 'you', 'i', 'as', 'for', 'with', 'one', 'someone', 'something', 'somebody']);
 
 /** Normalised form used to catch the same expression written twice. */
@@ -155,6 +157,14 @@ for (const f of targets) {
       const words = norm(e.text).split(' ').filter((w) => w.length > 1 && !STOP.has(w));
       const ex = e.example.toLowerCase();
       if (words.length && !words.some((w) => ex.includes(w.replace(/'s$/, '')))) warn(id, 'example does not seem to contain the expression');
+    }
+    // soft check: the meaning should not hand the player a key word of the expression
+    if (typeof e.meaning === 'string' && typeof e.text === 'string') {
+      const stem = (w) => w.replace(/'s$/, '').replace(/(ing|ed|es|s)$/, '');
+      const keys = norm(e.text).split(' ').filter((w) => w.length >= 4 && !STOP.has(w) && !FUNCTION_WORDS.has(w)).map(stem);
+      const meaningWords = norm(e.meaning).split(' ').map(stem);
+      const shared = keys.filter((k) => k.length >= 3 && meaningWords.includes(k));
+      if (shared.length) warn(id, `meaning repeats "${shared.join('", "')}" from the expression (gives the answer away)`);
     }
   }
   const nErr = out.filter((l) => l.includes('✗')).length;

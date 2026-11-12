@@ -164,6 +164,7 @@ svg.ico.fill {
   opacity: 1;
   visibility: visible;
 }
+.screen.is-on.hit,
 .screen.is-on .hit,
 .screen.is-on button,
 .screen.is-on .scroll,
@@ -2009,10 +2010,49 @@ svg.ico.fill {
   grid-column: 1 / -1;
   height: 12px;
 }
+.coll__stages {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  gap: 6px 12px;
+  margin-top: 6px;
+}
+.coll__stage {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 3px 8px;
+  min-width: 0;
+}
+.coll__stage-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 600 0.78rem/1.1 var(--display);
+  color: var(--text-dim);
+}
+.coll__stage-n {
+  font: 600 0.74rem/1 var(--display);
+  font-variant-numeric: tabular-nums;
+  color: var(--cream);
+}
+.minimeter {
+  grid-column: 1 / -1;
+  height: 5px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+.minimeter i {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: var(--mint);
+}
 .coll__progress b {
   font: 600 1rem/1 var(--display);
 }
-.coll__progress span {
+.coll__progress > span {
   font: 600 0.9rem/1 var(--display);
   color: var(--gold);
   font-variant-numeric: tabular-nums;

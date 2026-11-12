@@ -1,6 +1,7 @@
 import { h, icon, clear } from '../dom.js';
 import { shots } from '../../game/shots.js';
-import { getExpression, TOTAL_EXPRESSIONS } from '../../data/expressions/index.js';
+import { getExpression, TOTAL_EXPRESSIONS, BY_STAGE } from '../../data/expressions/index.js';
+import { STAGES } from '../../data/stages.js';
 
 const TABS = [
   { id: 'mastered', label: 'Mastered', color: 'var(--mint)', test: (s, id, save) => save.isMastered(id), empty: ['Nothing mastered yet', 'Answer an expression correctly three times in a row and it moves here.'] },
@@ -16,6 +17,7 @@ export function createCollection(app) {
   const tabs = h('div.tabs');
   const progressText = h('span');
   const meter = h('i');
+  const stagesEl = h('div.coll__stages');
   const rows = h('div.rows');
   const list = h('div.scroll', rows);
   const el = h(
@@ -23,7 +25,7 @@ export function createCollection(app) {
     h(
       'div.panel.sheet__panel',
       h('header.bar', h('button.iconbtn', { 'aria-label': 'Back', 'data-sound': 'back', onclick: () => ui.go('menu') }, icon('back')), h('div.bar__title', 'My Collection')),
-      h('div.coll', h('div.coll__progress', h('b', 'Expressions discovered'), progressText, h('div.meter', meter)), tabs, list)
+      h('div.coll', h('div.coll__progress', h('b', 'Expressions discovered'), progressText, h('div.meter', meter), stagesEl), tabs, list)
     )
   );
 
@@ -33,6 +35,19 @@ export function createCollection(app) {
     const seen = save.seenIds.filter((id) => getExpression(id)).length;
     progressText.textContent = `${seen.toLocaleString('en-GB')} / ${TOTAL_EXPRESSIONS.toLocaleString('en-GB')}`;
     meter.style.width = `${(seen / TOTAL_EXPRESSIONS) * 100}%`;
+    clear(stagesEl);
+    STAGES.forEach((st, i) => {
+      const list = BY_STAGE[i];
+      const found = list.reduce((n, e) => n + (save.stat(e.id)?.seen ? 1 : 0), 0);
+      stagesEl.append(
+        h(
+          'div.coll__stage',
+          h('span.coll__stage-name', st.short),
+          h('span.coll__stage-n', `${found}/${list.length}`),
+          h('span.minimeter', h('i', { style: { width: `${list.length ? (found / list.length) * 100 : 0}%` } }))
+        )
+      );
+    });
     clear(tabs);
     for (const t of TABS) tabs.append(h(`button.tab${t.id === tab ? '.is-on' : ''}`, { onclick: () => ((tab = t.id), render()) }, t.label, h('span.tab__n', idsFor(t).length)));
     const def = TABS.find((t) => t.id === tab);
