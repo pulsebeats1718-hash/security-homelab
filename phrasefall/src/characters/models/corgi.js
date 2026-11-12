@@ -41,7 +41,7 @@ export default {
     const c = rig.headCenter;
 
     // white chest
-    torso.add(k.at(k.ball(white, 0.27, 0.3, 0.13), 0, 0.22, 0.27));
+    torso.add(k.at(k.ball(white, 0.27, 0.27, 0.13), 0, 0.2, 0.27));
 
     // big upright ears with pink insides
     const ears = [];
@@ -91,7 +91,9 @@ export default {
     // royal-blue bandana: neck ring, triangle on the chest, knot at the back
     const ring = k.at(k.torus(blue, 0.27, 0.065), 0, 0.55, 0.01, Math.PI / 2 + 0.12, 0, 0);
     ring.scale.set(1.05, 0.95, 1);
-    torso.add(ring, k.at(k.box(blue, 0.2, 0.2, 0.035, 0.03), 0, 0.43, 0.335, -0.3, 0, Math.PI / 4));
+    const kerchief = k.at(k.group(k.at(k.box(blue, 0.26, 0.26, 0.035, 0.03), 0, 0, 0, 0, 0, Math.PI / 4)), 0, 0.42, 0.355, -0.3, 0, 0);
+    kerchief.scale.x = 0.75;
+    torso.add(ring, kerchief);
     const knot = k.at(k.group(), 0, 0.55, -0.32);
     knot.add(k.ball(blue, 0.075, 0.065, 0.055), k.at(k.ball(blue, 0.05, 0.09, 0.025), 0.05, -0.08, -0.01, 0, 0, 0.4), k.at(k.ball(blue, 0.05, 0.09, 0.025), -0.05, -0.08, -0.01, 0, 0, -0.4));
     torso.add(knot);

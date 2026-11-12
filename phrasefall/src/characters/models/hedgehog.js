@@ -48,6 +48,7 @@ export default {
     const brown = k.mat(0x86583a, { rough: 0.75 });
     const tan = k.mat(0xb07d52, { rough: 0.75 });
     const cream = k.mat(0xf3dfbf, { rough: 0.72 });
+    const snoutTan = k.mat(0xe9cba4, { rough: 0.6 });
     const limb = k.mat(0x5e3b2a, { rough: 0.7 });
     const paw = k.mat(0xd29b77, { rough: 0.6 });
     const nose = k.mat(0x2a1d1c, { rough: 0.2 });
@@ -117,7 +118,7 @@ export default {
     ].forEach(([theta, phis], r) =>
       phis.forEach((phi, i) => {
         const { pos, n } = onHead(theta, phi);
-        plant(head, pos, n, headDroop, r === 0 ? 0.8 : 0.9, 0.88, (r + i) % 3 === 0 ? tan : brown);
+        plant(head, pos, n, headDroop, r === 0 ? 0.8 : 0.9, 0.88, r === 0 || (r === 2 && i % 2) ? tan : brown);
       })
     );
 
@@ -132,7 +133,7 @@ export default {
       yaws.forEach((yaw, i) => {
         k.onTorso(probe, yaw, y, 0);
         const n = new THREE.Vector3(0, 0, 1).applyQuaternion(probe.quaternion);
-        plant(torso, probe.position.clone(), n, bodyDroop, 0.82, 0.95, (r + i) % 3 === 1 ? tan : brown);
+        plant(torso, probe.position.clone(), n, bodyDroop, 0.82, 0.95, brown);
       })
     );
 
@@ -146,11 +147,12 @@ export default {
     });
 
     // ── pointed snout with a black button nose (a group, so it can sniff) ──
-    const snout = k.at(k.group(), 0, c.y - 0.13, 0.36);
+    const SNOUT_RX = 0.1;
+    const snout = k.at(k.group(), 0, c.y - 0.12, 0.36, SNOUT_RX, 0, 0);
     const SR = [0.13, 0.11, 0.23];
     const SC = new THREE.Vector3(0, 0, 0.08);
     const button = k.at(k.ball(nose, 0.062, 0.05, 0.05), 0, 0.02, 0.305);
-    snout.add(k.at(k.ball(cream, ...SR), SC.x, SC.y, SC.z), button);
+    snout.add(k.at(k.ball(snoutTan, ...SR), SC.x, SC.y, SC.z), button);
     head.add(snout);
 
     k.face({
@@ -193,7 +195,7 @@ export default {
       const cc = t % PERIOD;
       const idle = !anim?.clip;
       const sn = idle ? sniffAt(cc) : 0;
-      snout.rotation.x = Math.sin(t * 23) * 0.05 * sn - 0.05 * sn;
+      snout.rotation.x = SNOUT_RX + Math.sin(t * 23) * 0.05 * sn - 0.07 * sn;
       snout.rotation.y = Math.sin(t * 9) * 0.06 * sn;
       button.scale.set(0.062 * (1 + 0.1 * Math.sin(t * 31) * (0.3 + sn)), 0.05, 0.05);
 
