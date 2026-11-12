@@ -30,7 +30,8 @@ export function format(header, list) {
       return `  {\n${keys.map((k) => `    ${k}: ${val(e[k])},`).join('\n')}\n  },`;
     })
     .join('\n');
-  return `${header.trimEnd()}\nexport default [\n${body}\n];\n`;
+  const head = header.trim() ? `${header.trim()}\n` : '';
+  return `${head}export default [\n${body}\n];\n`;
 }
 
 const [fileArg, patchArg] = process.argv.slice(2);
