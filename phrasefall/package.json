@@ -1,0 +1,23 @@
+{
+  "name": "phrasefall",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Phrasefall — a 3D arcade game for learning English expressions",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:single": "vite build --mode single",
+    "preview": "vite preview",
+    "check:data": "node scripts/check-expressions.mjs"
+  },
+  "dependencies": {
+    "@fontsource-variable/fredoka": "^5.3.0",
+    "@fontsource-variable/nunito": "^5.3.0",
+    "three": "^0.187.0"
+  },
+  "devDependencies": {
+    "vite": "^8.3.8",
+    "vite-plugin-singlefile": "^2.3.4"
+  }
+}
