@@ -865,6 +865,33 @@ svg.ico.fill {
   gap: 9px;
   font: 600 0.95rem/1.2 var(--display);
 }
+/* a tier: two ways in, each with its own progress */
+.chars__req {
+  display: grid;
+  gap: 6px;
+}
+.chars__req-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.86rem;
+  color: var(--text-dim);
+}
+.chars__req-line b {
+  flex: none;
+  font: 700 0.9rem/1 var(--display);
+  font-variant-numeric: tabular-nums;
+  color: var(--cream);
+}
+.chars__or {
+  justify-self: center;
+  margin: -2px 0;
+  font: 600 0.7rem/1 var(--display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
 .meter {
   height: 10px;
   border-radius: 99px;
@@ -4219,6 +4246,16 @@ svg.ico.fill {
   display: grid;
   gap: 4px;
   min-width: 0;
+}
+.near__item--tier {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+.near__pair {
+  display: flex;
+}
+.near__pair .near__portrait + .near__portrait {
+  margin-left: -14px;
+  box-shadow: -3px 0 0 var(--ink-2);
 }
 .near__line {
   display: flex;

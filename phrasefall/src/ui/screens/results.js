@@ -4,7 +4,7 @@ import { getExpression } from '../../data/expressions/index.js';
 import { formatScore } from '../../core/utils.js';
 import { formatCountdown, msToNextDaily, shareText } from '../../game/daily.js';
 import { levelInfo } from '../../data/levels.js';
-import { ROSTER, describeRule } from '../../data/roster.js';
+import { ROSTER } from '../../data/roster.js';
 import { GOAL } from '../../game/progress.js';
 import { ring } from './today.js';
 
@@ -146,14 +146,13 @@ export function createResults(app) {
   }
 
   // ── progress: what this game earned, and what is close ─────────────────
-  /** Locked characters the player has made the most progress towards. */
-  function nearUnlocks(count) {
-    const p = save.progress();
-    return ROSTER.filter((r) => r.rule.type !== 'start' && !save.isUnlocked(r.id) && (!save.available || save.available.has(r.id)))
-      .map((r) => ({ ...r, have: Math.min(r.rule.n, p[r.rule.type] ?? 0), frac: save.unlockProgress(r.rule) }))
-      .filter((r) => r.frac > 0)
-      .sort((a, b) => b.frac - a.frac)
-      .slice(0, count);
+  /** The next tier of characters still locked: { rule, ids, rp } or null once every tier is open. */
+  function nextTier() {
+    const locked = ROSTER.filter((r) => r.rule.type === 'tier' && !save.isUnlocked(r.id) && (!save.available || save.available.has(r.id)));
+    if (!locked.length) return null;
+    const first = Math.min(...locked.map((r) => r.rule.tier));
+    const group = locked.filter((r) => r.rule.tier === first);
+    return { rule: group[0].rule, ids: group.map((r) => r.id), rp: save.ruleProgress(group[0].rule) };
   }
 
   /** The XP bar fills up, rolling over once for each level gained. */
@@ -259,23 +258,34 @@ export function createResults(app) {
       )
     );
 
-    // characters that are close
-    const near = nearUnlocks(2);
-    if (near.length) {
+    // the next characters: progress by points or by mastery, whichever is closer
+    const next = nextTier();
+    if (next) {
+      const fmt = (n) => n.toLocaleString('en-GB');
+      const [points, mastered] = next.rp.parts;
+      const byMastery = mastered.frac > points.frac;
+      const lead = byMastery ? mastered : points;
+      const main = byMastery ? `${fmt(mastered.have)}/${fmt(mastered.need)} mastered` : `${fmt(points.have)}/${fmt(points.need)} pts`;
+      const alt = byMastery ? `or earn ${fmt(points.need)} points in total (${fmt(points.have)} so far)` : `or master ${fmt(mastered.need)} expressions (${fmt(mastered.have)} so far)`;
+      const faces = next.ids.map((id) => {
+        const img = h('img', { alt: '' });
+        const t = app.thumbs.get(id);
+        if (t) img.src = t.locked;
+        return h('div.near__portrait', img);
+      });
       rows.push(
         h(
           'div.near',
-          near.map((n) => {
-            const def = getCharacter(n.id);
-            const img = h('img', { alt: '' });
-            const t = app.thumbs.get(n.id);
-            if (t) img.src = t.locked;
-            return h(
-              'div.near__item',
-              h('div.near__portrait', img),
-              h('div.near__body', h('div.near__line', h('b', def.id === n.id ? def.name : 'A new character'), h('span', `${n.have.toLocaleString('en-GB')}/${n.rule.n.toLocaleString('en-GB')}`)), h('span.near__rule', describeRule(n.rule)), h('div.meter.meter--violet', h('i', { style: { width: `${n.frac * 100}%` } })))
-            );
-          })
+          h(
+            'div.near__item.near__item--tier',
+            h('div.near__pair', faces),
+            h(
+              'div.near__body',
+              h('div.near__line', h('b', next.ids.length === 1 ? 'Next character' : `Next ${next.ids.length} characters`), h('span', main)),
+              h('span.near__rule', alt),
+              h('div.meter.meter--violet', h('i', { style: { width: `${lead.frac * 100}%` } }))
+            )
+          )
         )
       );
     }

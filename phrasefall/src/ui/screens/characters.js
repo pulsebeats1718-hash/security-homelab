@@ -1,7 +1,7 @@
 import { h, icon, clear } from '../dom.js';
 import { shots } from '../../game/shots.js';
 import { CHARACTERS } from '../../characters/index.js';
-import { ROSTER, describeRule } from '../../data/roster.js';
+import { ROSTER, TIERS, describeRule } from '../../data/roster.js';
 
 const hex = (n) => `#${n.toString(16).padStart(6, '0')}`;
 const ruleFor = (id) => ROSTER.find((r) => r.id === id)?.rule ?? { type: 'start' };
@@ -15,9 +15,26 @@ export function createCharacters(app) {
   const title = h('span.chip');
   const name = h('h2.chars__name');
   const blurb = h('p.chars__blurb');
-  const lockText = h('span');
-  const lockMeter = h('i');
-  const lock = h('div.chars__lock', h('div.chars__lock-row', icon('lock'), lockText), h('div.meter', lockMeter));
+  const lock = h('div.chars__lock');
+  const fmt = (n) => n.toLocaleString('en-GB');
+  const req = (label, have, need, frac) =>
+    h('div.chars__req', h('div.chars__req-line', h('span', label), h('b', `${fmt(have)} / ${fmt(need)}`)), h('div.meter', h('i', { style: { width: `${Math.round(frac * 100)}%` } })));
+  /** What it takes to unlock: a tier shows both ways in (points or mastery) with progress for each. */
+  function renderLock(rule) {
+    const rp = save.ruleProgress(rule);
+    clear(lock);
+    if (rule.type === 'tier') {
+      const [points, mastered] = rp.parts;
+      lock.append(
+        h('div.chars__lock-row', icon('lock'), h('span', `Tier ${rule.tier} of ${TIERS.length} · two characters unlock together`)),
+        req(`Earn ${fmt(points.need)} points in total`, points.have, points.need, points.frac),
+        h('div.chars__or', 'or'),
+        req(`Master ${fmt(mastered.need)} expressions`, mastered.have, mastered.need, mastered.frac)
+      );
+    } else {
+      lock.append(h('div.chars__lock-row', icon('lock'), h('span', describeRule(rule))), h('div.meter', h('i', { style: { width: `${Math.round(rp.frac * 100)}%` } })));
+    }
+  }
   const select = h('button.btn.btn--gold.chars__select', { 'data-quiet': '1', onclick: choose });
   const strip = h('div.chars__strip.scroll');
   const info = h('div.chars__info', title, name, blurb, lock, select);
@@ -115,10 +132,7 @@ export function createCharacters(app) {
     name.textContent = unlocked ? def.name : '???';
     blurb.textContent = unlocked ? def.blurb : `${def.title} is waiting to join your collection.`;
     lock.hidden = unlocked;
-    if (!unlocked) {
-      lockText.textContent = describeRule(rule);
-      lockMeter.style.width = `${Math.round(save.unlockProgress(rule) * 100)}%`;
-    }
+    if (!unlocked) renderLock(rule);
     const current = def.id === save.data.character;
     clear(select);
     select.disabled = !unlocked;

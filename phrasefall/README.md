@@ -13,9 +13,11 @@ four options before they land.
   advanced expressions and collocations. Each stage is faster and moves the world
   on through the day, from sunrise to a starlit aurora.
 - **39 collectable characters** – real-time 3D, each with its own idle animation
-  and reactions. Purely cosmetic; unlocked by playing (score, streaks, stages,
-  expressions discovered and mastered) — and four only by keeping a daily streak
-  of 7, 30, 100 and 365 days.
+  and reactions. Purely cosmetic. Three are ready from the start; the rest open two
+  at a time in 16 tiers, each needing more points in total across all games
+  (10,000, then 20,000, 35,000 … up to 1,000,000) *or* more expressions mastered
+  (10, 25, 40 … 750), whichever comes first. Four more are only for keeping a daily
+  streak of 7, 30, 100 and 365 days. The pace is set in `src/data/roster.js`.
 - **Reasons to come back** (`src/game/progress.js`) – everything earns XP towards
   a player level, and levels move the island to new places: London at level 3,
   New York at 10, Sydney at 20 (switch any time from *Your journey*). A **daily

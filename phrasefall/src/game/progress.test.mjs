@@ -5,6 +5,7 @@ import { Save } from '../core/storage.js';
 import { Events } from '../core/events.js';
 import { Progress, GOAL, localDay, addDays, daysBetween, questsFor } from './progress.js';
 import { levelInfo, xpToNext, xpForLevel } from '../data/levels.js';
+import { ROSTER, TIERS, describeRule } from '../data/roster.js';
 
 let passed = 0;
 const test = (name, fn) => {
@@ -189,6 +190,49 @@ test('the week report covers the last seven days', () => {
   assert.equal(w.days[5].goal, true);
   assert.equal(w.played, 2);
   assert.equal(w.right, GOAL + 3);
+});
+
+// ── character unlocks: three to start, then pairs by points or mastery ───
+test('roster: three starters, then tiers of two that get steadily harder', () => {
+  assert.deepEqual(ROSTER.filter((r) => r.rule.type === 'start').map((r) => r.id), ['fox', 'astronaut', 'robot']);
+  TIERS.forEach((t, i) => {
+    const ids = ROSTER.filter((r) => r.rule.type === 'tier' && r.rule.tier === i + 1);
+    assert.equal(ids.length, 2, `tier ${i + 1} has two characters`);
+    if (i > 0) {
+      assert.ok(t.points > TIERS[i - 1].points && t.mastered > TIERS[i - 1].mastered, `tier ${i + 1} is harder than tier ${i}`);
+      assert.ok(t.points - TIERS[i - 1].points >= TIERS[Math.max(0, i - 1)].points - (TIERS[i - 2]?.points ?? 0), 'each step in points is at least as big as the last');
+    }
+  });
+  assert.equal(TIERS[0].points, 10_000);
+  assert.equal(TIERS[1].points, 20_000);
+});
+
+test('a fresh save has three characters; 10,000 points opens two more, 20,000 two more', () => {
+  const save = new Save();
+  assert.deepEqual(save.data.unlocked.sort(), ['astronaut', 'fox', 'robot']);
+  save.data.totals.score = 9_999;
+  assert.deepEqual(save.checkUnlocks(), []);
+  save.data.totals.score = 10_000;
+  assert.deepEqual(save.checkUnlocks().sort(), ['chef', 'footballer']);
+  save.data.totals.score = 19_000;
+  assert.deepEqual(save.checkUnlocks(), []);
+  save.data.totals.score = 20_500;
+  assert.deepEqual(save.checkUnlocks().sort(), ['corgi', 'penguin']);
+});
+
+test('mastering expressions opens the same tiers without the points', () => {
+  const save = new Save();
+  const master = (n) => {
+    for (let i = 0; i < n; i++) save.data.expr[`e${i}`] = { seen: 3, correct: 3, wrong: 0, streak: 3, last: 'c', fav: false, practise: false, t: 1 };
+  };
+  master(TIERS[0].mastered - 1);
+  assert.deepEqual(save.checkUnlocks(), []);
+  const rp = save.ruleProgress(ROSTER.find((r) => r.id === 'chef').rule);
+  assert.equal(rp.parts[1].have, TIERS[0].mastered - 1);
+  assert.ok(rp.frac > 0.8 && !rp.done);
+  master(TIERS[0].mastered);
+  assert.deepEqual(save.checkUnlocks().sort(), ['chef', 'footballer']);
+  assert.equal(describeRule(ROSTER.find((r) => r.id === 'corgi').rule), `Earn 20,000 points in total, or master ${TIERS[1].mastered} expressions`);
 });
 
 Date.now = realNow;

@@ -31,7 +31,7 @@
  * Unknown fields (top level, settings, per-expression) are kept as they are, so
  * other modules — cloud sync, for one — can add their own without losing them.
  */
-import { ROSTER } from '../data/roster.js';
+import { ROSTER, ruleProgress } from '../data/roster.js';
 import { levelInfo } from '../data/levels.js';
 
 const KEY = 'phrasefall.save.v1';
@@ -419,8 +419,7 @@ export class Save {
     const fresh = [];
     for (const { id, rule } of ROSTER) {
       if (this.data.unlocked.includes(id) || (this.available && !this.available.has(id))) continue;
-      const have = rule.type === 'start' ? Infinity : p[rule.type] ?? 0;
-      if (have >= (rule.n ?? 0)) {
+      if (ruleProgress(rule, p).done) {
         this.data.unlocked.push(id);
         fresh.push(id);
       }
@@ -428,10 +427,13 @@ export class Save {
     return fresh;
   }
 
-  /** 0…1 progress towards a character's unlock rule. */
+  /** 0…1 progress towards a character's unlock rule (a tier: the better of points and mastery). */
   unlockProgress(rule) {
-    if (rule.type === 'start') return 1;
-    const p = this.progress();
-    return Math.max(0, Math.min(1, (p[rule.type] ?? 0) / rule.n));
+    return ruleProgress(rule, this.progress()).frac;
+  }
+
+  /** Full progress towards a rule, for display: { frac, done, parts: [{ label, have, need, frac }] }. */
+  ruleProgress(rule) {
+    return ruleProgress(rule, this.progress());
   }
 }
