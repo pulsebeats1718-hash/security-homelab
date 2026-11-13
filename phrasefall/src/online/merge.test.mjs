@@ -155,8 +155,8 @@ test('decoding refuses unknown formats and garbage instead of guessing', () => {
 
 // ── nicknames ───────────────────────────────────────────────────────────
 test('nickname rules', () => {
-  for (const ok of ['Sam', 'Zoë 2', 'José Luis', '李明明', 'Ana Maria 99', 'Hancock', 'Nazir', 'Titus', 'Scunthorpe Fan']) assert.equal(checkName(ok).ok, true, ok);
-  for (const bad of ['Al', 'a'.repeat(17), ' ', 'Sam!', 'x_y', 'fuck', 'F u c k', 'sh1t head', 'Admin', 'big dick', 'Phrasefall HQ']) assert.equal(checkName(bad).ok, false, bad);
+  for (const ok of ['Sam', 'Zoë 2', 'José Luis', '李明明', 'Ana Maria 99', 'Hancock', 'Nazir', 'Titus', 'Scunthorpe Fan', 'Matsushita', 'Swanky', 'Pornchai', 'The Therapist']) assert.equal(checkName(ok).ok, true, ok);
+  for (const bad of ['Al', 'a'.repeat(17), ' ', 'Sam!', 'x_y', 'fuck', 'F u c k', 'sh1t head', 'Admin', 'big dick', 'Phrasefall HQ', 'wanker', 'Big C0ck', 'n4z1']) assert.equal(checkName(bad).ok, false, bad);
   assert.equal(checkName('  Sam   Smith ').name, 'Sam Smith');
 });
 
