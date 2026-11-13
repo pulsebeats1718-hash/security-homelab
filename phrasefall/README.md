@@ -24,6 +24,10 @@ four options before they land.
   ranked attempt a day (replays are practice) and a shareable emoji result.
 - **Installable and offline** – the production build is a PWA (manifest, icons,
   service worker); after the first visit it plays offline.
+- **Online, optional** – sign in with Google to keep progress in the cloud across
+  devices and join live leaderboards (today's daily challenge, this week, all time).
+  Guests play straight away, and their progress comes along when they sign in.
+  Runs on Firebase; setup, costs and limits are in [DEPLOY.md](DEPLOY.md).
 - **1,685 British English expressions** – 210 everyday expressions, 485 phrasal
   verbs, 480 idioms, 260 set phrases and 250 advanced idioms and collocations –
   each with three plausible wrong answers, an example, synonyms, register, context
@@ -40,8 +44,10 @@ npm run build:single   # one self-contained HTML file in dist-single/
 npm run check:data     # validate the expression database (see below)
 ```
 
-Requires Node 18+. The only runtime dependency is [three.js](https://threejs.org);
-fonts (Fredoka, Nunito — both OFL) are bundled, so the built game works offline.
+Requires Node 18+. The runtime dependencies are [three.js](https://threejs.org) and,
+only in builds with a Firebase config (`.env.local`, see [DEPLOY.md](DEPLOY.md)), the
+Firebase SDK, fetched on demand; fonts (Fredoka, Nunito — both OFL) are bundled, so the
+built game works offline. `node src/online/merge.test.mjs` runs the cloud-save tests.
 
 ## Controls
 
@@ -70,6 +76,7 @@ src/
   world/                  sky, lighting themes, island, clouds, particle effects
   game/                   rules (game.js), the daily challenge (daily.js), the falling card, camera framing, the live hero
   audio/                  synthesised sound effects and generative music
+  online/                 optional Google sign-in, cloud save and leaderboards (Firebase, loaded on demand)
   ui/                     screens (menu, characters, HUD, results, flashcards, collection …)
   styles/main.css         the interface look
 dev/                      character and world preview pages, character authoring guide
@@ -148,8 +155,13 @@ correct answer, the number of answers that clears a stage, and the points.
   (Auto / High / Medium / Low) plus dynamic resolution keep the frame rate steady
   on phones. Development screenshots were taken with a software renderer, so real
   frame rates were reasoned about rather than measured on physical devices.
-- **Progress is saved in the browser** (`localStorage`). It does not sync between
-  devices and is lost if site data is cleared.
+- **Progress is saved in the browser** (`localStorage`). Players who sign in also
+  get a cloud copy that syncs between devices; a guest's progress is lost if site
+  data is cleared.
+- **Leaderboard scores come from the player's browser.** The Firestore rules keep
+  them within believable bounds, but a determined player could still send a fake
+  one; checking games on the server with Cloud Functions is the upgrade path
+  (see DEPLOY.md).
 - Flashcard pronunciation uses the browser's speech synthesis, so the voice
   depends on the device.
 - **Content was written and fact-checked with AI assistance.** Every expression

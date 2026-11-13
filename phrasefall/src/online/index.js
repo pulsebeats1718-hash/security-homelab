@@ -11,8 +11,9 @@
  *   user                 null | { uid, name, photo }   name = public nickname
  *   on(event, fn)        → unsubscribe. Events:
  *     'user'     user | null
- *     'rank'     after submitScore: { mode, board: 'daily'|'week'|'all', boardId, rank, score,
- *                counted, improved, text: '#12 today', ranks: { daily?, week?, all? } }
+ *     'rank'     after submitScore: { mode, board: 'daily'|'week'|'all', boardId, rank, capped,
+ *                score, counted, improved, text: '#12 today', ranks: { daily?, week?, all? } }
+ *                (ranks past 10,000 are not counted exactly: capped = true, text '#10,000+ …')
  *                (also emitted on app.events as 'online:rank')
  *     'sync'     { state: 'idle'|'syncing'|'synced'|'offline'|'error', at }
  *     'name-needed'  { suggestion, first }  — the account UI asks for a nickname
@@ -72,15 +73,19 @@ export function createOnline(app) {
     /** Load Firebase (once). Called at the end of boot; safe to call again. */
     start() {
       if (!ONLINE) return Promise.resolve(null);
-      loading ??= loadService()
-        .then((m) => (impl = m.createService(online, app, { config: FIREBASE_CONFIG, emulatorHost: EMULATOR_HOST, hintKey: HINT_KEY })))
-        .catch((err) => {
+      loading ??= loadService().then(
+        (m) => (impl = m.createService(online, app, { config: FIREBASE_CONFIG, emulatorHost: EMULATOR_HOST, hintKey: HINT_KEY })),
+        (err) => {
+          // offline on a first visit, say: play on as a guest and try again on the next call
           console.warn('Phrasefall online features failed to load:', err);
-          online.ready = true;
-          online.failed = true;
-          online.emit('user', null);
+          loading = null;
+          if (!online.ready) {
+            online.ready = true;
+            online.emit('user', null);
+          }
           return null;
-        });
+        }
+      );
       return loading;
     },
 
@@ -110,7 +115,9 @@ export function createOnline(app) {
   async function call(name, arg, fallback = null) {
     if (!ONLINE) return fallback;
     await online.start();
-    return impl ? impl[name](arg) : fallback;
+    if (impl) return impl[name](arg);
+    if (name === 'signIn') online.emit('notice', { text: 'Sign-in is not available right now. Check your connection and try again.', error: true });
+    return fallback;
   }
 
   return online;

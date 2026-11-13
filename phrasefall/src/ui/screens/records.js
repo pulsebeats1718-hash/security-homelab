@@ -68,7 +68,7 @@ export function recordsContent(app) {
     ),
     dailyHistory(save),
     save.persistent ? null : h('p.about', 'Your browser is blocking saved data here, so progress will last only until this page is closed.'),
-  ];
+  ].filter(Boolean);
 }
 
 /** Personal Best: lifetime records at a glance (the leaderboard screen's "Me" tab shows the same). */

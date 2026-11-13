@@ -1,7 +1,7 @@
 import { h, icon, clear } from '../dom.js';
 import { shots } from '../../game/shots.js';
 import { formatScore } from '../../core/utils.js';
-import { dailyNumber } from '../../game/daily.js';
+import { dailyNumber, DAILY_CARDS } from '../../game/daily.js';
 import { dayId, weekId, msToNextDay, msToNextWeek, formatSpan, formatDay } from '../../online/dates.js';
 import { recordsContent } from './records.js';
 import { signInButton } from '../account.js';
@@ -63,7 +63,7 @@ export function createLeaderboard(app) {
   const row = (r, pinned = false) =>
     h(
       `div.lb-row${r.me ? '.is-me' : ''}${r.rank <= 3 ? `.is-top.is-top${r.rank}` : ''}${pinned ? '.is-pinned' : ''}`,
-      h('span.lb-row__rank', { 'aria-label': `Rank ${r.rank}` }, r.rank.toLocaleString('en-GB')),
+      h('span.lb-row__rank', { 'aria-label': r.capped ? 'Rank 10,000 or lower' : `Rank ${r.rank}` }, r.capped ? '10k+' : r.rank.toLocaleString('en-GB')),
       face(r.character),
       h('span.lb-row__name', h('span', r.name ?? 'Player'), r.me ? h('span.lb-row__you', 'You') : null),
       h('span.lb-row__score', formatScore(r.score ?? 0))
@@ -135,7 +135,7 @@ export function createLeaderboard(app) {
     if (!board.rows.length) {
       body.append(
         tab === 'today'
-          ? empty('calendar', 'No scores yet today', 'Be the first on the board: everyone gets the same 20 expressions.', playDaily())
+          ? empty('calendar', 'No scores yet today', `Be the first on the board: everyone gets the same ${DAILY_CARDS} expressions.`, playDaily())
           : empty('trophy', tab === 'week' ? 'No scores this week yet' : 'No scores yet', 'Finish a classic game to put your name up here.', play())
       );
       return;
@@ -143,7 +143,7 @@ export function createLeaderboard(app) {
     body.append(h('div.lb__rows', board.rows.map((r) => row(r))));
     const me = board.me;
     if (me && !me.inTop) {
-      pin.append(row({ rank: me.rank, name: online.user.name, character: me.character ?? app.save.data.character, score: me.score, me: true }, true));
+      pin.append(row({ rank: me.rank, capped: me.capped, name: online.user.name, character: me.character ?? app.save.data.character, score: me.score, me: true }, true));
     } else if (!me) {
       pin.append(h('div.lb__invite', h('span', tab === 'today' ? 'Play today’s challenge to join this board.' : 'Finish a classic game to join this board.'), tab === 'today' ? playDaily() : play()));
     }

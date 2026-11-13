@@ -1,7 +1,7 @@
 import { h, icon, clear } from '../dom.js';
 import { shots } from '../../game/shots.js';
 import { PACE, STAGES } from '../../data/stages.js';
-import { TOTAL_EXPRESSIONS } from '../../data/expressions/index.js';
+import { TOTAL_EXPRESSIONS, expressionsReady, whenExpressionsReady } from '../../data/expressions/index.js';
 import { CHARACTERS } from '../../characters/index.js';
 import { avatar, googleMark, signInButton, syncText } from '../account.js';
 
@@ -150,6 +150,14 @@ export function createSettings(app) {
     if (line) line.textContent = syncText(state);
   });
 
+  // the expressions load in the background, so the count is filled in when the screen opens
+  const about = h('p.about');
+  function syncAbout() {
+    const total = expressionsReady() ? `${TOTAL_EXPRESSIONS.toLocaleString('en-GB')} ` : '';
+    about.textContent = `Phrasefall · ${total}British English expressions across ${STAGES.length} stages, ${CHARACTERS.length} characters to collect. Music and sound are synthesised live in your browser.`;
+    if (!total) whenExpressionsReady().then(() => ui.name === 'settings' && syncAbout(), () => {});
+  }
+
   const resetRow = h('div.set');
   function syncReset(confirming = false) {
     clear(resetRow);
@@ -192,7 +200,7 @@ export function createSettings(app) {
         h('div.set', h('span.set__ico', icon('wind')), h('span.set__label', 'Reduce motion'), motion, h('p.set__note', 'Calms screen shake and camera drift.')),
         resetRow,
         app.online?.available ? h('p.about', 'When you are signed in, your nickname, character and scores appear on the public leaderboards. Your cloud save is private to your account.') : null,
-        h('p.about', `Phrasefall · ${TOTAL_EXPRESSIONS.toLocaleString('en-GB')} British English expressions across ${STAGES.length} stages, ${CHARACTERS.length} characters to collect. Music and sound are synthesised live in your browser.`)
+        about
       )
     )
   );
@@ -210,6 +218,7 @@ export function createSettings(app) {
       syncMotion();
       syncReset(false);
       syncAccount(false);
+      syncAbout();
     },
     key(e) {
       if (e.key === 'Escape') leave();

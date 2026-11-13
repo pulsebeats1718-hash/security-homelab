@@ -2986,7 +2986,7 @@ svg.ico.fill {
 }
 .lb-row {
   display: grid;
-  grid-template-columns: 2.4em 44px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(2.4em, auto) 44px minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
   min-height: 58px;

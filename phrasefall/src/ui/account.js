@@ -81,7 +81,7 @@ export function createAccount(app) {
   function open(content, { canClose = true, enter = null, focus = null } = {}) {
     closable = canClose;
     onEnter = enter;
-    clear(panel).append(...content);
+    clear(panel).append(...content.filter(Boolean)); // append(null) would print "null"
     if (!modal.classList.contains('is-on')) {
       returnFocus = document.activeElement;
       window.addEventListener('keydown', onKey, true);

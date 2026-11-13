@@ -47,6 +47,8 @@ const WRITE_DELAY = 12_000; // debounce for cloud-save writes
 const RESYNC_AFTER = 10 * 60_000; // re-read the cloud save when the tab returns after this long
 const TOP = 50;
 const RANK_TTL = 5 * 60_000;
+// counting stops here (≤ 10 reads a count); further down a rank reads "#10,000+"
+const RANK_CAP = 10_000;
 const DAY = 86_400_000;
 // keep in step with validScore() in firestore.rules
 const MAX = { score: 200_000, stage: 5, answered: 500 };
@@ -54,6 +56,7 @@ const MAX = { score: 200_000, stage: 5, answered: 500 };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const clone = (v) => JSON.parse(JSON.stringify(v));
 const fmt = (n) => n.toLocaleString('en-GB');
+const place = (rank) => (rank > RANK_CAP ? `#${fmt(RANK_CAP)}+` : `#${fmt(rank)}`);
 const store = {
   get(key, fallback) {
     try {
@@ -184,7 +187,11 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
     online.emit('user', u);
   }
 
+  // calls that arrive during boot (a ranked daily settled as the menu first shows) wait for this
+  let authKnown = () => {};
+  const authReady = new Promise((resolve) => (authKnown = resolve));
   onAuthStateChanged(auth, (u) => {
+    authKnown();
     const before = user?.uid;
     user = u;
     if (!u || u.uid !== before) {
@@ -465,13 +472,14 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
   async function rankOn(board, score) {
     const hit = ranks.get(board);
     if (hit && hit.score === score && Date.now() - hit.at < RANK_TTL) return hit.rank;
-    const snap = await F.getCountFromServer(F.query(F.collection(db, 'boards', board, 'scores'), F.where('score', '>', score)));
-    const rank = snap.data().count + 1;
+    const snap = await F.getCountFromServer(F.query(F.collection(db, 'boards', board, 'scores'), F.where('score', '>', score), F.limit(RANK_CAP)));
+    const rank = snap.data().count + 1; // RANK_CAP + 1 means "further down than that"
     ranks.set(board, { score, rank, at: Date.now() });
     return rank;
   }
 
   async function submitScore(r) {
+    await authReady; // the restored session may not be known yet; signed out → the score stays local only
     const u = user;
     if (!u || !r) return null;
     const mode = r.mode === 'daily' ? 'daily' : 'classic';
@@ -497,8 +505,8 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
     }
   }
 
-  /** Write one finished game to its boards; with `rank`, also work out where it placed. */
-  async function post(job, rank) {
+  /** Write one finished game to its boards; with `withRank`, also work out where it placed. */
+  async function post(job, withRank) {
     const data = { ...job.entry, name: currentName(), uid: job.uid, at: F.serverTimestamp() };
     if (job.mode === 'daily') {
       // the first ranked attempt of the day is the one that counts (the rules make it create-only)
@@ -515,9 +523,9 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
         }
       }
       const score = counted ? job.entry.score : snap.exists() ? snap.data().score : null;
-      if (!rank || score == null) return null;
-      const place = await rankOn(job.daily, score);
-      return { mode: 'daily', board: 'daily', boardId: job.daily, rank: place, score, counted, improved: counted, text: `#${fmt(place)} today`, ranks: { daily: place } };
+      if (!withRank || score == null) return null;
+      const pos = await rankOn(job.daily, score);
+      return { mode: 'daily', board: 'daily', boardId: job.daily, rank: pos, capped: pos > RANK_CAP, score, counted, improved: counted, text: `${place(pos)} today`, ranks: { daily: pos } };
     }
     // classic: the weekly and all-time boards keep each player's best
     const boards = [job.week, boardId.all()];
@@ -532,9 +540,9 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
       if (improved[i]) batch.set(scoreDoc(b, job.uid), data);
     });
     if (improved.some(Boolean)) await batch.commit();
-    if (!rank) return null;
+    if (!withRank) return null;
     const [week, all] = await Promise.all([rankOn(boards[0], best[0]), improved[1] ? rankOn(boards[1], best[1]) : null]);
-    return { mode: 'classic', board: 'week', boardId: boards[0], rank: week, score: best[0], counted: true, improved: improved[0], text: `#${fmt(week)} this week`, ranks: { week, all } };
+    return { mode: 'classic', board: 'week', boardId: boards[0], rank: week, capped: week > RANK_CAP, score: best[0], counted: true, improved: improved[0], text: `${place(week)} this week`, ranks: { week, all } };
   }
 
   function queue(job) {
@@ -618,7 +626,7 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
         rankedFor = mine.score;
         try {
           const rank = await rankOn(board, mine.score);
-          if (alive) state.me = { rank, score: mine.score, character: mine.character, inTop: false };
+          if (alive) state.me = { rank, capped: rank > RANK_CAP, score: mine.score, character: mine.character, inTop: false };
         } catch {
           rankedFor = null;
         }
