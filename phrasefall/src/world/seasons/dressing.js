@@ -137,7 +137,7 @@ export class Dressing {
       Object.assign(shader.uniforms, u);
       shader.vertexShader = shader.vertexShader
         .replace('#include <common>', '#include <common>\nattribute float aTint;\nattribute float aStart;\nuniform float uGrow;\nuniform float uPop;')
-        .replace('#include <color_vertex>', 'vColor = color;\n#ifdef USE_INSTANCING_COLOR\nvColor = mix(vColor, vColor * instanceColor, aTint);\n#endif')
+        .replace('#include <color_vertex>', 'vColor = vec4(color, 1.0);\n#ifdef USE_INSTANCING_COLOR\nvColor.rgb = mix(vColor.rgb, vColor.rgb * instanceColor.rgb, aTint);\n#endif')
         .replace(
           '#include <begin_vertex>',
           `#include <begin_vertex>
