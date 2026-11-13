@@ -276,16 +276,16 @@ function buildGlasses(rig, cfg, color, mats) {
   };
   const nudge = cfg.nudge ?? 0.03;
   for (const L of lenses) {
-    for (let k = 0; k < 7; k++) {
+    for (let k = 0; k < 4; k++) {
       const { need, below, above } = probe(L);
-      if (need <= nudge || k === 6) {
+      if (need <= nudge || k === 3) {
         L.lift += Math.min(need, maxLift);
         break;
       }
       const dir = below >= above ? 1 : -1; // snout below → go up; hat brim or fringe above → go down
       L.hh *= 0.9;
       L.hw *= 0.96;
-      L.c.addScaledVector(L.y, dir * L.hh * 0.09);
+      L.c.addScaledVector(L.y, dir * L.hh * 0.08);
     }
   }
   // both lenses at the same depth so the frame stays symmetric
