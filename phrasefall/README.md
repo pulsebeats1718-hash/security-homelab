@@ -18,6 +18,12 @@ four options before they land.
   (10,000, then 20,000, 35,000 … up to 1,000,000) *or* more expressions mastered
   (10, 25, 40 … 750), whichever comes first. Four more are only for keeping a daily
   streak of 7, 30, 100 and 365 days. The pace is set in `src/data/roster.js`.
+- **Four seasons** (`src/world/seasons/`, `src/data/seasons.js`) – the world follows the
+  player's calendar (meteorological seasons, flipped for southern-hemisphere time
+  zones) or a season chosen in Settings: autumn leaves tumbling across the sky,
+  winter snow with a snowman, spring flowers and butterflies, and a summer beach
+  where every character wears sunglasses and a swim ring
+  (`src/characters/kit/summer.js`). Seasons dress every place.
 - **Reasons to come back** (`src/game/progress.js`) – everything earns XP towards
   a player level, and levels move the island to new places: London at level 3,
   New York at 10, Sydney at 20 (switch any time from *Your journey*). A **daily
