@@ -24,8 +24,7 @@
  *   progress:goal { count, brolly, unlocked, milestone }
  *   progress:streak-lost { count }       progress:brolly-used { n, count }
  */
-import { mulberry32 } from '../core/utils.js';
-import { hash32 } from './daily.js';
+import { mulberry32, hash32 } from '../core/utils.js';
 import { XP, levelInfo } from '../data/levels.js';
 import { PLACES, placesForLevel } from '../data/places.js';
 import { blankDay, BROLLY_MAX, DAYS_KEEP } from '../core/storage.js';
@@ -122,6 +121,10 @@ export class Progress {
   get data() {
     return this.save.data;
   }
+  /** The game in progress (its bookkeeping stops once it has finished). */
+  get liveRun() {
+    return this.run && !this.run.done ? this.run : null;
+  }
 
   // ── level ───────────────────────────────────────────────────────────────
   get xp() {
@@ -140,12 +143,13 @@ export class Progress {
     const before = levelInfo(this.xp).level;
     this.data.totals.xp = this.xp + amount;
     this._day().xp += amount;
-    if (this.run) this.run.xp += amount;
+    const run = this.liveRun;
+    if (run) run.xp += amount;
     const after = levelInfo(this.xp).level;
     this.events.emit('progress:xp', { gained: amount, total: this.xp });
     if (after > before) {
       const places = PLACES.filter((p) => p.level > before && p.level <= after);
-      if (this.run) this.run.places.push(...places);
+      if (run) run.places.push(...places);
       this.events.emit('progress:level', { level: after, from: before, places });
       this.save.write();
     }
@@ -289,9 +293,10 @@ export class Progress {
       brolly = true;
     }
     const unlocked = this.save.checkUnlocks(); // the streak characters
-    if (this.run) {
-      this.run.goal = true;
-      this.run.unlocked.push(...unlocked);
+    const run = this.liveRun;
+    if (run) {
+      run.goal = true;
+      run.unlocked.push(...unlocked);
     }
     this.addXp(XP.goal);
     this.save.write();
@@ -343,7 +348,7 @@ export class Progress {
       q[key] = max ? Math.max(before, value) : before + value;
       if (!q[`d${quest.slot}`] && q[key] >= quest.n) {
         q[`d${quest.slot}`] = true;
-        if (this.run) this.run.quests.push(quest.slot);
+        this.liveRun?.quests.push(quest.slot);
         this.addXp(quest.xp);
         this.events.emit('progress:quest', { quest: { ...quest, have: quest.n, done: true } });
         if (q.d0 && q.d1 && q.d2) this.events.emit('progress:chest-ready');
@@ -407,6 +412,7 @@ export class Progress {
       }
     }
     this._checkGoal(id);
+    if (this.run) this.run.done = true;
     this.save.write();
   }
 

@@ -225,7 +225,7 @@ export function createHud(app) {
   }
   events.on('game:fever', ({ on, quiet }) => {
     setFever(on);
-    if (on && !quiet) showBanner('Fever!', 'Double points', 'Keep the streak going');
+    if (on && !quiet) showBanner('×10 streak', 'Fever!', 'Double points until you miss');
   });
 
   events.on('game:answered', ({ choice, correct, correctIndex }) => {

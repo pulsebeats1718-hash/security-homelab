@@ -200,6 +200,17 @@ export const SHAPE = {
   /** triangular prism (a gable roof): ridge along X, 1 long, 1 tall, 1 deep, centred */
   prism: faceted(new THREE.CylinderGeometry(0.5, 0.5, 1, 3, 1).rotateZ(Math.PI / 2).rotateX(Math.PI / 6).scale(1, 1 / 0.75, 2 / Math.sqrt(3)).translate(0, -1 / 6, 0)),
   quad: new THREE.PlaneGeometry(1, 1),
+  /** upper half of a disc facing +Z, 1 across, 1 thick (fanlights, arches) */
+  halfDisc: new THREE.CylinderGeometry(0.5, 0.5, 1, 12, 1, false, 0, Math.PI).rotateX(Math.PI / 2).rotateZ(Math.PI / 2),
+  /** square lantern glass, wider at the top */
+  lantern: faceted(new THREE.CylinderGeometry(0.5 * Math.SQRT2, 0.36 * Math.SQRT2, 1, 4, 1).rotateY(Math.PI / 4)),
+  /** flat triangle pennant hanging down from its top edge (0.5 each side of x = 0, tip at y = -1) */
+  pennant: (() => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute([-0.5, 0, 0, 0, -1, 0, 0.5, 0, 0, 0.5, 0, 0, 0, -1, 0, -0.5, 0, 0], 3));
+    g.computeVertexNormals();
+    return g;
+  })(),
   torus: new THREE.TorusGeometry(0.5, 0.04, 6, 40),
 };
 
@@ -259,6 +270,8 @@ const VERT_NORMAL = /* glsl */ `
 if (aAnim.x > 0.5 && aAnim.x < 2.5) {
   if (aAnim.x < 1.5) objectNormal.xy = pfRot(objectNormal.xy, uTime * aAnim.y + aAnim.z);
   else objectNormal.xz = pfRot(objectNormal.xz, uTime * aAnim.y + aAnim.z);
+} else if (aAnim.x > 3.5) {
+  objectNormal.xy = pfRot(objectNormal.xy, aAnim.w * (0.5 - 0.5 * cos(uTime * aAnim.y + aAnim.z)));
 }
 #endif
 `;
@@ -268,7 +281,8 @@ const VERT_POS = /* glsl */ `
 if (aAnim.x > 0.5) {
   if (aAnim.x < 1.5) transformed.xy = aAxis.xy + pfRot(transformed.xy - aAxis.xy, uTime * aAnim.y + aAnim.z);
   else if (aAnim.x < 2.5) transformed.xz = aAxis.xz + pfRot(transformed.xz - aAxis.xz, uTime * aAnim.y + aAnim.z);
-  else transformed += aAxis * (sin(uTime * aAnim.y + aAnim.z - aAnim.w * 2.6) * aAnim.w);
+  else if (aAnim.x < 3.5) transformed += aAxis * (sin(uTime * aAnim.y + aAnim.z - aAnim.w * 2.6) * aAnim.w);
+  else transformed.xy = aAxis.xy + pfRot(transformed.xy - aAxis.xy, aAnim.w * (0.5 - 0.5 * cos(uTime * aAnim.y + aAnim.z)));
 }
 #endif
 float pfU = clamp((uPop - aPop.w * ${STAGGER.toFixed(3)}) / ${(1 - STAGGER).toFixed(3)}, 0.0, 1.0);
@@ -385,10 +399,10 @@ export class Batch {
       if (m) {
         const p = g.attributes.position;
         for (let i = 0; i < n; i++) {
-          let w = 1;
+          let w = m.amp ?? 1;
           if (m.len) {
             _v.fromBufferAttribute(p, i).applyMatrix4(m.inv);
-            w = Math.min(1, Math.max(0, _v.x / m.len));
+            w = Math.min(1, Math.max(0, (_v.x * m.along[0] + _v.y * m.along[1] + _v.z * m.along[2]) / m.len));
           }
           anim.set([m.type, m.speed, m.phase, w], i * 4);
           axis.set(m.axis, i * 3);
@@ -460,11 +474,19 @@ export class Batch {
     return this._scope(fn, null, { motion: { type: axis === 'z' ? 1 : 2, speed, phase, axis: this.world(px, py, pz), len: 0 } });
   }
 
-  /** Cloth hanging from the local origin along +X over `len` (flags): ripples along local (dx, dy, dz). */
-  wave(dx, dy, dz, freq, phase, len, fn) {
+  /**
+   * Cloth (flags, pennants): parts in `fn` ripple along the local direction `dir`, more the further
+   * they are from the local origin along `along` (0 at the origin, full at `len`).
+   */
+  wave({ dir = [0, 0, 1], along = [1, 0, 0], len = 1, freq = 3, phase = 0 }, fn) {
     _rot.setFromMatrix4(this.frame);
-    const dir = _w.set(dx, dy, dz).applyMatrix3(_rot).toArray();
-    return this._scope(fn, null, { motion: { type: 3, speed: freq, phase, axis: dir, len, inv: _inv.copy(this.frame).invert().clone() } });
+    const axis = _w.set(...dir).applyMatrix3(_rot).toArray();
+    return this._scope(fn, null, { motion: { type: 3, speed: freq, phase, axis, len, along, inv: _inv.copy(this.frame).invert().clone() } });
+  }
+
+  /** Parts in `fn` rock about the world Z axis through local (px, py, pz), from 0 up to `angle` and back. */
+  swing(px, py, pz, angle, freq, phase, fn) {
+    return this._scope(fn, null, { motion: { type: 4, speed: freq, phase, axis: this.world(px, py, pz), len: 0, amp: angle } });
   }
 
   /** Parts added in `fn` drift back and forth along the local vector (dx, dy, dz). */

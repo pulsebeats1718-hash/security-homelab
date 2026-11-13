@@ -61,7 +61,8 @@ npm run check:data     # validate the expression database (see below)
 Requires Node 18+. The runtime dependencies are [three.js](https://threejs.org) and,
 only in builds with a Firebase config (`.env.local`, see [DEPLOY.md](DEPLOY.md)), the
 Firebase SDK, fetched on demand; fonts (Fredoka, Nunito — both OFL) are bundled, so the
-built game works offline. `node src/online/merge.test.mjs` runs the cloud-save tests.
+built game works offline. `node src/online/merge.test.mjs` runs the cloud-save tests and
+`node src/game/progress.test.mjs` the level, streak and quest tests.
 
 ## Controls
 
