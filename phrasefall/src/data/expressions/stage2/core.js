@@ -210,7 +210,7 @@ export default [
   },
   {
     id: 'get-over',
-    text: 'get over',
+    text: 'get over (the flu)',
     type: 'phrasal',
     level: 1,
     meaning: 'feel better after an illness or shock',
@@ -223,7 +223,7 @@ export default [
   },
   {
     id: 'come-across',
-    text: 'come across',
+    text: 'come across (an old photo)',
     type: 'phrasal',
     level: 1,
     meaning: 'find something by chance',

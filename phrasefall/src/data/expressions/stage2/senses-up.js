@@ -2028,4 +2028,17 @@ export default [
     context: 'British, used between friends who share costs.',
     mistake: 'Use "square up with someone": "square up with him", not "square up to him" for paying.',
   },
+  {
+    id: 'blow-up-a-balloon',
+    text: 'blow up (a balloon)',
+    type: 'phrasal',
+    level: 1,
+    meaning: 'fill it with air',
+    distractors: ['let the air out of it', 'tie it to a chair', 'paint a face on it'],
+    example: 'We spent the morning blowing up balloons for the party.',
+    synonyms: ['inflate', 'pump up'],
+    register: 'Neutral',
+    context: 'Used for balloons, tyres and air beds that you fill with air by mouth or with a pump.',
+    mistake: 'Pronouns go in the middle: "blow it up", not "blow up it".',
+  },
 ];

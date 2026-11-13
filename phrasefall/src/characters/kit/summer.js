@@ -324,6 +324,10 @@ function measureWaist(parent, exclude, y, band) {
     if (best) pts.push(best);
   }
   if (pts.length < N / 2) return null;
+  // a tail or a held-out prop pokes through the ring rather than blowing it up
+  const sorted = pts.map((p) => p.rr).sort((a, b) => a - b);
+  const median = sorted[Math.floor(sorted.length / 2)];
+  for (let i = pts.length - 1; i >= 0; i--) if (pts[i].rr > median * 1.3) pts.splice(i, 1);
   let maxX = 0;
   let minZ = Infinity;
   let maxZ = -Infinity;
