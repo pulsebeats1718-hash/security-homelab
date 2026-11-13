@@ -113,8 +113,10 @@ if (dot(uSeason, uSeason) > 0.0) {
     float g = leafy ? 1.0 : grass;
     c = mix(c, c * vec3(0.82, 1.14, 0.62) + vec3(0.015, 0.05, 0.0), uSeason.x * g);
     if (leafy && h < 0.55) {
-      float bloom = smoothstep(0.6, 0.68, pfWobble(vPfWorld * 4.7 + h * 13.0));
-      c = mix(c, h < 0.3 ? ${lin(0xffb8d2)} : ${lin(0xfff2f6)}, uSeason.x * bloom * 0.9);
+      // little clusters of blossom dotted over the canopy
+      vec3 bp = vPfWorld * 11.0 + h * 17.0;
+      float bloom = smoothstep(0.72, 0.8, pfWobble(bp) * 0.55 + pfWobble(bp * 1.9 + 3.1) * 0.45);
+      c = mix(c, h < 0.3 ? ${lin(0xffb8d2)} : ${lin(0xfff2f6)}, uSeason.x * bloom * 0.95);
     }
   }
   // autumn: a colour per tree, blended across the canopy; warmer grass

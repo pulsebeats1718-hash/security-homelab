@@ -1,9 +1,9 @@
 /**
  * Cloud save encoding for saves/{uid}. Pure functions, round-trip tested in merge.test.mjs.
  *
- * Firestore caps a document at 1 MiB. As plain JSON, 4,000 expression records come to
- * ~450 KB; here the per-id record maps (`expr`, `daily`) become tab-separated rows under a
- * shared column list, with integers in base 36, which is ~150 KB for 4,000 records. Fields
+ * Firestore caps a document at 1 MiB. As plain JSON, 6,000 expression records come to
+ * ~970 KB; here the per-id record maps (`expr`, `daily`) become tab-separated rows under a
+ * shared column list, with integers in base 36, which is ~370 KB for 6,000 records. Fields
  * nobody planned for (new columns, nested values, new top-level keys) are carried as-is:
  * new keys become new columns, and any value that is not a small scalar falls back to JSON.
  *

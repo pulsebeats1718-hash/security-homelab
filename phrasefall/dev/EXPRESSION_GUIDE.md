@@ -118,6 +118,9 @@ fit several, the rule in the table decides.
 | `stage1/spoken-2.js` | spoken reactions, opinions, fillers and softeners, and British politeness and understatement (`I'm not being funny, but…`, `with all due respect`) |
 | `stage2/senses-*.js` | extra meanings of phrasal verbs, with sense hints, split by first particle like the files above (`senses-up`, `senses-out`, `senses-off-down`, `senses-on-in`, `senses-other`) |
 | `stage5/collocations-everyday-verb.js`, `…-adj.js` | B1–C1 collocations that make English sound natural: verb + noun (`meet a deadline`), adjective/adverb + noun or adjective (`heavy traffic`, `fast asleep`) |
+| `stage5/collocations-adverb-verb.js` | adverb + verb and verb + adverb collocations (`strongly recommend`, `sleep soundly`) |
+| `stage1/spoken-3.js` | spoken and written phrases for work, study and messages (`no rush`, `just to flag`, `kind regards`) |
+| `stageN/*-2.js`, `*-3.js` | later batches of the file with the same name, following the same rules (`stage3/body-3.js` holds more body-part idioms) |
 
 Stage 3 is for idioms a B2 learner commonly meets in films, TV and conversation;
 rarer, literary or formal idioms belong in `stage5/advanced.js`. Binomials and

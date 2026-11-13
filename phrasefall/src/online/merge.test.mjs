@@ -136,11 +136,11 @@ test('encode → decode round-trips exactly (settings excluded)', () => {
   assert.equal(t, 1234);
 });
 
-test('4,000 expression records stay far below the 1 MiB document limit', () => {
-  const fields = encodeSave(big(4000));
+test('6,000 expression records stay far below the 1 MiB document limit', () => {
+  const fields = encodeSave(big(6000));
   const bytes = encodedSize(fields);
-  const json = JSON.stringify(big(4000)).length;
-  console.log(`  4,000 records + 400 daily days: ${(bytes / 1024).toFixed(0)} KB encoded (plain JSON ${(json / 1024).toFixed(0)} KB)`);
+  const json = JSON.stringify(big(6000)).length;
+  console.log(`  6,000 records + 400 daily days: ${(bytes / 1024).toFixed(0)} KB encoded (plain JSON ${(json / 1024).toFixed(0)} KB)`);
   assert.ok(bytes < 400 * 1024, `encoded ${bytes} bytes`);
   // the rules cap (firestore.rules) is 700,000 characters for rows and 200,000 for data
   assert.ok(fields.rows.length < 700_000 && fields.data.length < 200_000);

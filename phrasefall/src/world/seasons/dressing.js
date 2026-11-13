@@ -26,7 +26,7 @@ const hashString = (s) => [...s].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >
 
 /** Spots already in use: the place's props, the stepping stones, water, the dais. */
 function occupied(place) {
-  const taken = (place.props ?? []).filter((p) => !p.far).map((p) => ({ x: p.x, z: p.z, r: 0.75 }));
+  const taken = (place.props ?? []).filter((p) => !p.far).map((p) => ({ x: p.x, z: p.z, r: 0.5 }));
   for (const [x, z, s] of STEPPING_STONES) taken.push({ x, z, r: s + 0.15 });
   for (const a of place.avoid ?? []) taken.push({ x: a.x, z: a.z, r: a.r, water: true });
   taken.push({ x: 0, z: 0, r: 2.1, dais: true });
@@ -248,8 +248,12 @@ export class Dressing {
         [3.0, 1.75, -0.5],
         [-3.05, 1.8, 0.5],
         [3.1, -1.55, -1.2],
+        [-3.9, 0.3, 0.9],
+        [3.9, 0.1, -0.9],
+        [-2.2, -2.1, 0.5],
+        [2.3, -2.0, -0.5],
       ],
-      0.9,
+      0.7,
       () => {
         const wood = 0xb98a5a;
         for (const s of [-1, 1]) {
@@ -278,8 +282,10 @@ export class Dressing {
           [2.6, 1.25, -0.6],
           [-2.65, 1.3, 0.6],
           [2.9, 2.6, -0.3],
+          [-1.9, 2.7, 0.3],
+          [1.75, 2.75, -0.3],
         ],
-        0.6,
+        0.45,
         () => {
           for (let i = 0; i < 6; i++) slab(-0.38 + i * 0.152, 0, 0, 0.152, 0.022, 1.25, i % 2 ? cream : 0xffb02e);
         }

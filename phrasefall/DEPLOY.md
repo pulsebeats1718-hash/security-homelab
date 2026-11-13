@@ -158,8 +158,8 @@ only when `firestore.rules` or `firestore.indexes.json` changes.
   scores keep the highest value, and game counts add up, so nothing is counted twice. After that,
   progress is saved to the cloud about 12 seconds after it changes, and straight away when the
   page is hidden. Each write merges with whatever is already in the cloud, so two devices never
-  overwrite each other. Settings such as volume and graphics stay on each device. 4,000
-  expressions plus a year of daily challenges take about 250 KB, a quarter of Firestore's
+  overwrite each other. Settings such as volume and graphics stay on each device. 6,000
+  expressions plus a year of daily challenges take about 370 KB, about a third of Firestore's
   1 MiB document limit.
 - **Leaderboards.** Each board shows the top 50 and updates live while it is on screen. A player
   outside the top 50 sees their own position pinned at the bottom. Exact positions are counted
