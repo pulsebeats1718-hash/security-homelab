@@ -7,6 +7,7 @@
  */
 import { mulberry32 } from '../../core/utils.js';
 import { Diorama, SHAPE, rbox, groundY, islandR, ribbon, pathX, addLand, tools } from './kit.js';
+import { KIND } from '../seasons/shader.js';
 
 const M = 'matte';
 const S = 'satin';
@@ -271,7 +272,7 @@ export class NewYork extends Diorama {
       for (let i = 0; i < 9; i++) {
         const a = r() * Math.PI * 2;
         const rr = 0.3 + r() * 0.55;
-        part(M, SHAPE.sphere, Math.cos(a) * rr, 2.3 + r() * 0.8, Math.sin(a) * rr * 0.8, 0.75 + r() * 0.35, 0.6, 0.75, C.leaf[i % 4]);
+        b.kind(KIND.FOLIAGE, () => part(M, SHAPE.sphere, Math.cos(a) * rr, 2.3 + r() * 0.8, Math.sin(a) * rr * 0.8, 0.75 + r() * 0.35, 0.6, 0.75, C.leaf[i % 4]));
       }
     };
 
@@ -502,7 +503,9 @@ export class NewYork extends Diorama {
       addLand(b, 2.6, { top: (c, x, y, z) => c.setHex(Math.hypot(x - 0.5, z + 0.2) < 0.8 ? (y > -0.02 ? 0x5ea9d6 : 0x6fc15a) : y < -0.06 ? 0x5fb455 : 0x7ed06a) });
       for (const [x, z, s] of [[-1.2, -0.5, 1], [-0.4, 0.9, 0.8], [1.5, -0.9, 0.9]]) {
         post(x, 0, z, 0.16 * s, 1.2 * s, 0x6b5848);
-        for (let i = 0; i < 4; i++) part(M, SHAPE.sphere, x + (i - 1.5) * 0.25 * s, (1.4 + (i % 2) * 0.3) * s, z + ((i % 3) - 1) * 0.15, 0.85 * s, 0.75 * s, 0.85 * s, C.leaf[i]);
+        b.kind(KIND.FOLIAGE, () => {
+          for (let i = 0; i < 4; i++) part(M, SHAPE.sphere, x + (i - 1.5) * 0.25 * s, (1.4 + (i % 2) * 0.3) * s, z + ((i % 3) - 1) * 0.15, 0.85 * s, 0.75 * s, 0.85 * s, C.leaf[i]);
+        });
       }
       post(1.3, 0, 0.7, 0.06, 1.0, C.lamp, S);
       b.lit(WARM, -1, () => ball(1.3, 1.05, 0.7, 0.16, 0xfff0c0, L));

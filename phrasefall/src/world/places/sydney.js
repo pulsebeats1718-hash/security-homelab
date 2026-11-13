@@ -9,6 +9,7 @@
 import * as THREE from 'three';
 import { mulberry32 } from '../../core/utils.js';
 import { Diorama, SHAPE, groundY, addLand, tools, faceted, UNIT } from './kit.js';
+import { KIND } from '../seasons/shader.js';
 
 const M = 'matte';
 const S = 'satin';
@@ -70,6 +71,7 @@ export class Sydney extends Diorama {
     const tmp = new THREE.Color();
     this.ground = {
       keep: (x, z) => sandiness(x, z) < 0.2,
+      sand: (x, z) => sandiness(x, z),
       tint: (c, x, y, z) => {
         const s = sandiness(x, z);
         if (s <= 0) return;
@@ -90,10 +92,12 @@ export class Sydney extends Diorama {
       part(M, SHAPE.cyl6, 0.62, 2.85, 0.05, 0.08, 0.7, 0.08, C.trunk, 0, 0, -1.0);
       // loose, drooping clumps of grey-green leaves around the branch tips
       const clumps = [[-0.8, 2.7, 0.1, 0.95], [0.8, 3.15, 0, 1.0], [0.1, 3.5, -0.2, 0.9], [1.2, 2.8, 0.25, 0.7], [-0.3, 2.55, 0.55, 0.65], [0.35, 2.7, -0.6, 0.7], [-1.15, 2.35, -0.25, 0.55], [0.55, 3.75, 0.25, 0.6], [-0.45, 3.2, -0.45, 0.6]];
-      clumps.forEach(([x, y, z, d], i) => {
-        part(M, SHAPE.sphere, x, y, z, d * 1.2, d * 0.55, d * 0.95, C.gum[i % 4], (r() - 0.5) * 0.4, r() * 3, (r() - 0.5) * 0.4);
-        part(M, SHAPE.sphere, x + (r() - 0.5) * 0.3, y - d * 0.22, z + (r() - 0.5) * 0.3, d * 0.75, d * 0.4, d * 0.7, C.gum[(i + 2) % 4]);
-      });
+      b.kind(KIND.FOLIAGE, () =>
+        clumps.forEach(([x, y, z, d], i) => {
+          part(M, SHAPE.sphere, x, y, z, d * 1.2, d * 0.55, d * 0.95, C.gum[i % 4], (r() - 0.5) * 0.4, r() * 3, (r() - 0.5) * 0.4);
+          part(M, SHAPE.sphere, x + (r() - 0.5) * 0.3, y - d * 0.22, z + (r() - 0.5) * 0.3, d * 0.75, d * 0.4, d * 0.7, C.gum[(i + 2) % 4]);
+        })
+      );
       if (koala) {
         // a koala hugging the trunk
         b.at(0.02, 1.55, 0.2, 0.25, 1, () => {
@@ -219,9 +223,11 @@ export class Sydney extends Diorama {
       const { rx, rz } = LAGOON;
       // water, a lighter shallow rim and foam
       part(M, SHAPE.cyl, 0, -0.03, 0, rx * 2 + 0.3, 0.05, rz * 2 + 0.3, C.sandWet);
-      part(S, SHAPE.cyl, 0, -0.005, 0, rx * 2 + 0.08, 0.05, rz * 2 + 0.08, 0x7fdcd6);
-      part(S, SHAPE.cyl, 0, 0.002, 0, rx * 1.7, 0.05, rz * 1.7, C.sea);
-      part(M, SHAPE.cyl, 0, 0.006, 0, rx * 1.05, 0.05, rz * 1.05, 0x22a6cf);
+      b.kind(KIND.WATER, () => {
+        part(S, SHAPE.cyl, 0, -0.005, 0, rx * 2 + 0.08, 0.05, rz * 2 + 0.08, 0x7fdcd6);
+        part(S, SHAPE.cyl, 0, 0.002, 0, rx * 1.7, 0.05, rz * 1.7, C.sea);
+        part(M, SHAPE.cyl, 0, 0.006, 0, rx * 1.05, 0.05, rz * 1.05, 0x22a6cf);
+      });
       part(M, new THREE.TorusGeometry(1, 0.035, 4, 40), 0, 0.03, 0, rx * 0.93, rz * 0.93, 1, C.foam, Math.PI / 2, 0, 0);
       // boulders around the edge
       const rocks = [[-1.15, 0.45, 0.32], [-1.3, -0.15, 0.24], [1.05, -0.55, 0.36], [1.4, 0.1, 0.28], [0.3, 0.86, 0.22], [-0.5, -0.82, 0.2]];
@@ -280,12 +286,13 @@ export class Sydney extends Diorama {
         }
       }
     };
-    const beachGrass = (n = 5) => {
-      for (let i = 0; i < n; i++) {
-        const a = rng() * Math.PI * 2;
-        part(M, SHAPE.cone, Math.cos(a) * 0.12, 0.2, Math.sin(a) * 0.12, 0.05, 0.45, 0.05, i % 2 ? 0x8fb35a : 0xa7c46a, Math.cos(a) * 0.4, 0, -Math.sin(a) * 0.4);
-      }
-    };
+    const beachGrass = (n = 5) =>
+      b.kind(KIND.EVERGREEN, () => {
+        for (let i = 0; i < n; i++) {
+          const a = rng() * Math.PI * 2;
+          part(M, SHAPE.cone, Math.cos(a) * 0.12, 0.2, Math.sin(a) * 0.12, 0.05, 0.45, 0.05, i % 2 ? 0x8fb35a : 0xa7c46a, Math.cos(a) * 0.4, 0, -Math.sin(a) * 0.4);
+        }
+      });
 
     // ── place them ──────────────────────────────────────────────────────────
     const P = (x, z, ry, s, fn) => b.prop(x, at(x, z), z, ry, s, near(x, z), fn);
@@ -404,7 +411,9 @@ export class Sydney extends Diorama {
       }
       const pine = (x, z, s) => b.at(x, 0, z, 0, s, () => {
         post(0, 0, 0, 0.14, 3.0, 0x7a5a40);
-        for (let i = 0; i < 5; i++) part(M, SHAPE.cone8, 0, 0.9 + i * 0.5, 0, 1.3 - i * 0.22, 0.45, 1.3 - i * 0.22, C.pine[i % 3]);
+        b.kind(KIND.EVERGREEN, () => {
+          for (let i = 0; i < 5; i++) part(M, SHAPE.cone8, 0, 0.9 + i * 0.5, 0, 1.3 - i * 0.22, 0.45, 1.3 - i * 0.22, C.pine[i % 3]);
+        });
       });
       pine(-1.8, -0.9, 1);
       pine(-0.9, -1.6, 0.85);
@@ -432,7 +441,9 @@ export class Sydney extends Diorama {
       });
       for (const [x, z] of [[-2.4, -0.6], [2.6, 1.0], [-0.1, 0.1]]) {
         post(x, 0, z, 0.14, 1.1, C.trunk);
-        for (let i = 0; i < 3; i++) part(M, SHAPE.sphere, x + (i - 1) * 0.3, 1.2 + (i % 2) * 0.25, z, 0.8, 0.5, 0.7, C.gum[i]);
+        b.kind(KIND.FOLIAGE, () => {
+          for (let i = 0; i < 3; i++) part(M, SHAPE.sphere, x + (i - 1) * 0.3, 1.2 + (i % 2) * 0.25, z, 0.8, 0.5, 0.7, C.gum[i]);
+        });
       }
     });
 

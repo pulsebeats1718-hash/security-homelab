@@ -7,6 +7,7 @@
 import * as THREE from 'three';
 import { mulberry32 } from '../../core/utils.js';
 import { Diorama, SHAPE, rbox, groundY, islandR, ribbon, pathX, addLand, tools } from './kit.js';
+import { KIND } from '../seasons/shader.js';
 
 const M = 'matte';
 const S = 'satin';
@@ -211,7 +212,7 @@ export class London extends Diorama {
       part(M, SHAPE.cyl8, -0.34, 2.4, 0.05, 0.16, 1.0, 0.16, C.bark, 0, 0, 0.75);
       part(M, SHAPE.cyl8, 0.32, 2.5, -0.05, 0.15, 1.0, 0.15, C.bark, 0.2, 0, -0.65);
       const blobs = [[0, 3.1, 0, 1.55], [-0.95, 2.8, 0.2, 1.15], [0.95, 2.85, -0.1, 1.2], [0.3, 3.7, -0.15, 1.1], [-0.45, 3.55, 0.35, 1.0], [0.2, 2.6, 0.65, 1.0], [-0.2, 2.7, -0.7, 1.05]];
-      blobs.forEach(([x, y, z, d], i) => part(M, SHAPE.sphere, x, y, z, d, d * 0.84, d, C.leaf[i % 4]));
+      b.kind(KIND.FOLIAGE, () => blobs.forEach(([x, y, z, d], i) => part(M, SHAPE.sphere, x, y, z, d, d * 0.84, d, C.leaf[i % 4])));
       for (const [x, y, z] of [[0.75, 2.25, 0.45], [-0.55, 2.2, 0.5], [0.1, 2.1, 0.75]]) {
         slab(x, y - 0.02, z, 0.012, 0.2, 0.012, 0x6b5a3a);
         ball(x, y - 0.03, z, 0.1, 0x8a6a40);
@@ -544,7 +545,7 @@ export class London extends Diorama {
         if (i % 2 === 0) for (let k = 0; k < 3; k++) b.rise(x + 0.38, h + 0.9, -0.35, 0.16, k / 3 + i * 0.1, 1.6, () => part(M, SHAPE.sphere, x + 0.38, h + 0.9, -0.35, 0.42, 0.36, 0.42, 0xeeebe6));
       }
       for (let i = 0; i < 3; i++) {
-        part(M, SHAPE.sphere, -1.2 + i * 1.1, 0.35, 1.0, 0.8, 0.6, 0.6, C.leaf[i % 4]);
+        b.kind(KIND.FOLIAGE, () => part(M, SHAPE.sphere, -1.2 + i * 1.1, 0.35, 1.0, 0.8, 0.6, 0.6, C.leaf[i % 4]));
       }
     });
 
@@ -560,7 +561,7 @@ export class London extends Diorama {
           pane(x, 0.5, -0.03, 0.3, 0.4);
           pane(x, 1.2, -0.03, 0.3, 0.4);
         }
-        part(M, SHAPE.sphere, 1.4, 1.1, 0.9, 1.4, 1.3, 1.4, C.leaf[0]);
+        b.kind(KIND.FOLIAGE, () => part(M, SHAPE.sphere, 1.4, 1.1, 0.9, 1.4, 1.3, 1.4, C.leaf[0]));
         post(1.4, 0, 0.9, 0.2, 0.6, C.bark);
       });
     }
