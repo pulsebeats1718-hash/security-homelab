@@ -1,12 +1,14 @@
 /**
  * Environment — lights, sky, island, clouds and the theme system that blends
- * between times of day as the player climbs through the stages.
+ * between times of day as the player climbs through the stages, plus the place
+ * the island has travelled to (Home Island, London, New York, Sydney).
  */
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { THEMES, COLOR_KEYS, NUMBER_KEYS } from './themes.js';
 import { Sky, makeGlowTexture } from './sky.js';
 import { Island } from './island.js';
+import { Places } from './places/index.js';
 import { Clouds, Motes } from './clouds.js';
 import { rimShared } from '../characters/kit/materials.js';
 import { ease, lerp } from '../core/utils.js';
@@ -44,6 +46,7 @@ export class Environment {
 
     this.sky = new Sky(scene);
     this.island = new Island(scene, { quality: q });
+    this.places = new Places(scene, this.island, { quality: q });
     this.clouds = new Clouds(scene, { quality: q });
     this.motes = new Motes(scene, { quality: q });
 
@@ -74,6 +77,26 @@ export class Environment {
     this._fromSun = this._sunDir.clone();
     this._fromSky = this._skySun.clone();
     this._apply();
+    this.setPlace('home', { instant: true });
+  }
+
+  /**
+   * Move the island to a place (ids in src/data/places.js; unknown ids mean home). Each place is
+   * built the first time it is visited. Not instant: a ~1.1 s celebration — the old scenery sinks
+   * away and the new one pops up. Safe to call repeatedly or mid-transition.
+   */
+  setPlace(id, { instant = false } = {}) {
+    this.places.set(id, { instant });
+  }
+
+  /** Id of the current place. */
+  get place() {
+    return this.places.current;
+  }
+
+  /** Let the current place spawn its ambient particles (petals, leaves, steam …). Call once a frame. */
+  ambient(fx, dt, quality = this.stage.qualityName) {
+    this.places.ambient(fx, dt, quality);
   }
 
   /** Blend to a theme over `seconds`. */
@@ -138,6 +161,7 @@ export class Environment {
     rimShared.color.value.copy(v.rim);
     this.sky.apply(v, this._skySun);
     this.island.apply(v);
+    this.places.apply(v);
     this.clouds.apply(v);
     this.motes.apply(v);
   }
@@ -159,6 +183,7 @@ export class Environment {
     }
     this.sky.update(t, this.stage.camera, this.stage.pixelRatio);
     this.island.update(t, dt);
+    this.places.update(t, dt);
     this.clouds.update(t, dt);
     this.motes.update(t, this.stage.pixelRatio, this.stage.height);
   }

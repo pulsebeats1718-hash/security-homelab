@@ -180,4 +180,45 @@ test('UTC day ids and ISO weeks', () => {
   assert.equal(msToNextWeek(Date.parse('2026-11-15T23:00:00Z')), 3_600_000);
 });
 
+// ── progress: daily streak, day log, XP ─────────────────────────────────
+const streak = (over = {}) => ({ count: 0, best: 0, last: '', brollies: 0, lost: 0, lostOn: '', saved: null, t: 0, ...over });
+
+test('the streak that counted the later day wins as a whole; best never drops', () => {
+  // the phone was away and ended its old streak; the laptop kept it going
+  const phone = save({ streak: streak({ count: 0, best: 4, last: '2026-11-08', lost: 4, lostOn: '2026-11-13', t: 900 }) });
+  const laptop = save({ streak: streak({ count: 12, best: 12, last: '2026-11-12', brollies: 1, t: 500 }) });
+  const m = mergeSaves(phone, laptop, { localNewer: true });
+  assert.equal(m.streak.count, 12);
+  assert.equal(m.streak.last, '2026-11-12');
+  assert.equal(m.streak.brollies, 1);
+  assert.equal(m.streak.lost, 0);
+  assert.equal(m.streak.best, 12);
+  // same day: the longer streak, then the later change
+  const a = save({ streak: streak({ count: 5, best: 9, last: '2026-11-13', brollies: 0, t: 100 }) });
+  const b = save({ streak: streak({ count: 5, best: 5, last: '2026-11-13', brollies: 1, t: 200 }) });
+  assert.equal(mergeSaves(a, b).streak.brollies, 1);
+  assert.equal(mergeSaves(a, b).streak.best, 9);
+});
+
+test('per-day activity merges key by key: higher counts, goal and quest flags or-ed, characters joined', () => {
+  const day = (over) => ({ right: 0, known: 0, reviews: 0, fresh: 0, mastered: 0, xp: 0, games: 0, goal: false, brolly: false, daily: false, q: { p0: 0, p1: 0, p2: 0, d0: false, d1: false, d2: false, chest: false, chars: [] }, ...over });
+  const local = save({ days: { '2026-11-13': day({ right: 9, goal: false, q: { p0: 9, p1: 2, p2: 0, d0: false, d1: false, d2: false, chest: false, chars: ['fox'] } }) } });
+  const cloud = save({ days: { '2026-11-13': day({ right: 16, goal: true, q: { p0: 15, p1: 0, p2: 0, d0: true, d1: false, d2: false, chest: false, chars: ['ninja'] } }), '2026-11-12': day({ goal: true }) } });
+  const m = mergeSaves(local, cloud);
+  assert.equal(m.days['2026-11-13'].right, 16);
+  assert.equal(m.days['2026-11-13'].goal, true);
+  assert.equal(m.days['2026-11-13'].q.p1, 2);
+  assert.equal(m.days['2026-11-13'].q.d0, true);
+  assert.deepEqual(m.days['2026-11-13'].q.chars.sort(), ['fox', 'ninja']);
+  assert.equal(m.days['2026-11-12'].goal, true);
+});
+
+test('XP adds up across devices like the other counters', () => {
+  const local = save({ totals: { games: 3, correct: 30, wrong: 2, score: 900, xp: 700 } });
+  const cloud = save({ totals: { games: 5, correct: 50, wrong: 4, score: 1500, xp: 1100 } });
+  // both started from 400 XP at the last sync
+  const m = mergeSaves(local, cloud, { base: { totals: { games: 2, correct: 20, wrong: 1, score: 600, xp: 400 } } });
+  assert.equal(m.totals.xp, 1400);
+});
+
 console.log(process.exitCode ? 'FAILED' : `✓ ${passed} tests passed`);

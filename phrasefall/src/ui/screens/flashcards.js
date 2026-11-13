@@ -188,6 +188,7 @@ export function createFlashcards(app) {
     if (!deck.length || !card.classList.contains('is-flipped')) return;
     const id = deck[pos];
     const box = save.review(id, knew);
+    app.events.emit('cards:review', { id, knew }); // daily goal, quests and XP (src/game/progress.js)
     audio.play(knew ? 'select' : 'back');
     toast.textContent = knew ? `Nice — back ${whenAgain(box)}` : 'It will come round again';
     toast.classList.toggle('is-good', knew);

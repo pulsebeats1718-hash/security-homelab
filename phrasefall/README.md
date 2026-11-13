@@ -6,12 +6,26 @@ four options before they land.
 
 - **Simple to play** – one tap per answer. Three lives. +100 per correct answer,
   bonus points at streaks of 5 and 10.
+- **Fever and golden cards** – ten right in a row starts *fever*: the island glows,
+  the music speeds up and every answer scores double until the next miss. About
+  one classic card in sixteen is *golden* and worth triple points.
 - **Five stages** – everyday expressions → phrasal verbs → idioms → set phrases →
   advanced expressions and collocations. Each stage is faster and moves the world
   on through the day, from sunrise to a starlit aurora.
-- **35 collectable characters** – real-time 3D, each with its own idle animation
+- **39 collectable characters** – real-time 3D, each with its own idle animation
   and reactions. Purely cosmetic; unlocked by playing (score, streaks, stages,
-  expressions discovered and mastered).
+  expressions discovered and mastered) — and four only by keeping a daily streak
+  of 7, 30, 100 and 365 days.
+- **Reasons to come back** (`src/game/progress.js`) – everything earns XP towards
+  a player level, and levels move the island to new places: London at level 3,
+  New York at 10, Sydney at 20 (switch any time from *Your journey*). A **daily
+  goal** of 15 right answers (or the daily challenge) keeps a **daily streak**
+  going; missing a day uses up a **brolly**, earned every 7 days, before the
+  streak ends. **Three daily quests** (easy, medium, hard — the same for everyone
+  on a date) open a **reward chest**. After every game the results show what was
+  earned and what is close: XP and level, new places, the goal and streak, quest
+  progress, the nearest character unlocks and the gap to your best. *Personal Best*
+  adds a weekly report.
 - **Learning built in** – every expression you meet becomes a flashcard (meaning,
   example, synonyms, register and context, common mistake). *My Collection* tracks
   what you have mastered, got wrong, flagged to practise or marked as a favourite.
@@ -68,16 +82,19 @@ src/
     expressions/          stage1/ … stage5/ — the expression database, one folder per stage
     stages.js             pace, goals and scoring rules
     roster.js             character order and unlock rules
+    levels.js             XP rewards and the level curve
+    places.js             the places the island travels to, and the levels that open them
   characters/
     kit/                  the character construction kit: shared skeleton, toy material, face rig
     animator.js           procedural animation: idle layers, action clips, secondary motion
     models/               one file per character (auto-discovered)
     thumbnails.js         portrait renderer for the collection strip
-  world/                  sky, lighting themes, island, clouds, particle effects
-  game/                   rules (game.js), the daily challenge (daily.js), the falling card, camera framing, the live hero
+  world/                  sky, lighting themes, island, clouds, particle effects; places/ (Home, London, New York, Sydney)
+  game/                   rules (game.js), the daily challenge (daily.js), levels/streak/quests (progress.js),
+                          the falling card, camera framing, the live hero
   audio/                  synthesised sound effects and generative music
   online/                 optional Google sign-in, cloud save and leaderboards (Firebase, loaded on demand)
-  ui/                     screens (menu, characters, HUD, results, flashcards, collection …)
+  ui/                     screens (menu, Today, Your journey, characters, HUD, results, flashcards …), notes
   styles/main.css         the interface look
 dev/                      character and world preview pages, character authoring guide
 scripts/                  data validator and screenshot helpers used during development

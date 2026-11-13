@@ -28,7 +28,8 @@ export function createHud(app) {
   const hearts = Array.from({ length: SCORING.lives }, heart);
   const lives = h('div.lives', { 'aria-label': 'Lives' }, hearts);
   const streakN = h('span');
-  const streak = h('div.chip.hud__streak.is-off', icon('flame'), streakN);
+  const feverTag = h('b.hud__fever', { hidden: true }, 'Fever ×2');
+  const streak = h('div.chip.hud__streak.is-off', icon('flame'), streakN, feverTag);
   const scoreNum = h('div.hud__score-num', '0');
   const best = h('div.hud__best');
   const stageName = h('span');
@@ -69,16 +70,18 @@ export function createHud(app) {
   const bottom = h('div.hud__bottom', hint, answers);
   const el = h('section.hud', top, mid, bottom, pause);
 
-  function showHint(text) {
+  /** A line above the answers. The golden-card hint floats, so the camera doesn't move for it. */
+  function showHint(text, gold = false) {
     hint.textContent = text;
+    hint.classList.toggle('is-gold', gold);
     hint.hidden = false;
-    measure();
+    if (!gold) measure();
   }
   function hideHint() {
     if (hint.hidden) return;
     hint.hidden = true;
     clearTimeout(hintTimer);
-    measure();
+    if (!hint.classList.contains('is-gold')) measure();
   }
 
   function flip(key) {
@@ -164,6 +167,8 @@ export function createHud(app) {
     const a = bottom.getBoundingClientRect();
     const t = top.getBoundingClientRect();
     game.setLayout(Math.round(view.bottom - a.top), Math.round(t.bottom - view.top));
+    // in-game notes (quest done, level up) sit just above the answers, clear of the falling card
+    ui.root.style.setProperty('--answers-h', `${Math.round(view.bottom - a.top)}px`);
   }
 
   function lock(on) {
@@ -186,6 +191,8 @@ export function createHud(app) {
     buttons = [];
     clear(answers);
     answers.classList.add('is-empty');
+    answers.classList.remove('is-golden');
+    setFever(false);
     pause.classList.remove('is-on');
     hint.hidden = true;
     measure();
@@ -202,10 +209,23 @@ export function createHud(app) {
       h('button.answer', { 'data-quiet': '1', style: { '--i': i }, onclick: () => !locked && game.answer(i) }, h('span.answer__key', KEYS[i]), h('span.answer__text', opt.text))
     );
     answers.append(...buttons);
+    answers.classList.toggle('is-golden', !!q.golden);
     lock(false);
     if (q.daily) setDaily(q.daily);
     else setStage(q.stage, game.correctInStage);
     if (!save.data.tutorialDone && q.number === 1) showHint('Tap the meaning before the expression lands!');
+    else if (q.golden) showHint('Golden expression · triple points!', true);
+  });
+
+  /** Fever mode: the streak chip turns to fire and the screen edges glow. */
+  function setFever(on) {
+    el.classList.toggle('is-fever', on);
+    streak.classList.toggle('is-fever', on);
+    feverTag.hidden = !on;
+  }
+  events.on('game:fever', ({ on, quiet }) => {
+    setFever(on);
+    if (on && !quiet) showBanner('Fever!', 'Double points', 'Keep the streak going');
   });
 
   events.on('game:answered', ({ choice, correct, correctIndex }) => {
@@ -220,12 +240,20 @@ export function createHud(app) {
     if (correct && !game.daily) setStage(game.stageDef, game.correctInStage);
   });
 
-  events.on('game:score', ({ score, gained, bonus, speed, streak: n, x, y }) => {
+  events.on('game:score', ({ score, gained, bonus, speed, golden, fever, streak: n, x, y }) => {
     setScore(score);
     setStreak(n);
-    ui.popup(`+${gained}`, x, y);
-    if (bonus) ui.popup(`Streak ×${n}  +${bonus}`, x, y + 46, 'pop--bonus');
-    if (speed) ui.popup(`Quick +${speed}`, x, y + (bonus ? 90 : 46), 'pop--speed');
+    ui.popup(`+${gained}`, x, y, golden ? 'pop--big' : '');
+    // extra labels stack underneath the points
+    let dy = 46;
+    const tag = (text, cls) => {
+      ui.popup(text, x, y + dy, cls);
+      dy += 44;
+    };
+    if (golden) tag('Golden ×3', 'pop--gold');
+    if (fever) tag('Fever ×2', 'pop--fever');
+    if (bonus) tag(`Streak ×${n}  +${bonus}`, 'pop--bonus');
+    if (speed) tag(`Quick +${speed}`, 'pop--speed');
   });
 
   events.on('game:lives', ({ lives: n }) => {

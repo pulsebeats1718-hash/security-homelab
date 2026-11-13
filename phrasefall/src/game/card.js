@@ -47,12 +47,15 @@ export class ExpressionCard {
     // little gems on the frame corners catch the light
     const gemGeo = new THREE.OctahedronGeometry(0.11, 0);
     this.gemMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.9, roughness: 0.2, flatShading: true });
+    this.gems = [];
     for (const sx of [-1, 1]) {
       const gem = new THREE.Mesh(gemGeo, this.gemMat);
       gem.position.set(sx * (W / 2 - 0.02), 0, 0.02);
       gem.scale.set(1, 1.5, 0.8);
       this.inner.add(gem);
+      this.gems.push(gem);
     }
+    this.golden = false;
     this.inner.add(this.glow, frame, face, label);
 
     this.scale = 1;
@@ -107,9 +110,18 @@ export class ExpressionCard {
     this.texture.needsUpdate = true;
   }
 
-  /** Bring a new expression in at the top of the fall zone. */
-  show(text, { scale, spawnY, impactY, accent }) {
+  /** Bring a new expression in at the top of the fall zone. `golden`: a triple-points card. */
+  show(text, { scale, spawnY, impactY, accent, golden = false }) {
     this._draw(text);
+    this.golden = golden;
+    // golden: a rich gold face and a polished frame (the frame shimmers in update())
+    this.frameMat.metalness = golden ? 0.35 : 0;
+    this.frameMat.roughness = golden ? 0.28 : 0.4;
+    this.faceMat.color.set(golden ? 0xffdf86 : 0xfff6e3);
+    this.faceMat.emissive.set(golden ? 0xffc94a : 0xfff1d6);
+    this.faceMat.emissiveIntensity = golden ? 0.36 : 0.5;
+    this.glow.scale.set(W * (golden ? 2.1 : 1.7), H * (golden ? 4 : 3.2), 1);
+    for (const gem of this.gems) gem.rotation.y = 0;
     this.scale = scale;
     this.spawnY = spawnY;
     this.impactY = impactY;
@@ -185,8 +197,18 @@ export class ExpressionCard {
       this._tint();
     }
     const pulse = 0.5 + 0.5 * Math.sin(a * (5 + d * 9));
-    this.frameMat.emissiveIntensity = 0.32 + d * (0.5 + pulse * 0.6);
-    this.glow.material.opacity = 0.42 + pulse * 0.1 + d * 0.3;
+    if (this.golden) {
+      // a slow shimmer, and the corner gems spin
+      const shimmer = 0.5 + 0.5 * Math.sin(a * 3.2);
+      this.frameMat.emissiveIntensity = 0.45 + shimmer * 0.5 + d * 0.6;
+      this.glow.material.opacity = 0.6 + shimmer * 0.25 + d * 0.2;
+      this.gemMat.emissiveIntensity = 1.2 + shimmer * 1.2;
+      for (const gem of this.gems) gem.rotation.y = a * 3;
+    } else {
+      this.frameMat.emissiveIntensity = 0.32 + d * (0.5 + pulse * 0.6);
+      this.glow.material.opacity = 0.42 + pulse * 0.1 + d * 0.3;
+      this.gemMat.emissiveIntensity = 0.9;
+    }
     const shake = d * d * 0.045;
     g.position.x = (Math.sin(a * 0.9) * 0.14 * (1 - d) + Math.sin(a * 47) * shake) * this.scale;
     this.inner.rotation.set(-0.05 + Math.sin(a * 1.1) * 0.035, Math.sin(a * 0.8) * 0.11, Math.sin(a * 1.3) * 0.028 + Math.sin(a * 53) * shake * 0.6);

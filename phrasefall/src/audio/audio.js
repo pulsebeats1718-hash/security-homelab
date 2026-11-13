@@ -280,4 +280,54 @@ const SFX = {
   whoosh(a) {
     a.noise({ dur: 0.38, vol: 0.09, type: 'bandpass', f: 400, f2: 2600, q: 1 });
   },
+
+  // ── fever, golden cards and progress ──────────────────────────────────
+  fever(a) {
+    a.noise({ dur: 0.9, vol: 0.12, type: 'bandpass', f: 300, f2: 6000, q: 0.8 });
+    a.arp([62, 69, 74, 78, 81, 86, 90, 93], 0.04, 0.15, 0.6, 0.12);
+    a.tone({ at: 0.42, type: 'sawtooth', f: midi(50), dur: 0.9, vol: 0.045, attack: 0.02, wet: 0.4 });
+    a.tone({ at: 0.42, type: 'triangle', f: midi(62), dur: 1.1, vol: 0.1, attack: 0.03, wet: 0.5 });
+  },
+  feverEnd(a) {
+    a.noise({ dur: 0.5, vol: 0.07, type: 'bandpass', f: 3000, f2: 300, q: 1 });
+    a.tone({ type: 'triangle', f: 520, f2: 180, dur: 0.45, vol: 0.08 });
+  },
+  golden(a) {
+    a.arp([93, 98, 102, 105], 0.035, 0.08, 0.5);
+    a.noise({ dur: 0.6, vol: 0.05, type: 'highpass', f: 7000 });
+  },
+  goldenHit(a) {
+    [86, 90, 93, 98, 102].forEach((n, i) => a.bell(n, i * 0.05, 0.12, 0.5, 0.6));
+    a.noise({ at: 0.05, dur: 0.7, vol: 0.06, type: 'highpass', f: 6500 });
+  },
+  goal(a) {
+    a.arp([69, 74, 78, 81, 86], 0.08, 0.17, 0.7);
+    a.tone({ at: 0.4, type: 'triangle', f: midi(50), dur: 1.2, vol: 0.13, attack: 0.04, wet: 0.5 });
+    a.noise({ at: 0.1, dur: 0.9, vol: 0.05, type: 'highpass', f: 6000 });
+  },
+  quest(a) {
+    a.bell(86, 0, 0.15, 0.4, 0.5);
+    a.bell(93, 0.09, 0.13, 0.6, 0.6);
+  },
+  levelUp(a) {
+    a.arp([62, 66, 69, 74, 78, 81, 86, 90], 0.06, 0.16, 0.8);
+    a.arp([74, 78, 81, 86], 0, 0.11, 1.4, 0.55);
+    a.tone({ at: 0.5, type: 'triangle', f: midi(50), dur: 1.4, vol: 0.13, attack: 0.05, wet: 0.5 });
+    a.noise({ at: 0.3, dur: 1.2, vol: 0.06, type: 'highpass', f: 6000 });
+  },
+  chest(a) {
+    a.noise({ dur: 0.25, vol: 0.12, type: 'lowpass', f: 900, f2: 300 });
+    a.tone({ at: 0.16, type: 'sine', f: 180, f2: 90, dur: 0.18, vol: 0.2 });
+    a.arp([81, 86, 90, 93, 98], 0.05, 0.13, 0.7, 0.3);
+    a.noise({ at: 0.3, dur: 1, vol: 0.06, type: 'highpass', f: 6500 });
+  },
+  brolly(a) {
+    a.noise({ dur: 0.3, vol: 0.08, type: 'bandpass', f: 600, f2: 2400, q: 1.2 });
+    a.bell(81, 0.12, 0.13, 0.5, 0.5);
+    a.bell(88, 0.2, 0.11, 0.6, 0.6);
+  },
+  travel(a) {
+    a.noise({ dur: 0.8, vol: 0.1, type: 'bandpass', f: 250, f2: 3000, q: 0.9 });
+    a.arp([74, 78, 81, 86, 90], 0.07, 0.14, 0.8, 0.35);
+  },
 };

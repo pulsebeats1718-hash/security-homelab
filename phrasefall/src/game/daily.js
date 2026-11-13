@@ -139,12 +139,16 @@ export function buildDaily(dateId) {
 /** Which part of the day (0–4, the stage themes) a card position falls in. */
 export const dailySegment = (index, total) => Math.min(STAGES.length - 1, Math.floor((index * STAGES.length) / Math.max(1, total)));
 
-/** Share text: a header, one emoji per card (🟩 right, 🟥 missed, ⬜ not reached), and the score. */
-export function shareText({ n, dateId, marks, total, score, correct, bestStreak }, url = '') {
+/**
+ * Share text: a header, one emoji per card (🟩 right, 🟥 missed, ⬜ not reached), the score,
+ * and the player's daily streak when they have one going (`days`).
+ */
+export function shareText({ n, dateId, marks, total, score, correct, bestStreak, days = 0 }, url = '') {
   const cells = Array.from({ length: total }, (_, i) => (marks[i] === 'c' ? '🟩' : marks[i] === 'w' ? '🟥' : '⬜'));
   const rows = [];
   for (let i = 0; i < cells.length; i += 10) rows.push(cells.slice(i, i + 10).join(''));
   const lines = [`Phrasefall Daily #${n} · ${dateId}`, ...rows, `${correct}/${total} · ${score.toLocaleString('en-GB')} points${bestStreak >= 2 ? ` · streak ×${bestStreak}` : ''}`];
+  if (days >= 2) lines.push(`🔥 ${days}-day streak`);
   if (url) lines.push(url);
   return lines.join('\n');
 }

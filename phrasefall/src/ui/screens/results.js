@@ -1,8 +1,12 @@
-import { h, icon, clear, countUp } from '../dom.js';
+import { h, icon, clear, countUp, retrigger } from '../dom.js';
 import { getCharacter } from '../../characters/index.js';
 import { getExpression } from '../../data/expressions/index.js';
 import { formatScore } from '../../core/utils.js';
 import { formatCountdown, msToNextDaily, shareText } from '../../game/daily.js';
+import { levelInfo } from '../../data/levels.js';
+import { ROSTER, describeRule } from '../../data/roster.js';
+import { GOAL } from '../../game/progress.js';
+import { ring } from './today.js';
 
 /** "Fri 13 Nov" for a 'YYYY-MM-DD' (UTC) id. */
 const shortDate = (dateId) => new Date(`${dateId}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
@@ -123,7 +127,7 @@ export function createResults(app) {
     const parts = [h('div.share__next', icon('calendar'), h('span', 'Next challenge in '), countdown)];
     if (rec) {
       const url = location.protocol === 'https:' ? `${location.origin}${location.pathname}` : '';
-      const text = shareText({ n: rec.n || d.n, dateId: d.dateId, marks: rec.marks, total: rec.total || d.total, score: rec.score, correct: rec.correct, bestStreak: rec.bestStreak }, url);
+      const text = shareText({ n: rec.n || d.n, dateId: d.dateId, marks: rec.marks, total: rec.total || d.total, score: rec.score, correct: rec.correct, bestStreak: rec.bestStreak, days: app.progress?.streak.count ?? 0 }, url);
       const pre = h('pre.share__text', text);
       const copyLabel = h('span', 'Copy');
       const copyBtn = h('button.btn.share__copy', {
@@ -139,6 +143,148 @@ export function createResults(app) {
       parts.unshift(h('div.share__head', h('div.eyebrow', d.ranked ? 'Share your result' : 'Your ranked result today'), copyBtn), pre);
     }
     return h('div.share', parts);
+  }
+
+  // ── progress: what this game earned, and what is close ─────────────────
+  /** Locked characters the player has made the most progress towards. */
+  function nearUnlocks(count) {
+    const p = save.progress();
+    return ROSTER.filter((r) => r.rule.type !== 'start' && !save.isUnlocked(r.id) && (!save.available || save.available.has(r.id)))
+      .map((r) => ({ ...r, have: Math.min(r.rule.n, p[r.rule.type] ?? 0), frac: save.unlockProgress(r.rule) }))
+      .filter((r) => r.frac > 0)
+      .sort((a, b) => b.frac - a.frac)
+      .slice(0, count);
+  }
+
+  /** The XP bar fills up, rolling over once for each level gained. */
+  function animateXp(before, after, numEl, fill, row) {
+    let t = 650;
+    for (let l = before.level; l < after.level; l++) {
+      later(t, () => {
+        fill.style.transition = '';
+        fill.style.width = '100%';
+      });
+      t += 620;
+      later(t, () => {
+        numEl.textContent = String(l + 1);
+        retrigger(row, 'is-levelup');
+        audio.play('quest');
+        fill.style.transition = 'none';
+        fill.style.width = '0%';
+      });
+      t += 90;
+    }
+    later(t, () => {
+      fill.style.transition = '';
+      fill.style.width = `${(after.into / after.need) * 100}%`;
+    });
+    return t;
+  }
+
+  function progressBlock(r) {
+    const p = app.progress;
+    const run = p?.run;
+    if (!run) return null;
+    const rows = [];
+
+    // XP and level
+    const before = levelInfo(run.xp0);
+    const after = p.info;
+    const lvlNum = h('b', String(before.level));
+    const fill = h('i', { style: { width: `${(before.into / before.need) * 100}%` } });
+    const xpRow = h(
+      'div.gain.gain--xp',
+      h('div.lvl.lvl--sm', h('span', 'Level'), lvlNum),
+      h('div.gain__body', h('div.gain__line', h('b', after.level > before.level ? `Level up! You're level ${after.level}` : `${(after.need - after.into).toLocaleString('en-GB')} XP to level ${after.level + 1}`), h('span.chip.chip--gold', `+${(p.xp - run.xp0).toLocaleString('en-GB')} XP`)), h('div.meter.meter--gold', fill))
+    );
+    rows.push(xpRow);
+    const xpDone = animateXp(before, after, lvlNum, fill, xpRow);
+
+    // places this game unlocked: the island travels to the newest one, behind the results
+    run.places.forEach((place, i) => {
+      rows.push(
+        h(
+          'div.gain.gain--place',
+          { style: { '--place': place.color } },
+          h('span.gain__ico', icon('map')),
+          h('div.gain__body', h('div.gain__line', h('b', `New place: ${place.name}`)), h('span.gain__sub', i === run.places.length - 1 ? 'Travelling there now…' : place.blurb))
+        )
+      );
+      p.markPlaceSeen(place.id);
+    });
+    const dest = run.places[run.places.length - 1];
+    if (dest) {
+      later(xpDone + 700, () => {
+        if (ui.name !== 'results' || !app.travel(dest.id)) return;
+        audio.play('travel');
+      });
+    }
+
+    // daily goal and streak
+    const s = p.streak;
+    const g = p.goal();
+    if (run.goal) {
+      rows.push(h('div.gain.gain--fire', h('span.gain__ico', icon('flame')), h('div.gain__body', h('div.gain__line', h('b', s.count === 1 ? 'Streak started!' : `${s.count}-day streak!`)), h('span.gain__sub', 'Daily goal reached. See you tomorrow!'))));
+    } else if (g.met) {
+      rows.push(h('div.gain.gain--fire.is-calm', h('span.gain__ico', icon('flame')), h('div.gain__body', h('div.gain__line', h('b', `${s.count}-day streak`)), h('span.gain__sub', "Today's goal is already done."))));
+    } else {
+      const left = GOAL - g.have;
+      rows.push(
+        h(
+          'div.gain.gain--goal',
+          h('span.gain__ring', ring(g.have / GOAL, 'ring--goal')),
+          h('div.gain__body', h('div.gain__line', h('b', `${left} more right ${left === 1 ? 'answer' : 'answers'} today`)), h('span.gain__sub', s.count ? `to keep your ${s.count}-day streak` : 'to start a daily streak'))
+        )
+      );
+    }
+
+    // quests: progress made this game, and the chest
+    const quests = p.quests();
+    const chest = p.chestState();
+    rows.push(
+      h(
+        'div.gain.gain--quests',
+        h(
+          'div.minis',
+          quests.map((q) =>
+            h(
+              `div.mini${q.done ? '.is-done' : ''}${run.quests.includes(q.slot) ? '.is-new' : ''}`,
+              h('span.mini__ico', icon(q.done ? 'check' : q.icon)),
+              h('span.mini__text', q.text),
+              h('div.meter', h('i', { style: { width: `${(q.have / q.n) * 100}%` } }))
+            )
+          )
+        ),
+        chest === 'ready' ? h('button.btn.btn--gold.gain__chest', { 'data-quiet': '1', onclick: () => (audio.play('select'), ui.go('today', { from: 'menu' })) }, icon('chest'), 'Open your chest') : null
+      )
+    );
+
+    // characters that are close
+    const near = nearUnlocks(2);
+    if (near.length) {
+      rows.push(
+        h(
+          'div.near',
+          near.map((n) => {
+            const def = getCharacter(n.id);
+            const img = h('img', { alt: '' });
+            const t = app.thumbs.get(n.id);
+            if (t) img.src = t.locked;
+            return h(
+              'div.near__item',
+              h('div.near__portrait', img),
+              h('div.near__body', h('div.near__line', h('b', def.id === n.id ? def.name : 'A new character'), h('span', `${n.have.toLocaleString('en-GB')}/${n.rule.n.toLocaleString('en-GB')}`)), h('span.near__rule', describeRule(n.rule)), h('div.meter.meter--violet', h('i', { style: { width: `${n.frac * 100}%` } })))
+            );
+          })
+        )
+      );
+    }
+
+    // just short of the best
+    if (r.mode !== 'daily' && !r.newBest && r.best > r.score && r.score >= r.best * 0.5) {
+      rows.push(h('div.gain.gain--best', h('span.gain__ico', icon('trophy')), h('div.gain__body', h('div.gain__line', h('b', `${formatScore(r.best - r.score)} points short of your best`)), h('span.gain__sub', 'One more go?'))));
+    }
+    return h('div.gains', rows);
   }
 
   return {
@@ -182,7 +328,11 @@ export function createResults(app) {
 
       clear(body);
       if (daily) body.append(dailyCard(r));
-      r.unlocked.forEach((id, i) => {
+      const gains = progressBlock(r);
+      if (gains) body.append(gains);
+      // characters unlocked by the game, and by a streak milestone reached during it
+      const unlocked = [...new Set([...r.unlocked, ...(app.progress?.run?.unlocked ?? [])])];
+      unlocked.forEach((id, i) => {
         const def = getCharacter(id);
         later(1100 + i * 650 + (r.newBest ? 900 : 0), () => {
           const img = h('img', { alt: '' });

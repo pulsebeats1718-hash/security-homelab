@@ -4,13 +4,15 @@ import { CHARACTERS, getCharacter } from '../../characters/index.js';
 import { TOTAL_EXPRESSIONS, expressionsReady, whenExpressionsReady, getExpression } from '../../data/expressions/index.js';
 import { utcDateId, dailyNumber, msToNextDaily, formatCountdown, DAILY_CARDS } from '../../game/daily.js';
 import { formatScore } from '../../core/utils.js';
+import { ring } from './today.js';
 
 /**
- * Main menu: Play, the daily challenge and four tiles. The header keeps a slot
- * next to the settings button (`accountSlot`, `.menu__account`) for the account chip.
+ * Main menu: today's strip (level, streak, daily goal, quests), Play, the daily
+ * challenge and four tiles. The header keeps a slot next to the settings button
+ * (`accountSlot`, `.menu__account`) for the account chip.
  */
 export function createMenu(app) {
-  const { save, ui, events } = app;
+  const { save, ui, events, progress, audio } = app;
   const sub = { chars: h('span.tile__sub'), cards: h('span.tile__sub'), coll: h('span.tile__sub'), boards: h('span.tile__sub') };
   const dueBadge = h('span.tile__badge', { hidden: true });
   const heroName = h('div.menu__hero-name');
@@ -31,6 +33,23 @@ export function createMenu(app) {
   const dailyBtn = h('button.daily', { 'data-quiet': '1', title: 'The same cards for everyone today', onclick: () => start('daily') }, h('span.daily__ico', icon('calendar')), h('span.daily__text', dailyTitle, dailySub), dailyTag);
   const status = h('div.menu__status', { hidden: true, role: 'status' });
 
+  // ── today strip: level, streak, daily goal, quests ──────────────────────
+  const openToday = () => ui.go('today', { from: 'menu' });
+  const lvlNum = h('b');
+  const lvlFill = h('i');
+  const lvlPill = h('button.pill.pill--level', { 'aria-label': 'Your level and places', onclick: () => ui.go('journey', { from: 'menu' }) }, h('span.pill__badge', lvlNum), h('span.pill__text', h('span.pill__label', 'Level'), h('span.pill__bar', lvlFill)));
+  const streakNum = h('b');
+  const streakSub = h('span.pill__label');
+  const streakPill = h('button.pill.pill--streak', { 'aria-label': 'Daily streak', onclick: openToday }, h('span.pill__ico', icon('flame')), h('span.pill__text', streakNum, streakSub));
+  const goalRing = h('span.pill__ring');
+  const goalNum = h('b');
+  const goalPill = h('button.pill.pill--goal', { 'aria-label': 'Daily goal', onclick: openToday }, goalRing, h('span.pill__text', goalNum, h('span.pill__label', 'Goal')));
+  const questNum = h('b');
+  const questSub = h('span.pill__label');
+  const questPill = h('button.pill.pill--quests', { 'aria-label': 'Daily quests', onclick: openToday }, h('span.pill__ico', icon('chest')), h('span.pill__text', questNum, questSub));
+  const strip = h('div.today-strip', lvlPill, streakPill, goalPill, questPill);
+  const notice = h('div.menu__notice', { hidden: true, role: 'status' });
+
   const openBoards = () => ui.go(ui.screens.has('leaderboard') ? 'leaderboard' : 'records', { from: 'menu' });
 
   // header: the account chip (added by the online module) sits next to the settings button
@@ -44,6 +63,8 @@ export function createMenu(app) {
     h(
       'nav.menu__nav',
       status,
+      notice,
+      strip,
       playBtn,
       dailyBtn,
       h(
@@ -119,8 +140,56 @@ export function createMenu(app) {
     }
   }
 
+  function refreshToday() {
+    const info = progress.info;
+    lvlNum.textContent = String(info.level);
+    lvlFill.style.width = `${Math.round((info.into / info.need) * 100)}%`;
+    const s = progress.streak;
+    const g = progress.goal();
+    streakNum.textContent = String(s.count);
+    streakSub.textContent = s.count === 1 ? 'day' : 'days';
+    streakPill.classList.toggle('is-lit', g.met);
+    streakPill.classList.toggle('is-risk', !g.met && s.count > 0);
+    clear(goalRing).append(ring(g.met ? 1 : g.have / g.need, 'ring--goal'));
+    clear(goalNum).append(g.met ? icon('check') : `${g.have}/${g.need}`);
+    goalPill.classList.toggle('is-done', g.met);
+    const done = progress.quests().filter((q) => q.done).length;
+    const chest = progress.chestState();
+    questNum.textContent = `${done}/3`;
+    questSub.textContent = chest === 'ready' ? 'Open!' : 'Quests';
+    questPill.classList.toggle('is-ready', chest === 'ready');
+    questPill.classList.toggle('is-done', chest === 'opened');
+
+    // a brolly that kept the streak going, or a streak that ended
+    const n = progress.notice();
+    notice.hidden = !n;
+    if (n) {
+      const text = n.kind === 'brolly' ? `${n.n === 1 ? 'A brolly' : `${n.n} brollies`} kept your ${n.count}-day streak dry while you were away.` : `Your ${n.count}-day streak ended. Start a new one today!`;
+      clear(notice).append(
+        h('span.menu__notice-ico', icon(n.kind === 'brolly' ? 'brolly' : 'flame')),
+        h('span', text),
+        h('button.menu__notice-x', { 'aria-label': 'Dismiss', onclick: () => (progress.dismissNotice(), refreshToday()) }, icon('x'))
+      );
+      notice.classList.toggle('is-lost', n.kind === 'lost');
+    }
+  }
+
+  /** Places unlocked away from the results screen (a chest, flashcards): travel there with a hello. */
+  function welcomeNewPlaces() {
+    const fresh = progress.unseenPlaces().filter((p) => p.id !== 'home');
+    if (!fresh.length) return;
+    const place = fresh[fresh.length - 1];
+    for (const p of fresh) progress.markPlaceSeen(p.id);
+    setTimeout(() => {
+      if (ui.name !== 'menu' || !app.travel(place.id)) return;
+      audio.play('travel');
+      ui.toast({ icon: 'map', title: `Welcome to ${place.name}!`, sub: 'Change places any time: tap your level', tone: 'sky', ms: 4200 });
+    }, 900);
+  }
+
   function refresh() {
     const d = save.data;
+    refreshToday();
     const loaded = expressionsReady();
     const known = loaded ? (id) => !!getExpression(id) : null;
     const seen = loaded ? save.seenIds.filter(known).length : save.seenIds.length;
@@ -149,10 +218,17 @@ export function createMenu(app) {
     accountSlot,
     show() {
       app.game.settleInterruptedDaily?.();
+      progress.touch();
       setLoading(false);
       refresh();
+      welcomeNewPlaces();
       clearInterval(ticker);
-      ticker = setInterval(refreshDaily, 20000); // the countdown, and a new challenge at midnight UTC
+      // the countdown, a new challenge at midnight UTC, and a new day for the streak and quests at local midnight
+      ticker = setInterval(() => {
+        progress.touch();
+        refreshDaily();
+        refreshToday();
+      }, 20000);
       app.hero.set(save.data.character, { effect: false, clip: null });
       app.hero.face();
       app.hero.waves = true;

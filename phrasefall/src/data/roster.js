@@ -11,6 +11,7 @@
  *   stage:    n            reach stage n
  *   mastered: n            master n expressions
  *   total:    n            n points in total across all games
+ *   streakDays: n          reach a daily streak of n days (best ever)
  *
  * A character listed here without a model file is simply skipped.
  */
@@ -50,6 +51,11 @@ export const ROSTER = [
   { id: 'dragon', rule: { type: 'stage', n: 5 } },
   { id: 'lion', rule: { type: 'score', n: 7500 } },
   { id: 'unicorn', rule: { type: 'mastered', n: 150 } },
+  // daily streak rewards
+  { id: 'duck', rule: { type: 'streakDays', n: 7 } },
+  { id: 'crier', rule: { type: 'streakDays', n: 30 } },
+  { id: 'phoenix', rule: { type: 'streakDays', n: 100 } },
+  { id: 'nessie', rule: { type: 'streakDays', n: 365 } },
 ];
 
 export function describeRule(rule) {
@@ -73,6 +79,8 @@ export function describeRule(rule) {
       return `Master ${n} expressions`;
     case 'total':
       return `Earn ${n} points in total`;
+    case 'streakDays':
+      return `Keep a ${n}-day streak`;
     default:
       return '';
   }

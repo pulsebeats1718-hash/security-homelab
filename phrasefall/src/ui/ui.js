@@ -2,7 +2,7 @@
  * UI — screen manager plus the overlays every screen shares
  * (score popups, damage vignette, scene shade).
  */
-import { h, retrigger } from './dom.js';
+import { h, icon, retrigger } from './dom.js';
 
 export class UI {
   constructor(app) {
@@ -13,6 +13,7 @@ export class UI {
     this.shade = h('div.shade');
     this.fxLayer = h('div.fxlayer');
     this.vignette = h('div.vignette');
+    this.toasts = h('div.notes', { role: 'status', 'aria-live': 'polite' });
     this.root.append(this.shade);
 
     // one tap sound for every button unless it opts out
@@ -32,7 +33,22 @@ export class UI {
 
   /** Call once all screens are registered so overlays sit on top. */
   finish() {
-    this.root.append(this.fxLayer, this.vignette);
+    this.root.append(this.fxLayer, this.vignette, this.toasts);
+  }
+
+  /**
+   * A short note that slides in at the top and leaves by itself (quest done,
+   * level up, streak…). tone: '' | 'gold' | 'mint' | 'fire' | 'sky'.
+   */
+  toast({ icon: ico = 'sparkle', title, sub = '', tone = '', ms = 2900 }) {
+    const el = h(`div.note${tone ? `.note--${tone}` : ''}`, h('span.note__ico', icon(ico)), h('span.note__text', h('b', title), sub ? h('span', sub) : null));
+    this.toasts.append(el);
+    while (this.toasts.childElementCount > 3) this.toasts.firstChild.remove();
+    setTimeout(() => {
+      el.classList.add('is-out');
+      setTimeout(() => el.remove(), 450);
+    }, ms);
+    return el;
   }
 
   get name() {
@@ -48,6 +64,7 @@ export class UI {
       prev.screen.hide?.(name);
     }
     this.current = { name, screen, params };
+    this.root.dataset.screen = name;
     screen.el.classList.add('is-on');
     screen.show?.(params, prev?.name);
     this.shade.classList.toggle('is-on', !!screen.shade);

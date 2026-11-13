@@ -93,6 +93,11 @@ export class Music {
     }
   }
 
+  /** Fever mode: a faster, busier arrangement until the streak breaks. */
+  setFever(on) {
+    this.fever = !!on;
+  }
+
   /** Low-pass the music (pause menu, game over). */
   muffle(on) {
     this.muffled = on;
@@ -112,7 +117,7 @@ export class Music {
     if (this.nextTime < ctx.currentTime - 0.3) this.nextTime = ctx.currentTime + 0.05; // tab was asleep
     while (this.nextTime < ctx.currentTime + 0.16) {
       this._schedule(this.step, this.nextTime);
-      const target = this.mode === 'game' ? 98 + (this.level - 1) * 6 : 84;
+      const target = this.mode === 'game' ? 98 + (this.level - 1) * 6 + (this.fever ? 12 : 0) : 84;
       this.bpm += (target - this.bpm) * 0.06;
       const sixteenth = 60 / this.bpm / 4;
       this.delay.delayTime.setTargetAtTime(sixteenth * 3, this.nextTime, 0.05);
@@ -167,6 +172,12 @@ export class Music {
         if (s === 4 || s === 12) this._snap(t);
       } else if (s === 0) {
         this._kick(t, 0.16);
+      }
+      // fever: four on the floor, driving sixteenths and a sparkling arpeggio two octaves up
+      if (this.fever) {
+        if (s % 4 === 0 && s !== 0 && s !== 8) this._kick(t, 0.17);
+        if (s % 2 === 1) this._hat(t, 0.022);
+        if (s % 2 === 0) this._pluck(tones[ARP[(s / 2) % ARP.length]] + 24, t, 0.12, 0.024);
       }
     }
   }

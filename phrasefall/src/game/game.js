@@ -10,6 +10,10 @@
  * that is the same for everyone each UTC day (see daily.js), with a small
  * speed bonus and no stage-ups; the time of day moves on as the run progresses.
  *
+ * Fever: ten right answers in a row light the island up and double the points
+ * of every answer after that, until the next miss. Golden cards (classic only,
+ * about one card in sixteen) are worth triple points.
+ *
  * This module owns state and timing only. It talks to the interface through
  * events and to the 3D world through the stage / environment / effects objects.
  */
@@ -23,9 +27,16 @@ import { clamp, shuffle, smoothstep } from '../core/utils.js';
 
 /** Classic games deal expressions that are due for spaced-repetition review this much more often. */
 const DUE_WEIGHT = 2.2;
+/** A run of this many right answers starts fever mode: double points until a miss. */
+export const FEVER_AT = 10;
+/** Chance that a classic card is golden (triple points): never the first two cards, never two in a row. */
+export const GOLDEN_CHANCE = 0.06;
+export const GOLD = 0xffb21e;
+export const FEVER_COLOR = 0xff6a2b;
 
 const _v = new THREE.Vector3();
 const _w = new THREE.Vector3();
+const _fever = new THREE.Color(FEVER_COLOR);
 
 export class Game {
   constructor({ stage, env, fx, audio, save, events }) {
@@ -69,6 +80,9 @@ export class Game {
     this.trailT = 0;
     this.timers.length = 0;
     this.pendingBurst = null;
+    this.fever = false;
+    this.feverT = 0;
+    this.lastGolden = false;
   }
 
   get stageDef() {
@@ -112,6 +126,7 @@ export class Game {
   /** Start a run. `opts.mode`: 'classic' (default) or 'daily'. Needs the expression database loaded. */
   start(opts = {}) {
     this._settleDaily();
+    this._setFever(false, true);
     this.reset();
     this.mode = opts.mode === 'daily' ? 'daily' : 'classic';
     this.daily = null;
@@ -162,6 +177,7 @@ export class Game {
   /** Leave the run without recording it (a ranked daily run still counts what was scored). */
   quit() {
     this._settleDaily();
+    this._setFever(false, true);
     this.timers.length = 0;
     this.paused = false;
     this.card.hide();
@@ -241,7 +257,9 @@ export class Game {
       options = shuffle([{ text: expr.meaning, correct: true }, ...expr.distractors.map((text) => ({ text, correct: false }))]);
     }
     if (!this.seen.includes(expr.id)) this.seen.push(expr.id);
-    this.question = { expr, options, correctIndex: options.findIndex((o) => o.correct), number: this.answered + 1 };
+    const golden = !d && this.answered >= 2 && !this.lastGolden && Math.random() < GOLDEN_CHANCE;
+    this.lastGolden = golden;
+    this.question = { expr, options, correctIndex: options.findIndex((o) => o.correct), number: this.answered + 1, golden };
 
     const st = this.stageDef;
     if (d) {
@@ -256,14 +274,16 @@ export class Game {
 
     const m = (this.metrics = shots.play(this.stage, this.layout.panelH, this.layout.hudH));
     const headTop = (this.ch?.rig.metrics.height ?? 2) + 0.05;
+    const accent = golden ? GOLD : this.fever ? FEVER_COLOR : this.env.v.accent;
     this.card.show(expr.text, {
       scale: m.cardScale,
       spawnY: Math.max(m.spawnY, headTop + m.cardH * 1.4),
       impactY: headTop + m.cardH / 2 - 0.12,
-      accent: this.env.v.accent,
+      accent,
+      golden,
     });
-    this.fx.line(this.card.pos, this.card.halfWidth, { count: 16, color: 0xffffff, color2: this.env.v.accent, speed: 2.5, size: 0.4, life: 0.5, gravity: 0 });
-    this.audio.play('spawn');
+    this.fx.line(this.card.pos, this.card.halfWidth, { count: golden ? 40 : 16, color: golden ? 0xfff1b8 : 0xffffff, color2: accent, speed: golden ? 4 : 2.5, size: golden ? 0.55 : 0.4, life: golden ? 0.8 : 0.5, gravity: 0 });
+    this.audio.play(golden ? 'golden' : 'spawn');
     this._set('playing');
     this.events.emit('game:question', { ...this.question, stage: st, stageIndex: this.stageIndex, fallTime: this.fallTime, mode: this.mode, daily: this.dailyInfo });
   }
@@ -289,19 +309,22 @@ export class Game {
     this.bestStreak = Math.max(this.bestStreak, this.streak);
     const bonus = streakBonus(this.streak);
     const speed = this.daily ? speedBonus(this.qTime) : 0;
-    const gained = SCORING.correct + bonus + speed;
+    // fever doubles, a golden card triples (both: ×6); streak and speed bonuses stay as they are
+    const fever = this.fever;
+    const base = SCORING.correct * (q.golden ? 3 : 1) * (fever ? 2 : 1);
+    const gained = base + bonus + speed;
     this.score += gained;
-    this.save.recordAnswer(q.expr.id, true);
+    const rec = this.save.recordAnswer(q.expr.id, true);
     if (this.daily) {
       this.marks += 'c';
       this._saveDaily(false);
     }
-    this.events.emit('game:answered', { choice: index, correct: true, correctIndex: q.correctIndex });
+    this.events.emit('game:answered', { choice: index, correct: true, correctIndex: q.correctIndex, id: q.expr.id, type: q.expr.type, golden: !!q.golden, fever, streak: this.streak, fresh: rec.fresh, mastered: rec.mastered, mode: this.mode });
 
     const a = this.ch.animator;
     a.worry = 0;
     const clip = this.ch.def.attack === 'kick' ? 'kick' : 'attack';
-    this.pendingBurst = { gained, bonus, speed };
+    this.pendingBurst = { gained, base, bonus, speed, golden: !!q.golden, fever };
     a.play(clip, { speed: 1.25 });
     // safety net in case the release event is missed
     this.after(0.5, () => this._release());
@@ -343,10 +366,15 @@ export class Game {
     this.fx.ring(pos, { color: accent, from: 0.4, to: 2.4 * card.scale + 0.8, life: 0.4, opacity: 0.7 });
     this.audio.play('pop');
     this.audio.play('correct', { streak: this.streak });
-    this.stage.shake(3, 0.16);
+    this.stage.shake(pb.golden ? 6 : 3, pb.golden ? 0.24 : 0.16);
+    if (pb.golden) {
+      this.audio.play('goldenHit');
+      this.fx.confetti(pos, { count: 60, spread: 3, colors: [0xffc83d, 0xffe08a, 0xfff6e3, 0xf0a31b] });
+      this.fx.ring(pos, { color: GOLD, from: 0.6, to: 3.6 * card.scale + 1, life: 0.55, opacity: 0.85 });
+    }
 
     const screen = this.stage.toScreen(pos);
-    this.events.emit('game:score', { score: this.score, gained: SCORING.correct, bonus: pb.bonus, speed: pb.speed, streak: this.streak, x: screen.x, y: screen.y });
+    this.events.emit('game:score', { score: this.score, gained: pb.base, bonus: pb.bonus, speed: pb.speed, golden: pb.golden, fever: pb.fever, streak: this.streak, x: screen.x, y: screen.y });
     this.env.island.setStreak(this.streak);
     this.env.island.pulseRing(pb.bonus ? 1 : 0.45);
     this.ch.animator.play('cheer', { speed: 1.1 });
@@ -358,6 +386,7 @@ export class Game {
       this.fx.confetti(_v.setY(1.2), { count: pb.bonus >= SCORING.streak10 ? 70 : 40 });
       this.ch.animator.flash(0xffe9a8, 0.6);
     }
+    if (!this.fever && this.streak >= FEVER_AT) this.after(0.35, () => this.streak >= FEVER_AT && this._setFever(true));
 
     if (!this.daily && this.correctInStage >= this.stageDef.goal && this.stageIndex < STAGES.length - 1) this.after(0.75, () => this._stageUp());
     else this.after(0.62, () => this._advance());
@@ -370,13 +399,14 @@ export class Game {
     this.answered++;
     this.streak = 0;
     this.lives--;
-    this.save.recordAnswer(q.expr.id, false);
+    const rec = this.save.recordAnswer(q.expr.id, false);
     if (!this.wrong.includes(q.expr.id)) this.wrong.push(q.expr.id);
     if (this.daily) {
       this.marks += 'w';
       this._saveDaily(false);
     }
-    this.events.emit('game:answered', { choice: index, correct: false, correctIndex: q.correctIndex, timeout: index == null });
+    this.events.emit('game:answered', { choice: index, correct: false, correctIndex: q.correctIndex, timeout: index == null, id: q.expr.id, type: q.expr.type, golden: !!q.golden, fever: false, streak: 0, fresh: rec.fresh, mastered: false, mode: this.mode });
+    this._setFever(false);
     this.env.island.setStreak(0);
     if (index != null) {
       this.audio.play('wrong');
@@ -453,6 +483,7 @@ export class Game {
   /** End of a run: 'ko' (out of lives) or 'complete' (the last card of a daily run). */
   _finish(reason) {
     this._set('over');
+    this._setFever(false, true);
     this.timers.length = 0;
     const a = this.ch.animator;
     const ko = reason === 'ko';
@@ -496,6 +527,31 @@ export class Game {
       this.stage.setShot(shots.over(this.stage), 1.5);
     });
     this.after(2.1, () => this.events.emit('game:over', results));
+  }
+
+  // ── fever ───────────────────────────────────────────────────────────────
+  /** Start or end fever mode. `quiet`: no fanfare (a run ending or starting). */
+  _setFever(on, quiet = false) {
+    if (this.fever === on) return;
+    this.fever = on;
+    this.feverT = 0;
+    this.audio.music?.setFever?.(on);
+    if (!on) this.env.island.setAccent?.(this.env.v.accent);
+    this.events.emit('game:fever', { on, streak: this.streak, quiet });
+    if (quiet || !this.ch) return;
+    if (on) {
+      this.audio.play('fever');
+      const a = this.ch.animator;
+      a.flash(FEVER_COLOR, 0.9);
+      this.after(0.25, () => this.state !== 'over' && !a.clip && a.play('power'));
+      this.ch.rig.root.getWorldPosition(_v);
+      this.fx.ring(_v.setY(0.08), { color: FEVER_COLOR, from: 0.6, to: 6, life: 0.8, flat: true, opacity: 0.85 });
+      this.fx.burst(_v.setY(1.1), { count: 46, color: FEVER_COLOR, color2: 0xffd27a, speed: 4.5, size: 0.6, life: 0.8, gravity: -1.5, up: 1.2 });
+      this.env.island.pulseRing(1);
+      this.stage.shake(6, 0.3);
+    } else {
+      this.audio.play('feverEnd');
+    }
   }
 
   // ── daily challenge bookkeeping ─────────────────────────────────────────
@@ -560,6 +616,19 @@ export class Game {
     const card = this.card;
     const res = card.update(dt, this.fallTime);
     if (this.state === 'playing') this.qTime += dt;
+
+    // fever: embers rise around the character and the island glows fire-orange
+    if (this.fever && ch) {
+      this.feverT -= dt;
+      if (this.feverT <= 0) {
+        this.feverT = 0.045;
+        ch.rig.root.getWorldPosition(_v);
+        const a = Math.random() * Math.PI * 2;
+        const r = 0.55 + Math.random() * 0.6;
+        this.fx.spark(_v.x + Math.cos(a) * r, 0.08, _v.z + Math.sin(a) * r * 0.7, (Math.random() - 0.5) * 0.3, 1.4 + Math.random() * 1.6, 0, Math.random() < 0.55 ? FEVER_COLOR : 0xffd27a, 0.32 + Math.random() * 0.3, 0.7 + Math.random() * 0.5, -0.8, 1.2);
+      }
+      this.env.island.setAccent?.(_fever);
+    }
 
     if (this.state === 'playing' && ch) {
       const t = card.t;

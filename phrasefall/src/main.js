@@ -25,6 +25,10 @@ import { createCollection } from './ui/screens/collection.js';
 import { createRecords } from './ui/screens/records.js';
 import { createSettings } from './ui/screens/settings.js';
 import { createLeaderboard } from './ui/screens/leaderboard.js';
+import { createToday } from './ui/screens/today.js';
+import { createJourney } from './ui/screens/journey.js';
+import { createNotifier } from './ui/notify.js';
+import { Progress } from './game/progress.js';
 import { createAccount } from './ui/account.js';
 import { createOnline } from './online/index.js';
 import { loadExpressions, expressionsReady } from './data/expressions/index.js';
@@ -61,27 +65,48 @@ async function boot() {
   const fx = new Effects(stage);
   const game = new Game({ stage, env, fx, audio, save, events });
   const hero = new Hero({ stage, fx, env, game });
-  const app = { stage, env, fx, game, hero, audio, save, events, thumbs: new Map(), screens: {} };
+  const player = new Progress({ save, events }); // levels, daily streak, quests
+  const app = { stage, env, fx, game, hero, audio, save, events, progress: player, thumbs: new Map(), screens: {} };
   const ui = (app.ui = new UI(app));
+
+  // the island's place (London, New York…), unlocked by levelling up
+  env.setPlace?.(player.place, { instant: true });
+  let catchingUp = false;
+  /** Move the island to an unlocked place. Returns false if it isn't open yet. */
+  app.travel = (id, { instant = false } = {}) => {
+    if (!player.isPlaceOpen(id)) return false;
+    catchingUp = true;
+    try {
+      player.setPlace(id);
+    } finally {
+      catchingUp = false;
+    }
+    if (env.place !== id) env.setPlace?.(id, { instant });
+    return true;
+  };
+  // a cloud sync can bring a streak or place from another device: catch up when the save changes
+  save.onChange(() => {
+    if (catchingUp) return;
+    catchingUp = true;
+    try {
+      player.touch();
+      if (env.place && env.place !== player.place && ui.name !== 'play') env.setPlace?.(player.place);
+    } finally {
+      catchingUp = false;
+    }
+  });
   app.online = createOnline(app); // Google sign-in, cloud save, leaderboards — inert unless Firebase is configured
   window.__pf = app; // handy for testing from the console
   progress(0.3);
 
   hero.set(save.data.character, { effect: false, clip: null });
   stage.setShot(shots.title(stage), 0);
-  let petalT = 1;
   stage.onUpdate((dt, t) => {
     env.update(dt, t);
     game.update(dt);
     hero.update(dt);
     fx.update(dt, t, game.dizzyAnchor);
-    // blossom petals drifting off the tree
-    petalT -= dt;
-    if (petalT <= 0 && stage.qualityName !== 'low') {
-      petalT = 0.5 + Math.random() * 0.9;
-      const p = env.island.blossomTop;
-      fx.petal(p.x + (Math.random() - 0.5) * 2.4, p.y + (Math.random() - 0.5) * 1.2, p.z + (Math.random() - 0.2) * 1.6, Math.random() < 0.5 ? 0xffb3cf : 0xff8fb8);
-    }
+    env.ambient(fx, dt, stage.qualityName); // the current place's ambient particles (blossom petals, leaves, steam …)
   });
   // compile shaders for objects that only appear mid-game (card, effects) before play starts
   game.card.group.visible = true;
@@ -128,7 +153,10 @@ async function boot() {
   s.records = ui.add('records', createRecords(app));
   s.leaderboard = ui.add('leaderboard', createLeaderboard(app));
   s.settings = ui.add('settings', createSettings(app));
+  s.today = ui.add('today', createToday(app));
+  s.journey = ui.add('journey', createJourney(app));
   ui.finish();
+  createNotifier(app); // toasts for quests, goals and level-ups
   app.account = createAccount(app); // header chip, account sheet, nickname dialog (online builds only)
 
   // ── global input ────────────────────────────────────────────────────────

@@ -19,14 +19,27 @@
  *                 marks: one character per card — c correct, w wrong, - not reached
  *   tutorialDone  boolean
  *
+ * Progress (src/game/progress.js — levels, the daily streak, quests):
+ *   totals.xp     lifetime XP; the level is worked out from it (src/data/levels.js)
+ *   streak        { count, best, last, brollies, lost, lostOn, saved, t }
+ *                 last: the LOCAL day ('YYYY-MM-DD') last counted — goal met, or kept by a brolly
+ *   days          local 'YYYY-MM-DD' → that day's activity:
+ *                 { right, known, reviews, fresh, mastered, xp, games, goal, brolly, daily,
+ *                   q: { p0, p1, p2, d0, d1, d2, chest, chars } }   (today's quests)
+ *   place         the place the island is in;  seenPlaces  places already celebrated
+ *
  * Unknown fields (top level, settings, per-expression) are kept as they are, so
  * other modules — cloud sync, for one — can add their own without losing them.
  */
 import { ROSTER } from '../data/roster.js';
+import { levelInfo } from '../data/levels.js';
 
 const KEY = 'phrasefall.save.v1';
 const MASTERY_STREAK = 3;
 const DAILY_KEEP = 400;
+/** Local days of activity kept for the weekly report and the streak calendar. */
+export const DAYS_KEEP = 60;
+export const BROLLY_MAX = 2;
 
 /**
  * Spaced repetition (Leitner): a right answer moves an expression up one box,
@@ -53,6 +66,9 @@ const plain = (v) => v == null || ['string', 'number', 'boolean'].includes(typeo
 const DATE_ID = /^\d{4}-\d{2}-\d{2}$/;
 
 const blankExpr = () => ({ seen: 0, correct: 0, wrong: 0, streak: 0, last: null, fav: false, practise: false, t: 0 });
+export const blankStreak = () => ({ count: 0, best: 0, last: '', brollies: 0, lost: 0, lostOn: '', saved: null, t: 0 });
+export const blankDay = () => ({ right: 0, known: 0, reviews: 0, fresh: 0, mastered: 0, xp: 0, games: 0, goal: false, brolly: false, daily: false, q: blankQuests() });
+const blankQuests = () => ({ p0: 0, p1: 0, p2: 0, d0: false, d1: false, d2: false, chest: false, chars: [] });
 
 const defaults = () => ({
   version: 1,
@@ -61,13 +77,42 @@ const defaults = () => ({
   unlocked: ROSTER.filter((r) => r.rule.type === 'start').map((r) => r.id),
   seenUnlocks: [],
   best: { score: 0, streak: 0, stage: 1 },
-  totals: { games: 0, correct: 0, wrong: 0, score: 0 },
+  totals: { games: 0, correct: 0, wrong: 0, score: 0, xp: 0 },
   /** id → { seen, correct, wrong, streak, last: 'c' | 'w', fav, practise, t, box, due } */
   expr: {},
   /** 'YYYY-MM-DD' → ranked daily challenge attempt */
   daily: {},
   tutorialDone: false,
+  streak: blankStreak(),
+  /** local 'YYYY-MM-DD' → that day's activity and quests */
+  days: {},
+  place: 'home',
+  seenPlaces: ['home'],
 });
+
+function cleanStreak(raw) {
+  const s = { ...blankStreak(), ...(isObj(raw) ? raw : {}) };
+  for (const k of ['count', 'best', 'lost', 't']) s[k] = Math.max(0, Math.round(num(s[k])));
+  s.best = Math.max(s.best, s.count);
+  s.brollies = Math.max(0, Math.min(BROLLY_MAX, Math.round(num(s.brollies))));
+  s.last = DATE_ID.test(s.last) ? s.last : '';
+  s.lostOn = DATE_ID.test(s.lostOn) ? s.lostOn : '';
+  s.saved = isObj(s.saved) && DATE_ID.test(s.saved.on) ? { n: Math.max(1, Math.round(num(s.saved.n, 1))), on: s.saved.on } : null;
+  return s;
+}
+
+function cleanDay(raw) {
+  if (!isObj(raw)) return null;
+  const day = { ...blankDay(), ...raw };
+  for (const k of ['right', 'known', 'reviews', 'fresh', 'mastered', 'xp', 'games']) day[k] = Math.max(0, Math.round(num(day[k])));
+  for (const k of ['goal', 'brolly', 'daily']) day[k] = !!day[k];
+  const q = { ...blankQuests(), ...(isObj(raw.q) ? raw.q : {}) };
+  for (const k of ['p0', 'p1', 'p2']) q[k] = Math.max(0, Math.round(num(q[k])));
+  for (const k of ['d0', 'd1', 'd2', 'chest']) q[k] = !!q[k];
+  q.chars = strings(q.chars).slice(0, 12);
+  day.q = q;
+  return day;
+}
 
 /** One per-expression record, cleaned up; old records get a Leitner box from their history. */
 function cleanExpr(raw) {
@@ -148,6 +193,17 @@ export class Save {
       }
     }
     d.tutorialDone = !!saved.tutorialDone;
+    d.streak = cleanStreak(saved.streak);
+    if (isObj(saved.days)) {
+      d.days = {};
+      const ids = Object.keys(saved.days).filter((id) => DATE_ID.test(id)).sort().slice(-DAYS_KEEP);
+      for (const id of ids) {
+        const day = cleanDay(saved.days[id]);
+        if (day) d.days[id] = day;
+      }
+    }
+    if (typeof saved.place === 'string') d.place = saved.place;
+    d.seenPlaces = [...new Set(['home', ...strings(saved.seenPlaces)])];
     return true;
   }
 
@@ -236,9 +292,14 @@ export class Save {
   _rec(id) {
     return (this.data.expr[id] ??= blankExpr());
   }
-  /** A game answer: updates the stats and the Leitner box (right → up one, wrong → box 0). */
+  /**
+   * A game answer: updates the stats and the Leitner box (right → up one, wrong → box 0).
+   * Returns { fresh, mastered }: met for the first time ever / mastered by this answer.
+   */
   recordAnswer(id, correct) {
     const s = this._rec(id);
+    const fresh = s.seen === 0;
+    const wasMastered = s.streak >= MASTERY_STREAK;
     s.seen++;
     s.t = Date.now();
     if (correct) {
@@ -255,6 +316,7 @@ export class Save {
     s.due = dueFor(s.box, s.t);
     if (correct) this.data.totals.correct++;
     else this.data.totals.wrong++;
+    return { fresh, mastered: !wasMastered && s.streak >= MASTERY_STREAK };
   }
   /** A flashcard review ("I knew it" / "Not yet"): moves the Leitner box only. Returns the new box. */
   review(id, knew) {
@@ -318,7 +380,18 @@ export class Save {
   /** Lifetime stats used by unlock rules. */
   progress() {
     const d = this.data;
-    return { score: d.best.score, streak: d.best.streak, stage: d.best.stage, games: d.totals.games, correct: d.totals.correct, seen: this.seenIds.length, mastered: this.masteredCount, total: d.totals.score };
+    return {
+      score: d.best.score,
+      streak: d.best.streak,
+      stage: d.best.stage,
+      games: d.totals.games,
+      correct: d.totals.correct,
+      seen: this.seenIds.length,
+      mastered: this.masteredCount,
+      total: d.totals.score,
+      streakDays: d.streak.best,
+      level: levelInfo(d.totals.xp).level,
+    };
   }
 
   /**

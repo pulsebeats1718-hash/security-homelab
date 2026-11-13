@@ -14,6 +14,11 @@
  *   objects         merged key by key with these same rules
  *   anything else   (e.g. the selected character) from whichever side changed last
  *   settings        always this device's: volume, graphics and pace are per device
+ *   streak          the daily streak is one record: the side that counted the later day
+ *                   wins as a whole (so a device that was away for a while cannot end a
+ *                   streak another device kept going); the best ever is the higher of the two
+ *   days            per-day activity: merged key by key like any object (counts take the
+ *                   higher value, "goal met" and quest flags are or-ed)
  */
 const isObj = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
 const clone = (v) => (v === undefined ? undefined : JSON.parse(JSON.stringify(v)));
@@ -39,6 +44,7 @@ export function mergeSaves(local, cloud, { localNewer = true, base = null } = {}
     const a = local[k];
     const b = cloud[k];
     if (LOCAL_ONLY.includes(k)) out[k] = a !== undefined ? a : b;
+    else if (k === 'streak') out[k] = mergeStreak(a, b, localNewer);
     else if (RECORD_MAPS.includes(k)) out[k] = mergeRecords(a, b);
     else if (COUNTERS.includes(k)) out[k] = mergeCounters(a, b, base ? base[k] ?? {} : null, localNewer);
     else out[k] = mergeValue(a, b, localNewer);
@@ -66,6 +72,28 @@ function pickRecord(a, b) {
   const tb = typeof b.t === 'number' ? b.t : 0;
   if (ta !== tb) return ta > tb ? a : b;
   return (b.seen ?? 0) > (a.seen ?? 0) ? b : a;
+}
+
+/**
+ * The daily streak as a whole record: the later `last` day wins, then the longer streak,
+ * then the later change (`t`). `best` is never lowered.
+ */
+export function mergeStreak(a, b, localNewer = true) {
+  if (!isObj(a)) return isObj(b) ? b : a;
+  if (!isObj(b)) return a;
+  const la = typeof a.last === 'string' ? a.last : '';
+  const lb = typeof b.last === 'string' ? b.last : '';
+  const ca = typeof a.count === 'number' ? a.count : 0;
+  const cb = typeof b.count === 'number' ? b.count : 0;
+  const ta = typeof a.t === 'number' ? a.t : 0;
+  const tb = typeof b.t === 'number' ? b.t : 0;
+  let win;
+  if (la !== lb) win = la > lb ? a : b;
+  else if (ca !== cb) win = ca > cb ? a : b;
+  else if (ta !== tb) win = ta > tb ? a : b;
+  else win = localNewer ? a : b;
+  const best = Math.max(typeof a.best === 'number' ? a.best : 0, typeof b.best === 'number' ? b.best : 0, ca, cb);
+  return { ...win, best };
 }
 
 /** cloud + (local − base); never less than either side. Without a base every local count is new. */

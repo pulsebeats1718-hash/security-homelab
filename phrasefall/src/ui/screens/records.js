@@ -31,7 +31,7 @@ function dailyHistory(save) {
   const streak = dailyStreak(daily);
   return h(
     'div.history',
-    h('div.history__head', h('div.eyebrow', 'Daily challenges'), h('span.chip', icon('flame'), streak === 1 ? '1 day in a row' : `${streak} days in a row`)),
+    h('div.history__head', h('div.eyebrow', 'Daily challenges'), h('span.chip', icon('calendar'), streak === 1 ? '1 day in a row' : `${streak} days in a row`)),
     h(
       'div.history__list',
       ids.slice(0, HISTORY_DAYS).map((id) => {
@@ -44,6 +44,41 @@ function dailyHistory(save) {
           h(`div.history__score${r.score === best && best > 0 ? '.is-best' : ''}`, r.done === false ? 'Unfinished' : formatScore(r.score ?? 0))
         );
       })
+    )
+  );
+}
+
+/** The last seven days: XP per day as bars (flame on goal days, brolly on saved ones) and the week's totals. */
+function weekReport(app) {
+  const p = app.progress;
+  if (!p) return null;
+  const w = p.week();
+  const max = Math.max(60, ...w.days.map((d) => d.xp));
+  const s = p.streak;
+  return h(
+    'div.week-report',
+    h('div.history__head', h('div.eyebrow', 'This week'), h('span.chip.chip--fire', icon('flame'), s.count === 1 ? '1-day streak' : `${s.count}-day streak`)),
+    h(
+      'div.bars',
+      w.days.map((d) =>
+        h(
+          `div.bars__col${d.today ? '.is-today' : ''}${d.goal ? '.is-goal' : ''}`,
+          { title: `${d.label}: ${d.xp} XP` },
+          h('span.bars__xp', d.xp ? d.xp.toLocaleString('en-GB') : ''),
+          h('div.bars__track', h('i', { style: { height: `${d.xp ? Math.max(6, (d.xp / max) * 100) : 0}%` } })),
+          h('span.bars__mark', d.goal ? icon('flame') : d.brolly ? icon('brolly') : null),
+          h('span.bars__label', d.today ? 'Today' : d.label)
+        )
+      )
+    ),
+    h(
+      'div.records__grid',
+      stat(w.xp.toLocaleString('en-GB'), 'XP this week'),
+      stat(`${w.played}/7`, 'Days played'),
+      stat(w.right.toLocaleString('en-GB'), 'Right answers'),
+      stat(w.fresh.toLocaleString('en-GB'), 'New expressions'),
+      stat(w.mastered.toLocaleString('en-GB'), 'Mastered'),
+      stat(`Level ${p.level}`, `Best streak ${s.best} ${s.best === 1 ? 'day' : 'days'}`)
     )
   );
 }
@@ -66,6 +101,7 @@ export function recordsContent(app) {
       stat(`${save.masteredCount.toLocaleString('en-GB')}/${total}`, 'Mastered'),
       stat(`${d.unlocked.length}/${CHARACTERS.length}`, 'Characters')
     ),
+    weekReport(app),
     dailyHistory(save),
     save.persistent ? null : h('p.about', 'Your browser is blocking saved data here, so progress will last only until this page is closed.'),
   ].filter(Boolean);
