@@ -116,6 +116,7 @@ for (const f of targets) {
   if (f.loadError) err('(file)', `could not load: ${f.loadError}`);
   const seenHere = new Set();
   let longestCount = 0;
+  let shortestCount = 0;
   for (const e of f.list) {
     checked++;
     const id = e?.id ?? '(no id)';
@@ -151,6 +152,7 @@ for (const f of targets) {
         err(id, `meaning is ${String(e.meaning).length - longestWrong} chars longer than the longest distractor (gives the answer away; keep it within 6)`);
       }
       if (String(e.meaning).length > longestWrong) longestCount++;
+      if (String(e.meaning).length < Math.min(...e.distractors.map((d) => String(d).length))) shortestCount++;
     }
     if (/[.!]$/.test(e.meaning ?? '')) err(id, 'meaning should not end with punctuation');
     if (!Array.isArray(e.synonyms) || e.synonyms.length < 1 || e.synonyms.length > 3) err(id, 'needs 1–3 synonyms');
@@ -172,6 +174,9 @@ for (const f of targets) {
   // the right answer should not usually be the longest option (by chance it would be about 1 in 4)
   if (f.list.length >= 20 && longestCount / f.list.length > 0.4) {
     out.push(`  ⚠ (file): the meaning is the longest option in ${Math.round((longestCount / f.list.length) * 100)}% of entries — players learn to pick the longest answer; aim for under 40%`);
+  }
+  if (f.list.length >= 20 && shortestCount / f.list.length > 0.45) {
+    out.push(`  ⚠ (file): the meaning is the shortest option in ${Math.round((shortestCount / f.list.length) * 100)}% of entries — players learn to pick the shortest answer; aim for under 40%`);
   }
   const nErr = out.filter((l) => l.includes('✗')).length;
   errors += nErr;
