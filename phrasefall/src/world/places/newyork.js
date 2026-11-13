@@ -48,7 +48,7 @@ const COOL = 0xbfe0ff;
 /** The avenue's centre line behind the dais, and its half width; the steaming manhole's x. */
 const streetZ = (x) => -2.95 + 0.045 * x * x;
 const HALF = 0.62;
-const MH = -2.0;
+const MH = 3.75;
 
 /** A rooftop wooden water tower on stilts (local frame, base at y). */
 function waterTower(b, x, y, z, s = 1) {
@@ -315,6 +315,8 @@ export class NewYork extends Diorama {
       });
     }
     this.steam = [MH, at(MH, streetZ(MH) + 0.18) + 0.08, streetZ(MH) + 0.18];
+    /** keep the season dressing away from the steaming manhole (a snowman beside the puffs looks doubled) */
+    this.avoid = [{ x: MH, z: streetZ(MH) + 0.18, r: 1.5 }];
 
     // the block behind it
     const row = [
