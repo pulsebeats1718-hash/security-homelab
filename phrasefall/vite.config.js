@@ -35,9 +35,17 @@ function pwa() {
     writeBundle(options, bundle) {
       const sw = resolve(options.dir, 'sw.js');
       if (!existsSync(sw)) return;
-      const files = Object.keys(bundle)
-        .filter((f) => f !== 'index.html' && !f.endsWith('.map'))
-        .sort();
+      // Firebase and the sign-in code are skipped: guests never need them, and they are
+      // cached on first use (cache-first for /assets/) when a player signs in.
+      const isOnlineChunk = (f) => {
+        const c = bundle[f];
+        if (!c || c.type !== 'chunk') return false;
+        const ids = [c.facadeModuleId, ...(c.moduleIds ?? Object.keys(c.modules ?? {}))];
+        return ids.some((id) => id && (/[\\/]node_modules[\\/]@?firebase[\\/]/.test(id) || /[\\/]src[\\/]online[\\/](service|firestore)\.js$/.test(id)));
+      };
+      const all = Object.keys(bundle).filter((f) => f !== 'index.html' && !f.endsWith('.map'));
+      const files = all.filter((f) => !isOnlineChunk(f)).sort();
+      this.info?.(`service worker precaches ${files.length} files (skipped ${all.length - files.length} online-only chunks)`);
       const html = bundle['index.html']?.source ?? '';
       const src = readFileSync(sw, 'utf8');
       const version = createHash('sha256').update(files.join('\n')).update(String(html)).update(src).digest('hex').slice(0, 12);
