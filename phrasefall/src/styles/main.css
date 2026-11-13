@@ -3203,6 +3203,14 @@ svg.ico.fill {
   color: var(--gold);
 }
 
+/* an expression's sense hint, "pick up (a language)" */
+.phrase-hint {
+  font-size: 0.74em;
+  font-weight: 600;
+  opacity: 0.62;
+  white-space: nowrap;
+}
+
 /* ══ progress: levels, streak, quests, places ═══════════════════════════ */
 
 /* shared bits */

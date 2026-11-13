@@ -12,6 +12,7 @@ const H = 1.7;
 const TEX_W = 1280;
 const TEX_H = 320;
 const INK = '#1a1446';
+const HINT_INK = '#5b4f99';
 const DANGER = new THREE.Color(0xff5068);
 
 export class ExpressionCard {
@@ -78,25 +79,31 @@ export class ExpressionCard {
     return (H / 2) * this.scale;
   }
 
-  /** Draw the expression, fitting it on one or two lines. */
+  /**
+   * Draw the expression, fitting it on one or two lines. A sense hint in brackets
+   * ("pick up (a language)") goes on its own smaller, softer line underneath.
+   */
   _draw(text) {
     const g = this.ctx;
     g.clearRect(0, 0, TEX_W, TEX_H);
     g.textAlign = 'center';
     g.textBaseline = 'middle';
     g.fillStyle = INK;
-    const font = (px) => `700 ${px}px "Fredoka Variable", "Fredoka", "Nunito Variable", system-ui, sans-serif`;
+    const font = (px, weight = 700) => `${weight} ${px}px "Fredoka Variable", "Fredoka", "Nunito Variable", system-ui, sans-serif`;
+    const m = text.match(/^(.*\S)\s*\(([^()]+)\)$/);
+    const main = m ? m[1] : text;
+    const hint = m ? `(${m[2].trim()})` : '';
     const maxW = TEX_W - 110;
-    let lines = [text];
-    let size = 150;
+    let lines = [main];
+    let size = hint ? 128 : 150;
     g.font = font(size);
-    if (g.measureText(text).width > maxW && text.includes(' ') && text.length > 16) {
+    if (g.measureText(main).width > maxW && main.includes(' ') && main.length > 16) {
       // split at the space nearest the middle
-      const mid = text.length / 2;
+      const mid = main.length / 2;
       let best = -1;
-      for (let i = 0; i < text.length; i++) if (text[i] === ' ' && (best < 0 || Math.abs(i - mid) < Math.abs(best - mid))) best = i;
-      lines = [text.slice(0, best), text.slice(best + 1)];
-      size = 118;
+      for (let i = 0; i < main.length; i++) if (main[i] === ' ' && (best < 0 || Math.abs(i - mid) < Math.abs(best - mid))) best = i;
+      lines = [main.slice(0, best), main.slice(best + 1)];
+      size = hint ? 100 : 118;
     }
     for (;;) {
       g.font = font(size);
@@ -105,8 +112,16 @@ export class ExpressionCard {
       size -= 4;
     }
     const lh = size * 1.06;
-    const y0 = TEX_H / 2 - ((lines.length - 1) * lh) / 2 + size * 0.04;
-    lines.forEach((l, i) => g.fillText(l, TEX_W / 2, y0 + i * lh));
+    const hintSize = hint ? Math.max(48, Math.round(size * 0.5)) : 0;
+    const gap = hint ? size * 0.14 : 0;
+    const blockH = lines.length * lh + gap + hintSize;
+    const top = TEX_H / 2 - blockH / 2;
+    lines.forEach((l, i) => g.fillText(l, TEX_W / 2, top + lh * (i + 0.5) + size * 0.04));
+    if (hint) {
+      g.font = font(hintSize, 600);
+      g.fillStyle = HINT_INK;
+      g.fillText(hint, TEX_W / 2, top + lines.length * lh + gap + hintSize / 2);
+    }
     this.texture.needsUpdate = true;
   }
 

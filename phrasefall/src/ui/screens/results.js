@@ -1,4 +1,4 @@
-import { h, icon, clear, countUp, retrigger } from '../dom.js';
+import { h, icon, clear, countUp, retrigger, phrase } from '../dom.js';
 import { getCharacter } from '../../characters/index.js';
 import { getExpression } from '../../data/expressions/index.js';
 import { formatScore } from '../../core/utils.js';
@@ -378,7 +378,7 @@ export function createResults(app) {
             'div.review',
             wrong.map((id) => {
               const e = getExpression(id);
-              return h('div.review__item', h('div.review__expr', e.text), h('div.review__mean', e.meaning));
+              return h('div.review__item', h('div.review__expr', phrase(e.text)), h('div.review__mean', e.meaning));
             })
           )
         );

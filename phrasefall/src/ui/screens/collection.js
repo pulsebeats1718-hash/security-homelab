@@ -1,4 +1,4 @@
-import { h, icon, clear } from '../dom.js';
+import { h, icon, clear, phrase } from '../dom.js';
 import { shots } from '../../game/shots.js';
 import { getExpression, TOTAL_EXPRESSIONS, BY_STAGE, expressionsReady, whenExpressionsReady } from '../../data/expressions/index.js';
 import { STAGES } from '../../data/stages.js';
@@ -81,7 +81,7 @@ export function createCollection(app) {
         h(
           'div.row.hit',
           { role: 'button', tabindex: '0', style: { '--row': def.color }, onclick: () => (audio.play('tap'), ui.go('flashcards', { from: 'collection', filter: tab === 'mistakes' ? 'mistakes' : tab, startId: id })) },
-          h('span.row__expr', e.text),
+          h('span.row__expr', phrase(e.text)),
           h('span.row__stats', h('span.ok', `✓ ${s.correct}`), h('span.no', `✗ ${s.wrong}`)),
           star,
           h('span.row__mean', e.meaning)

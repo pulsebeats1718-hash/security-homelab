@@ -1,4 +1,4 @@
-import { h, icon, clear, retrigger } from '../dom.js';
+import { h, icon, clear, retrigger, phrase } from '../dom.js';
 import { shots } from '../../game/shots.js';
 import { getExpression, TYPE_LABELS, expressionsReady, whenExpressionsReady } from '../../data/expressions/index.js';
 import { SR_INTERVALS } from '../../core/storage.js';
@@ -18,7 +18,8 @@ function speak(text) {
     const synth = window.speechSynthesis;
     if (!synth) return;
     synth.cancel();
-    const u = new SpeechSynthesisUtterance(text);
+    // say the phrase, not its sense hint: "pick up (a language)" → "pick up"
+    const u = new SpeechSynthesisUtterance(String(text).replace(/\s*\([^()]+\)$/, ''));
     u.lang = 'en-GB';
     const voice = synth.getVoices().find((v) => v.lang === 'en-GB') ?? synth.getVoices().find((v) => v.lang?.startsWith('en'));
     if (voice) u.voice = voice;
@@ -146,9 +147,9 @@ export function createFlashcards(app) {
     type.textContent = `${TYPE_LABELS[e.type] ?? e.type} · Stage ${e.stage}`;
     clear(lvl).append(...[1, 2, 3].map((n) => h(`i${n <= e.level ? '.is-on' : ''}`)));
     lvl.setAttribute('aria-label', ['', 'Core', 'Common', 'Advanced'][e.level] ?? '');
-    expr.textContent = e.text;
+    clear(expr).append(...phrase(e.text));
     clear(back).append(
-      h('h3', e.text),
+      h('h3', phrase(e.text)),
       h('p.fc__meaning', e.meaning),
       h('div.fc__row', h('span.fc__label', 'Example'), h('p.fc__example', e.example)),
       h('div.fc__row', h('span.fc__label', 'Similar'), h('div.fc__chips', e.synonyms.map((x) => h('span', x)))),

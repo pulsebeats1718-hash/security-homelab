@@ -20,7 +20,16 @@ const LIMITS = { text: 34, meaning: 56, example: 120, context: 140, mistake: 150
 const FUNCTION_WORDS = new Set(['that', 'this', 'what', 'have', 'with', 'from', 'into', 'onto', 'they', 'them', 'their', 'there', 'then', 'than', 'when', 'where', 'which', 'will', 'would', 'could', 'should', 'been', 'were', 'more', 'most', 'much', 'very', 'just', 'some', 'about', 'over', 'under', 'down', 'make', 'made', 'take', 'took', 'give', 'gave', 'keep', 'come', 'came', 'goes', 'going', 'does', 'done', "don't", "isn't", "it's", "i'm", "you're", "can't", "won't", 'even', 'also', 'only', 'like', 'well']);
 const STOP = new Set(['the', 'a', 'an', 'to', 'of', 'in', 'on', 'at', 'and', 'or', 'it', 'is', 'be', 'your', 'my', 'you', 'i', 'as', 'for', 'with', 'one', 'someone', 'something', 'somebody']);
 
-/** Normalised form used to catch the same expression written twice. */
+/**
+ * A text may end with a sense hint in brackets — "pick up (a language)" — so the same phrase can
+ * appear once per meaning. Returns { base, hint } (hint '' when there is none).
+ */
+export function splitHint(text) {
+  const m = String(text).match(/^(.*\S)\s*\(([^()]+)\)$/);
+  return m ? { base: m[1], hint: m[2].trim().toLowerCase() } : { base: String(text), hint: '' };
+}
+
+/** Normalised form used to catch the same expression written twice (a sense hint is left out). */
 export function norm(text) {
   return String(text)
     .toLowerCase()
@@ -128,8 +137,18 @@ for (const f of targets) {
     seenHere.add(e.id);
     const idElsewhere = (ids.get(e.id) ?? []).filter((w) => w !== name);
     if (idElsewhere.length) err(id, `id also used in ${[...new Set(idElsewhere)].join(', ')}`);
+    // the same phrase may appear once per meaning, each with its own sense hint: "pick up (a language)"
+    const { hint } = splitHint(e.text ?? '');
     const sameText = (texts.get(norm(e.text ?? '')) ?? []).filter((x) => !(x.where === name && x.id === e.id));
-    if (sameText.length) err(id, `same expression as "${sameText[0].text}" in ${sameText[0].where}`);
+    for (const other of sameText) {
+      const otherHint = splitHint(other.text).hint;
+      if (hint && otherHint && hint !== otherHint) continue; // two meanings, told apart by their hints
+      if (hint && !otherHint) warn(id, `"${other.text}" (${other.where}) has no hint: give it one too, e.g. "${other.text} (…)", so players can tell the meanings apart`);
+      else if (!hint && otherHint) warn(id, `another meaning, "${other.text}", is in ${other.where}: give this one a hint too, e.g. "${e.text} (…)"`);
+      else err(id, `same expression as "${other.text}" in ${other.where}${hint ? ' (same hint)' : ''}`);
+    }
+    if (/[()]/.test(e.text ?? '') && !hint) err(id, 'brackets are only for a sense hint at the end: "pick up (a language)"');
+    if (hint && hint.length > 18) err(id, `sense hint "(${hint})" is ${hint.length} chars (max 18)`);
     const allowed = TYPES_BY_STAGE[f.stage] ?? [];
     if (!allowed.includes(e.type)) err(id, `type "${e.type}" not allowed in stage ${f.stage} (use ${allowed.join(' or ')})`);
     if (![1, 2, 3].includes(e.level)) err(id, 'level must be 1, 2 or 3');

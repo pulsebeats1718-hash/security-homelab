@@ -37,6 +37,15 @@ export function icon(name, cls = '') {
   return span.firstChild;
 }
 
+/**
+ * An expression's text as nodes, with its sense hint (if any) set softer and smaller:
+ * "pick up (a language)" → ["pick up ", <span class="phrase-hint">(a language)</span>].
+ */
+export function phrase(text) {
+  const m = String(text).match(/^(.*\S)\s*\(([^()]+)\)$/);
+  return m ? [`${m[1]} `, h('span.phrase-hint', `(${m[2].trim()})`)] : [String(text)];
+}
+
 export const clear = (el) => {
   while (el.firstChild) el.firstChild.remove();
   return el;

@@ -41,8 +41,8 @@ export default [
 
 | field | rule |
 |---|---|
-| `id` | kebab-case slug of the text, unique across the whole database (`keep-an-eye-on`) |
-| `text` | the expression as shown on the card. Max 34 characters. Lower case unless it is a full utterance with "I" or a proper noun. Base form, no "to". Include `someone`/`something` only when the object is part of the fixed phrase (`pull someone's leg`) |
+| `id` | kebab-case slug of the text (hint included: `pick-up-a-language`), unique across the whole database. Never change an existing id: players' progress is stored under it |
+| `text` | the expression as shown on the card. Max 34 characters. Lower case unless it is a full utterance with "I" or a proper noun. Base form, no "to". Include `someone`/`something` only when the object is part of the fixed phrase (`pull someone's leg`). May end with a sense hint in brackets — see "One entry per meaning" |
 | `type` | stage 1 `everyday`, stage 2 `phrasal`, stage 3 `idiom`, stage 4 `set-phrase`, stage 5 `collocation` or `advanced` |
 | `level` | 1, 2 or 3 — see below |
 | `meaning` | the correct answer. Max 56 characters, ideally 20–45. No full stop. Plain words a B1 learner knows. Must not reuse the key words of the expression |
@@ -78,8 +78,15 @@ Aim for roughly 35% level 1, 40% level 2, 25% level 3 in each file.
   meaning of the same expression, or arguably correct in some context.
 - **Never give the answer away:** the meaning must not be longer, more detailed
   or more "dictionary-like" than the distractors, and must not repeat the expression's words.
-- **One entry per expression.** Pick the most common sense of a phrasal verb.
-  Variants of the same expression count as the same (`a piece of cake` = `piece of cake`).
+- **One entry per meaning.** Variants of the same expression count as the same
+  (`a piece of cake` = `piece of cake`). A phrase with several common meanings —
+  above all the everyday phrasal verbs — gets one entry per meaning, each with a
+  **sense hint** in brackets at the end of `text`: `pick up (a language)`,
+  `pick up (the phone)`, `take off (a plane)`. The hint names the typical object,
+  subject or situation in 1–3 words (max 18 characters) and never gives the meaning
+  away. Once a phrase has two meanings, every one of them needs a hint; the
+  validator warns until they do. On the card the hint is drawn as a smaller line
+  under the phrase. All four options must make sense with the hint.
 - **Suitable for all ages:** no swearing, sexual or drug references or slurs. Mild British slang is fine.
 
 ## Who writes what
@@ -107,6 +114,10 @@ fit several, the rule in the table decides.
 | `stage4/discourse.js` | discourse markers, fixed adverbial and prepositional phrases and sentence frames that organise speech and writing (`as a matter of fact`, `on the whole`, `by heart`, `for good`, `if need be`) |
 | `stage5/collocations.js` | C1–C2 collocations: verb + noun (`allay fears`), adjective + noun (`a glaring error`), adverb + adjective (`bitterly disappointed`), fixed noun phrases (`a vicious circle`) |
 | `stage5/advanced.js` | C1–C2 idioms and expressions, often literary, formal or distinctly British (`a curate's egg`, `beyond the pale`, `a busman's holiday`) |
+| `stage1/spoken.js` | everyday spoken British English for social situations: greetings and replies, small talk, thanks, apologies, offers, invitations, ending a chat, the phone, shops, cafés, pubs, office chat |
+| `stage1/spoken-2.js` | spoken reactions, opinions, fillers and softeners, and British politeness and understatement (`I'm not being funny, but…`, `with all due respect`) |
+| `stage2/senses-*.js` | extra meanings of phrasal verbs, with sense hints, split by first particle like the files above (`senses-up`, `senses-out`, `senses-off-down`, `senses-on-in`, `senses-other`) |
+| `stage5/collocations-everyday-verb.js`, `…-adj.js` | B1–C1 collocations that make English sound natural: verb + noun (`meet a deadline`), adjective/adverb + noun or adjective (`heavy traffic`, `fast asleep`) |
 
 Stage 3 is for idioms a B2 learner commonly meets in films, TV and conversation;
 rarer, literary or formal idioms belong in `stage5/advanced.js`. Binomials and
