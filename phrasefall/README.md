@@ -28,8 +28,8 @@ four options before they land.
   devices and join live leaderboards (today's daily challenge, this week, all time).
   Guests play straight away, and their progress comes along when they sign in.
   Runs on Firebase; setup, costs and limits are in [DEPLOY.md](DEPLOY.md).
-- **1,685 British English expressions** – 210 everyday expressions, 485 phrasal
-  verbs, 480 idioms, 260 set phrases and 250 advanced idioms and collocations –
+- **4,000 British English expressions** – 500 everyday expressions, 1,000 phrasal
+  verbs, 1,100 idioms, 700 set phrases, 250 advanced idioms and 450 collocations –
   each with three plausible wrong answers, an example, synonyms, register, context
   and a common learner mistake. Every expression has a difficulty level; harder
   ones join a stage as the player discovers more of it.
