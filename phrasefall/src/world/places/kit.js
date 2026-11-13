@@ -1,8 +1,9 @@
 /**
  * Shared building blocks for the island and the places it travels to.
  *
- *   rim, makeLand      the wobbly floating-land shape: grass top + rocky underside
- *   UNIT, rbox         unit primitives and cached soft (rounded) boxes
+ *   rim, makeLand      the wobbly floating-land shape: grass top + rocky underside (addLand: as a
+ *                      distant chunk in a Batch); islandR / groundY / ribbon for building on the island
+ *   UNIT, SHAPE, rbox  unit primitives and soft (rounded) boxes; tools(b) has builder shorthands
  *   std                the matte scenery material
  *   Batch              merges transformed primitives per material, so a whole diorama costs a
  *                      handful of draw calls. In `anim` mode it also bakes a colour per part and
@@ -166,7 +167,7 @@ export const UNIT = {
  * A distant floating chunk's land: a top (painted by `top(color, x, y, z)`, grass by default) over a
  * faceted rocky underside, added to a Batch at the current frame. The top surface sits at y ≈ 0.
  */
-export function addLand(b, r, { depthScale = 0.85, depth = r * 1.15, seg = 36, top = null, key = 'matte' } = {}) {
+export function addLand(b, r, { depthScale = 0.85, depth = r * 1.15, seg = b.low ? 24 : 36, top = null, key = 'matte' } = {}) {
   const grass = paint(landGeometry(GRASS_PROFILE, seg, r, depthScale), (c, x, y, z) => (top ? top(c, x, y, z, r) : grassColor(c, x, y, z, r, depthScale)));
   grass.deleteAttribute('uv');
   b.add(key, grass, 0, 0, 0, 1, 1, 1, 0, 0, 0, null);
@@ -204,6 +205,8 @@ export const SHAPE = {
   halfDisc: new THREE.CylinderGeometry(0.5, 0.5, 1, 12, 1, false, 0, Math.PI).rotateX(Math.PI / 2).rotateZ(Math.PI / 2),
   /** square lantern glass, wider at the top */
   lantern: faceted(new THREE.CylinderGeometry(0.5 * Math.SQRT2, 0.36 * Math.SQRT2, 1, 4, 1).rotateY(Math.PI / 4)),
+  /** one sixth of a sphere 1 across, between longitudes 0 and 60° (beach-ball panels) */
+  ballPanel: new THREE.SphereGeometry(0.5, 3, 10, 0, Math.PI / 3),
   /** right-angled triangle (a sail): legs along +Y (luff, up the mast) and +X (foot), double sided */
   sail: (() => {
     const g = new THREE.BufferGeometry();
@@ -233,16 +236,29 @@ export const SHAPE = {
 };
 
 const rboxCache = new Map();
-/** A soft box w × h × d with rounded edges (cached by size, indexed so it stays light). */
+let rboxTemplate = null;
+/**
+ * A soft box w × h × d with rounded edges, indexed so it stays light. Every size is derived from
+ * one welded template: a rounded-box vertex is sign · (half size − r) + n · r, with n its normal.
+ */
 export function rbox(w, h, d, r = 0.08) {
   const key = `${w.toFixed(3)}|${h.toFixed(3)}|${d.toFixed(3)}|${r.toFixed(3)}`;
   let g = rboxCache.get(key);
   if (!g) {
-    const rr = Math.min(r, w / 2 - 0.001, h / 2 - 0.001, d / 2 - 0.001);
-    const raw = new RoundedBoxGeometry(w, h, d, 1, Math.max(0.001, rr));
-    raw.deleteAttribute('uv');
-    g = mergeVertices(raw);
-    raw.dispose();
+    if (!rboxTemplate) {
+      const raw = new RoundedBoxGeometry(1, 1, 1, 1, 0.25);
+      raw.deleteAttribute('uv');
+      rboxTemplate = mergeVertices(raw);
+      raw.dispose();
+    }
+    const rr = Math.max(0.001, Math.min(r, w / 2 - 0.001, h / 2 - 0.001, d / 2 - 0.001));
+    g = rboxTemplate.clone();
+    const p = g.attributes.position.array;
+    const n = g.attributes.normal.array;
+    const half = [w / 2 - rr, h / 2 - rr, d / 2 - rr];
+    for (let i = 0; i < p.length; i += 3) {
+      for (let k = 0; k < 3; k++) p[i + k] = Math.sign(p[i + k]) * half[k] + n[i + k] * rr;
+    }
     rboxCache.set(key, g);
   }
   return g;
@@ -307,7 +323,7 @@ const VERT_NORMAL = /* glsl */ `
 if (aAnim.x > 0.5 && aAnim.x < 2.5) {
   if (aAnim.x < 1.5) objectNormal.xy = pfRot(objectNormal.xy, uTime * aAnim.y + aAnim.z);
   else objectNormal.xz = pfRot(objectNormal.xz, uTime * aAnim.y + aAnim.z);
-} else if (aAnim.x > 3.5) {
+} else if (aAnim.x > 3.5 && aAnim.x < 4.5) {
   objectNormal.xy = pfRot(objectNormal.xy, aAnim.w * (0.5 - 0.5 * cos(uTime * aAnim.y + aAnim.z)));
 }
 #endif
@@ -319,7 +335,12 @@ if (aAnim.x > 0.5) {
   if (aAnim.x < 1.5) transformed.xy = aAxis.xy + pfRot(transformed.xy - aAxis.xy, uTime * aAnim.y + aAnim.z);
   else if (aAnim.x < 2.5) transformed.xz = aAxis.xz + pfRot(transformed.xz - aAxis.xz, uTime * aAnim.y + aAnim.z);
   else if (aAnim.x < 3.5) transformed += aAxis * (sin(uTime * aAnim.y + aAnim.z - aAnim.w * 2.6) * aAnim.w);
-  else transformed.xy = aAxis.xy + pfRot(transformed.xy - aAxis.xy, aAnim.w * (0.5 - 0.5 * cos(uTime * aAnim.y + aAnim.z)));
+  else if (aAnim.x < 4.5) transformed.xy = aAxis.xy + pfRot(transformed.xy - aAxis.xy, aAnim.w * (0.5 - 0.5 * cos(uTime * aAnim.y + aAnim.z)));
+  else {
+    float pfF = fract(uTime * aAnim.y + aAnim.z);
+    transformed = aAxis + (transformed - aAxis) * sin(3.14159 * pfF);
+    transformed.y += pfF * aAnim.w;
+  }
 }
 #endif
 float pfU = clamp((uPop - aPop.w * ${STAGGER.toFixed(3)}) / ${(1 - STAGGER).toFixed(3)}, 0.0, 1.0);
@@ -351,8 +372,11 @@ if (aGlow.a < -1.5) transformed = aAxis + (transformed - aAxis) * smoothstep(0.3
 /**
  * Patch a material with the place animation. `u` holds the place's shared uniforms
  * ({ uPop, uSink, uTime, uLamps, uGlowGain }): every material of a place reads the same objects.
- *   anim  per-vertex colour stays as is; adds bobbing chunks, spinning, waving and sliding parts
- *   glow  emissive from the per-vertex glow colour, lit when the theme's lamps pass its threshold
+ * Per vertex: aPop = pop anchor + delay; with `anim` also aBob (chunk bob phase, amplitude),
+ * aAnim (motion type, speed, phase, weight) and aAxis (pivot or direction). Motion types:
+ * 1 spin about Z, 2 spin about Y, 3 wave / slide, 4 swing about Z, 5 rise (puffs).
+ *   anim  vertex colours, bobbing chunks and the motions above
+ *   glow  emissive from the per-vertex glow colour (aGlow), lit when the theme's lamps pass its threshold
  */
 export function popMaterial(mat, u, { anim = false, glow = false } = {}) {
   const defines = `${anim ? '#define PF_ANIM\n' : ''}${glow ? '#define PF_GLOW\n' : ''}`;
@@ -378,6 +402,16 @@ export const popDepth = (u, opts = {}) => popMaterial(new THREE.MeshDepthMateria
 // ── batching ──────────────────────────────────────────────────────────────
 const _c = new THREE.Color();
 const _v = new THREE.Vector3();
+/** n copies of `values` in one Float32Array (per-vertex attribute data). */
+function fill(n, values) {
+  const k = values.length;
+  const out = new Float32Array(n * k);
+  for (let j = 0; j < k; j++) {
+    const v = values[j];
+    if (v) for (let i = j; i < out.length; i += k) out[i] = v;
+  }
+  return out;
+}
 const _w = new THREE.Vector3();
 const _inv = new THREE.Matrix4();
 const _rot = new THREE.Matrix3();
@@ -424,43 +458,34 @@ export class Batch {
 
     if (this.pop) {
       const a = s.anchor ?? [this._m.elements[12], this._m.elements[13], this._m.elements[14]];
-      const pop = new Float32Array(n * 4);
-      for (let i = 0; i < n; i++) pop.set([a[0], a[1], a[2], s.delay], i * 4);
-      g.setAttribute('aPop', new THREE.BufferAttribute(pop, 4));
+      g.setAttribute('aPop', new THREE.BufferAttribute(fill(n, [a[0], a[1], a[2], s.delay]), 4));
     }
     if (this.anim) {
       if (!keepColor) {
         _c.set(color ?? 0xffffff);
-        const col = new Float32Array(n * 3);
-        for (let i = 0; i < n; i++) col.set([_c.r, _c.g, _c.b], i * 3);
-        g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+        g.setAttribute('color', new THREE.BufferAttribute(fill(n, [_c.r, _c.g, _c.b]), 3));
       }
-      const bob = new Float32Array(n * 2);
-      if (s.bob) for (let i = 0; i < n; i++) bob.set(s.bob, i * 2);
-      g.setAttribute('aBob', new THREE.BufferAttribute(bob, 2));
-      const anim = new Float32Array(n * 4);
-      const axis = new Float32Array(n * 3);
+      g.setAttribute('aBob', new THREE.BufferAttribute(s.bob ? fill(n, s.bob) : new Float32Array(n * 2), 2));
       const m = s.motion;
+      let anim;
+      let axis;
       if (m) {
-        const p = g.attributes.position;
-        for (let i = 0; i < n; i++) {
-          let w = m.amp ?? 1;
-          if (m.len) {
+        anim = fill(n, [m.type, m.speed, m.phase, m.amp ?? 1]);
+        axis = fill(n, m.axis);
+        if (m.len) {
+          const p = g.attributes.position;
+          for (let i = 0; i < n; i++) {
             _v.fromBufferAttribute(p, i).applyMatrix4(m.inv);
-            w = Math.min(1, Math.max(0, (_v.x * m.along[0] + _v.y * m.along[1] + _v.z * m.along[2]) / m.len));
+            anim[i * 4 + 3] = Math.min(1, Math.max(0, (_v.x * m.along[0] + _v.y * m.along[1] + _v.z * m.along[2]) / m.len));
           }
-          anim.set([m.type, m.speed, m.phase, w], i * 4);
-          axis.set(m.axis, i * 3);
         }
+      } else {
+        anim = new Float32Array(n * 4);
+        axis = new Float32Array(n * 3);
       }
       g.setAttribute('aAnim', new THREE.BufferAttribute(anim, 4));
       g.setAttribute('aAxis', new THREE.BufferAttribute(axis, 3));
-      if (key.startsWith('glow')) {
-        const gl = s.glow ?? [1, 0.75, 0.4, -1];
-        const glow = new Float32Array(n * 4);
-        for (let i = 0; i < n; i++) glow.set(gl, i * 4);
-        g.setAttribute('aGlow', new THREE.BufferAttribute(glow, 4));
-      }
+      if (key.startsWith('glow')) g.setAttribute('aGlow', new THREE.BufferAttribute(fill(n, s.glow ?? [1, 0.75, 0.4, -1]), 4));
     }
     if (!this.items.has(key)) this.items.set(key, []);
     this.items.get(key).push(g);
@@ -527,6 +552,16 @@ export class Batch {
     _rot.setFromMatrix4(this.frame);
     const axis = _w.set(...dir).applyMatrix3(_rot).toArray();
     return this._scope(fn, null, { motion: { type: 3, speed: freq, phase, axis, len, along, inv: _inv.copy(this.frame).invert().clone() } });
+  }
+
+  /**
+   * Puffs (steam, smoke): parts in `fn`, centred on local (px, py, pz), rise `height` while they
+   * swell and shrink away, `rate` times a second, then start again.
+   */
+  rise(px, py, pz, rate, phase, height, fn) {
+    _rot.setFromMatrix4(this.frame);
+    const h = _w.set(0, height, 0).applyMatrix3(_rot).y;
+    return this._scope(fn, null, { motion: { type: 5, speed: rate, phase, axis: this.world(px, py, pz), len: 0, amp: h } });
   }
 
   /** Parts in `fn` rock about the world Z axis through local (px, py, pz), from 0 up to `angle` and back. */
@@ -640,8 +675,8 @@ export class Halos {
     this.mesh.name = 'halos';
   }
 
-  apply(v, scale = 1) {
-    this.uniforms.uOpacity.value = Math.min(0.85, v.lamps * 0.6) * scale;
+  apply(v) {
+    this.uniforms.uOpacity.value = Math.min(0.85, v.lamps * 0.6);
     this.uniforms.uFog.value = v.fogDensity;
   }
 }
@@ -657,13 +692,15 @@ export class Diorama {
     this.quality = quality;
     this.low = quality === 'low';
     this.group = new THREE.Group();
-    this.u = { uPop: { value: 0 }, uSink: { value: 0.6 }, uTime: { value: 0 }, uLamps: { value: 0 }, uGlowGain: { value: 0.2 } };
+    this.u = { uPop: { value: 0 }, uSink: { value: 0.32 }, uTime: { value: 0 }, uLamps: { value: 0 }, uGlowGain: { value: 0.2 } };
     const depth = popDepth(this.u, { anim: true });
     const mk = (o, glow = false) => popMaterial(new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0, ...o }), this.u, { anim: true, glow });
     this.mats = { matte: mk({ roughness: 0.85 }), satin: mk({ roughness: 0.42 }), glow: mk({ roughness: 0.45 }, true) };
     this.mats.matte.userData.depth = depth;
     this.mats.satin.userData.depth = depth;
     this.b = new Batch({ anim: true });
+    /** low quality: coarser distant land, fewer distant windows, no farthest chunk */
+    this.b.low = this.low;
     this.haloList = [];
     this.halos = null;
     /** how the island's own turf changes here: { keep(x, z), tint(color, x, y, z) } */

@@ -5,6 +5,7 @@ import { TOTAL_EXPRESSIONS, expressionsReady, whenExpressionsReady, getExpressio
 import { utcDateId, dailyNumber, msToNextDaily, formatCountdown, DAILY_CARDS } from '../../game/daily.js';
 import { formatScore } from '../../core/utils.js';
 import { ring } from './today.js';
+import { getPlace } from '../../data/places.js';
 
 /**
  * Main menu: today's strip (level, streak, daily goal, quests), Play, the daily
@@ -180,6 +181,8 @@ export function createMenu(app) {
     if (!fresh.length) return;
     const place = fresh[fresh.length - 1];
     for (const p of fresh) progress.markPlaceSeen(p.id);
+    // never move a player back to an older place than the one they chose
+    if (place.level <= getPlace(progress.place).level) return;
     setTimeout(() => {
       if (ui.name !== 'menu' || !app.travel(place.id)) return;
       audio.play('travel');

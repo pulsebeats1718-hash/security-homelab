@@ -331,21 +331,34 @@ export function createResults(app) {
       const gains = progressBlock(r);
       if (gains) body.append(gains);
       // characters unlocked by the game, and by a streak milestone reached during it
+      // new characters: one card (several at once share it, so the progress rows stay in view)
       const unlocked = [...new Set([...r.unlocked, ...(app.progress?.run?.unlocked ?? [])])];
-      unlocked.forEach((id, i) => {
-        const def = getCharacter(id);
-        later(1100 + i * 650 + (r.newBest ? 900 : 0), () => {
-          const img = h('img', { alt: '' });
-          const thumb = app.thumbs.get(id);
-          if (thumb) img.src = thumb.normal;
-          else pendingThumbs.set(id, img);
-          const card = h('div.unlock', img, h('div', h('div.unlock__eyebrow', 'NEW CHARACTER'), h('div.unlock__name', `${def.name} — ${def.title}`)));
+      if (unlocked.length) {
+        later(1100 + (r.newBest ? 900 : 0), () => {
+          const defs = unlocked.map((id) => getCharacter(id));
+          const imgs = unlocked.map((id) => {
+            const img = h('img', { alt: '' });
+            const thumb = app.thumbs.get(id);
+            if (thumb) img.src = thumb.normal;
+            else pendingThumbs.set(id, img);
+            return img;
+          });
+          const names = defs.map((d) => d.name);
+          const card =
+            unlocked.length === 1
+              ? h('div.unlock', imgs[0], h('div', h('div.unlock__eyebrow', 'NEW CHARACTER'), h('div.unlock__name', `${defs[0].name} — ${defs[0].title}`)))
+              : h(
+                  'div.unlock.unlock--many',
+                  h('div.unlock__eyebrow', `${unlocked.length} NEW CHARACTERS`),
+                  h('div.unlock__row', imgs.map((img, i) => h('span.unlock__face', { style: { '--i': i } }, img))),
+                  h('div.unlock__names', `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`)
+                );
           // after the share card on daily results, first otherwise
           if (daily) body.firstChild.after(card);
           else body.prepend(card);
           audio.play('unlock');
         });
-      });
+      }
 
       const wrong = r.wrong.filter((id) => getExpression(id));
       if (wrong.length) {

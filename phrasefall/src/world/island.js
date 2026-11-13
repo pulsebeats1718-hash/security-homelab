@@ -197,7 +197,8 @@ export class Island {
     const g = this.ground;
     const e = t >= 1 ? 1 : t * t * (3 - 2 * t);
     const arr = g.turf.array;
-    for (let i = 0; i < arr.length; i++) arr[i] = g.from[i] + (g.to[i] - g.from[i]) * e;
+    if (e === 1) arr.set(g.to);
+    else for (let i = 0; i < arr.length; i++) arr[i] = g.from[i] + (g.to[i] - g.from[i]) * e;
     g.turf.needsUpdate = true;
     for (const set of g.sets) {
       const im = set.mesh.instanceMatrix.array;

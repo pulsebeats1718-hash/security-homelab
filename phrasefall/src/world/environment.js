@@ -94,6 +94,15 @@ export class Environment {
     return this.places.current;
   }
 
+  /**
+   * Optional: build a place and compile its shaders ahead of time without showing it, so the first
+   * trip there starts without a hitch (building a city takes ~0.1 s on a desktop, more on phones).
+   */
+  preparePlace(id) {
+    const e = this.places.prepare(id);
+    if (e) this.stage.renderer.compile(e.place.group, this.stage.camera, this.stage.scene);
+  }
+
   /** Let the current place spawn its ambient particles (petals, leaves, steam …). Call once a frame. */
   ambient(fx, dt, quality = this.stage.qualityName) {
     this.places.ambient(fx, dt, quality);

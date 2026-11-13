@@ -29,7 +29,7 @@ export const PLACE_IDS = PLACES.map((p) => p.id).filter((id) => BUILDERS[id]);
 
 const RISE = 0.82; // seconds for a place to pop in
 const FALL = 0.5; // … and to sink away
-const HOLD = 0.3; // the new place waits this long while the old one starts sinking
+const HOLD = 0.2; // the new place waits this long while the old one starts sinking
 
 export class Places {
   constructor(scene, island, { quality = 'high' } = {}) {
@@ -87,6 +87,11 @@ export class Places {
     next.target = 1;
     this.current = id;
     this.island.setGround(next.place.ground, instant);
+  }
+
+  /** Build a place now without showing it (e.g. while the player looks at the place picker). */
+  prepare(id) {
+    return BUILDERS[id] ? this._entry(id) : null;
   }
 
   apply(v) {

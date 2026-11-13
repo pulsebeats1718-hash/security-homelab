@@ -19,6 +19,7 @@ export function createJourney(app) {
   const { ui, progress, audio } = app;
   const body = h('div.journey.scroll');
   let from = 'menu';
+  let prepT = 0;
   const back = () => ui.go(from);
   const el = h(
     'section.sheet.sheet--narrow',
@@ -87,6 +88,14 @@ export function createJourney(app) {
       from = params.from ?? 'menu';
       app.stage.setShot(shots.backdrop(app.stage), 1.2);
       render();
+      // build the open places in the background, so "Travel here" is instant
+      clearTimeout(prepT);
+      prepT = setTimeout(() => {
+        for (const p of progress.unlockedPlaces()) if (ui.name === 'journey') app.env.preparePlace?.(p.id);
+      }, 700);
+    },
+    hide() {
+      clearTimeout(prepT);
     },
     key(e) {
       if (e.key === 'Escape') back();

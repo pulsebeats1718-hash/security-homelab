@@ -6,7 +6,7 @@
  */
 import * as THREE from 'three';
 import { mulberry32 } from '../../core/utils.js';
-import { Diorama, SHAPE, rbox, groundY, islandR, ribbon, pathX, addLand } from './kit.js';
+import { Diorama, SHAPE, rbox, groundY, islandR, ribbon, pathX, addLand, tools } from './kit.js';
 
 const M = 'matte';
 const S = 'satin';
@@ -59,15 +59,7 @@ export class London extends Diorama {
   build() {
     const b = this.b;
     const rng = this.rng;
-    // ── helpers (local coordinates of the current prop) ─────────────────────
-    const part = (key, geo, x, y, z, sx, sy, sz, col, rx = 0, ry = 0, rz = 0) => b.add(key, geo, x, y, z, sx, sy, sz, rx, ry, rz, col);
-    /** soft box resting on y */
-    const block = (x, y, z, w, h, d, col, key = M, r = 0.05) => b.add(key, rbox(w, h, d, r), x, y + h / 2, z, 1, 1, 1, 0, 0, 0, col);
-    /** hard box resting on y */
-    const slab = (x, y, z, w, h, d, col, key = M, ry = 0) => b.add(key, SHAPE.box, x, y + h / 2, z, w, h, d, 0, ry, 0, col);
-    /** cylinder resting on y */
-    const post = (x, y, z, dia, h, col, key = M, geo = SHAPE.cyl8) => b.add(key, geo, x, y + h / 2, z, dia, h, dia, 0, 0, 0, col);
-    const ball = (x, y, z, d, col, key = M, sy = 1) => b.add(key, SHAPE.ball, x, y, z, d, d * sy, d, 0, 0, 0, col);
+    const { part, block, slab, post, ball } = tools(b);
     const lit = () => 0.12 + rng() * 0.95;
 
     /** a white sash window on a wall facing +z (wall plane at z), bottom at y */
@@ -78,8 +70,6 @@ export class London extends Diorama {
       slab(x, y + h * 0.5 - 0.01, z + 0.045, w, 0.035, 0.02, frame);
       slab(x, y, z + 0.045, 0.03, h, 0.02, frame);
     };
-    /** a plain lit window (distant buildings) */
-    const pane = (x, y, z, w, h, col = 0x6f86a3) => b.lit(WINDOW, lit(), () => slab(x, y, z, w, h, 0.03, col, L));
 
     // ── Victorian street lamp ───────────────────────────────────────────────
     const lamp = () => {
@@ -329,7 +319,7 @@ export class London extends Diorama {
     for (const [x, z] of lamps) b.prop(x, at(x, z), z, 0, 1, near(x, z), lamp);
     b.prop(-4.45, at(-4.45, 0.55), 0.55, 0.62, 0.92, near(-4.45, 0.55), phoneBox);
     b.prop(3.55, at(3.55, 0.35), 0.35, -0.45, 0.95, near(3.55, 0.35), pillarBox);
-    b.prop(-3.35, at(-3.35, 2.35), 2.35, 0.38, 0.9, near(-3.35, 2.35), bench);
+    b.prop(-2.95, at(-2.95, 2.75), 2.75, 0.3, 0.9, near(-2.95, 2.75), bench);
     b.prop(4.55, at(4.55, 2.1), 2.1, -0.75, 1, near(4.55, 2.1), () => railings(1.9));
     b.prop(-4.85, at(-4.85, 1.75), 1.75, 0.95, 1, near(-4.85, 1.75), () => railings(1.5));
 
@@ -345,6 +335,9 @@ export class London extends Diorama {
       bunting(2.9, 1.98, -1.05, 4.7, 2.7, -0.5, 7, 0.3);
     });
 
+    // the turf: no grass on the crescent, the pavement or under the terraces
+    this.ground = { keep: (x, z) => z > streetZ(x) + HALF + 0.3 };
+
     this.far();
   }
 
@@ -352,11 +345,7 @@ export class London extends Diorama {
   far() {
     const b = this.b;
     const rng = this.rng;
-    const part = (key, geo, x, y, z, sx, sy, sz, col, rx = 0, ry = 0, rz = 0) => b.add(key, geo, x, y, z, sx, sy, sz, rx, ry, rz, col);
-    const block = (x, y, z, w, h, d, col, key = M, r = 0.06) => b.add(key, rbox(w, h, d, r), x, y + h / 2, z, 1, 1, 1, 0, 0, 0, col);
-    const slab = (x, y, z, w, h, d, col, key = M) => b.add(key, SHAPE.box, x, y + h / 2, z, w, h, d, 0, 0, 0, col);
-    const post = (x, y, z, dia, h, col, key = M, geo = SHAPE.cyl8) => b.add(key, geo, x, y + h / 2, z, dia, h, dia, 0, 0, 0, col);
-    const ball = (x, y, z, d, col, key = M) => b.add(key, SHAPE.ball, x, y, z, d, d, d, 0, 0, 0, col);
+    const { part, block, slab, post, ball } = tools(b);
     const pane = (x, y, z, w, h, col = 0x5f7591, t = 0.12 + rng() * 0.9) => b.lit(WINDOW, t, () => slab(x, y, z, w, h, 0.04, col, L));
     const paved = (c, x, y, z, r) => {
       const n = 0.5 + 0.5 * Math.sin(x * 2.1 + z * 1.7);
@@ -551,26 +540,30 @@ export class London extends Diorama {
         pane(x + 0.17, 0.95, 0.31, 0.18, 0.36);
         block(x + 0.38, h - 0.1, -0.35, 0.22, 0.75, 0.36, C.brick, M, 0.02);
         for (const pz of [-0.45, -0.25]) post(x + 0.38, h + 0.65, pz, 0.08, 0.16, C.pot);
+        // smoke curling from a couple of the chimneys
+        if (i % 2 === 0) for (let k = 0; k < 3; k++) b.rise(x + 0.38, h + 0.9, -0.35, 0.16, k / 3 + i * 0.1, 1.6, () => part(M, SHAPE.sphere, x + 0.38, h + 0.9, -0.35, 0.42, 0.36, 0.42, 0xeeebe6));
       }
       for (let i = 0; i < 3; i++) {
         part(M, SHAPE.sphere, -1.2 + i * 1.1, 0.35, 1.0, 0.8, 0.6, 0.6, C.leaf[i % 4]);
       }
     });
 
-    // F ── a far-off terrace with a little park
-    b.chunk(-4, 13, -68, 0.2, 1, { delay: 1, phase: 5.1, amp: 0.4 }, () => {
-      addLand(b, 3.0);
-      const bodies = [0xa8dcc4, 0xf4b4b9, 0x9ccaf0, 0xf7d98a];
-      for (let i = 0; i < 4; i++) {
-        const x = -1.5 + i * 0.85;
-        block(x, 0, -0.6, 0.82, 1.9, 1.1, bodies[i], M, 0.03);
-        part(M, SHAPE.prism, x, 2.15, -0.6, 0.84, 0.5, 1.0, C.slate);
-        pane(x, 0.5, -0.03, 0.3, 0.4);
-        pane(x, 1.2, -0.03, 0.3, 0.4);
-      }
-      part(M, SHAPE.sphere, 1.4, 1.1, 0.9, 1.4, 1.3, 1.4, C.leaf[0]);
-      post(1.4, 0, 0.9, 0.2, 0.6, C.bark);
-    });
+    // F ── a far-off terrace with a little park (not on low quality)
+    if (!this.low) {
+      b.chunk(-4, 13, -68, 0.2, 1, { delay: 1, phase: 5.1, amp: 0.4 }, () => {
+        addLand(b, 3.0);
+        const bodies = [0xa8dcc4, 0xf4b4b9, 0x9ccaf0, 0xf7d98a];
+        for (let i = 0; i < 4; i++) {
+          const x = -1.5 + i * 0.85;
+          block(x, 0, -0.6, 0.82, 1.9, 1.1, bodies[i], M, 0.03);
+          part(M, SHAPE.prism, x, 2.15, -0.6, 0.84, 0.5, 1.0, C.slate);
+          pane(x, 0.5, -0.03, 0.3, 0.4);
+          pane(x, 1.2, -0.03, 0.3, 0.4);
+        }
+        part(M, SHAPE.sphere, 1.4, 1.1, 0.9, 1.4, 1.3, 1.4, C.leaf[0]);
+        post(1.4, 0, 0.9, 0.2, 0.6, C.bark);
+      });
+    }
   }
 
   ambient(fx, dt, quality) {

@@ -45,7 +45,7 @@ export class Home {
     this.p = 1;
     const rng = mulberry32(42);
 
-    this.u = { uPop: { value: 1 }, uSink: { value: 0.6 } };
+    this.u = { uPop: { value: 1 }, uSink: { value: 0.32 } };
     const depth = popDepth(this.u);
     const pm = (color, o) => {
       const m = popMaterial(std(color, o), this.u);
@@ -182,7 +182,7 @@ export class Home {
     const sink = this.u.uSink.value;
     for (const f of this.far) {
       const u = popU(this.p, f.delay);
-      f.g.position.y = f.y + Math.sin(t * 0.35 + f.phase) * f.amp - (u < 1 ? (1 - u) * (1 - u) * sink * 6 : 0);
+      f.g.position.y = f.y + Math.sin(t * 0.35 + f.phase) * f.amp - (u < 1 ? (1 - u) * (1 - u) * sink * 5 : 0);
       f.g.rotation.z = Math.sin(t * 0.22 + f.phase) * 0.02;
       f.g.scale.setScalar(u < 1 ? popK(u) : 1);
     }

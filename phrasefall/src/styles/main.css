@@ -4040,6 +4040,34 @@ svg.ico.fill {
   filter: grayscale(0.85) brightness(0.7);
 }
 
+/* results: several new characters share one card */
+.unlock.unlock--many {
+  grid-template-columns: 1fr;
+  gap: 6px;
+  padding: 9px 12px 10px;
+}
+.unlock__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.unlock__face img {
+  display: block;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(23, 18, 63, 0.85);
+  object-fit: cover;
+  object-position: 50% 12%;
+}
+.unlock__face {
+  animation: ribbon 0.5s var(--ease-back) both;
+  animation-delay: calc(0.15s + var(--i) * 0.12s);
+}
+.unlock__names {
+  font: 600 0.88rem/1.25 var(--display);
+}
+
 /* results: what the game earned, and what is close */
 .gains,
 .near {

@@ -8,7 +8,7 @@
  */
 import * as THREE from 'three';
 import { mulberry32 } from '../../core/utils.js';
-import { Diorama, SHAPE, rbox, groundY, islandR, addLand, tools, faceted, UNIT } from './kit.js';
+import { Diorama, SHAPE, groundY, addLand, tools, faceted, UNIT } from './kit.js';
 
 const M = 'matte';
 const S = 'satin';
@@ -41,11 +41,10 @@ const smooth = (a, b, v) => {
   const t = Math.min(1, Math.max(0, (v - a) / (b - a)));
   return t * t * (3 - 2 * t);
 };
-/** 0 on the grass at the back left … 1 on the beach */
-const sandiness = (x, z) => smooth(-0.32, 0.32, z - (-1.5 - 0.36 * (x + 2) + 0.28 * Math.sin(x * 1.6 + 0.5)));
+/** 0 on the grass in the back-left corner … 1 on the beach */
+const sandiness = (x, z) => smooth(-0.3, 0.3, (x - 0.6) * 0.62 + (z + 5.2) * 0.785 + 0.22 * Math.sin(x * 1.9 - z * 1.3) - 0.55);
 /** the lagoon at the front right */
 const LAGOON = { x: 3.75, z: 2.05, rx: 1.35, rz: 0.78 };
-const inLagoon = (x, z, pad = 0) => ((x - LAGOON.x) / (LAGOON.rx + pad)) ** 2 + ((z - LAGOON.z) / (LAGOON.rz + pad)) ** 2 < 1;
 
 export class Sydney extends Diorama {
   constructor(island, quality) {
@@ -89,9 +88,12 @@ export class Sydney extends Diorama {
       part(M, SHAPE.cyl8, -0.32, 2.05, 0, 0.18, 1.2, 0.18, C.trunk, 0, 0, 0.55);
       part(M, SHAPE.cyl8, 0.3, 2.2, 0.05, 0.17, 1.4, 0.17, C.trunk, 0.15, 0, -0.42);
       part(M, SHAPE.cyl6, 0.62, 2.85, 0.05, 0.08, 0.7, 0.08, C.trunk, 0, 0, -1.0);
-      // loose clumps of grey-green leaves
-      const clumps = [[-0.75, 2.75, 0.1, 1.0], [0.75, 3.1, 0, 1.1], [0.05, 3.45, -0.2, 0.95], [1.15, 2.85, 0.2, 0.7], [-0.25, 2.6, 0.5, 0.7], [0.35, 2.65, -0.55, 0.75]];
-      clumps.forEach(([x, y, z, d], i) => part(M, SHAPE.sphere, x, y, z, d * 1.15, d * 0.62, d, C.gum[i % 4]));
+      // loose, drooping clumps of grey-green leaves around the branch tips
+      const clumps = [[-0.8, 2.7, 0.1, 0.95], [0.8, 3.15, 0, 1.0], [0.1, 3.5, -0.2, 0.9], [1.2, 2.8, 0.25, 0.7], [-0.3, 2.55, 0.55, 0.65], [0.35, 2.7, -0.6, 0.7], [-1.15, 2.35, -0.25, 0.55], [0.55, 3.75, 0.25, 0.6], [-0.45, 3.2, -0.45, 0.6]];
+      clumps.forEach(([x, y, z, d], i) => {
+        part(M, SHAPE.sphere, x, y, z, d * 1.2, d * 0.55, d * 0.95, C.gum[i % 4], (r() - 0.5) * 0.4, r() * 3, (r() - 0.5) * 0.4);
+        part(M, SHAPE.sphere, x + (r() - 0.5) * 0.3, y - d * 0.22, z + (r() - 0.5) * 0.3, d * 0.75, d * 0.4, d * 0.7, C.gum[(i + 2) % 4]);
+      });
       if (koala) {
         // a koala hugging the trunk
         b.at(0.02, 1.55, 0.2, 0.25, 1, () => {
@@ -135,7 +137,11 @@ export class Sydney extends Diorama {
       block(0, 1.6, 0, 1.5, 0.1, 1.3, 0xd9c6a2, M, 0.02);
       block(0, 1.7, -0.12, 1.2, 0.95, 0.95, C.red, M, 0.04);
       for (let i = 0; i < 3; i++) slab(0, 1.78 + i * 0.3, 0.36, 1.21, 0.12, 0.02, C.yellow);
-      b.lit(WINDOW, 0.4, () => slab(0, 2.05, 0.37, 0.7, 0.36, 0.02, C.glass, L));
+      b.lit(WINDOW, 0.3, () => slab(0, 2.0, 0.37, 0.8, 0.42, 0.02, C.glass, L));
+      // a lamp over the deck
+      slab(-0.62, 2.55, 0.42, 0.04, 0.04, 0.3, 0x3a3530);
+      b.lit(0xfff0c8, -1, () => ball(-0.62, 2.5, 0.58, 0.14, 0xfff6e0, L));
+      this.halo(-0.62, 2.5, 0.58, 1.8, 0xffd9a0);
       part(M, SHAPE.prism, 0, 2.86, -0.12, 1.5, 0.45, 1.3, C.yellow);
       for (const s of [-1, 1]) slab(s * 0.74, 1.7, 0.6, 0.04, 0.45, 0.04, C.white);
       slab(0, 2.12, 0.6, 1.5, 0.04, 0.04, C.white);
@@ -215,7 +221,7 @@ export class Sydney extends Diorama {
       part(M, SHAPE.cyl, 0, -0.03, 0, rx * 2 + 0.3, 0.05, rz * 2 + 0.3, C.sandWet);
       part(S, SHAPE.cyl, 0, -0.005, 0, rx * 2 + 0.08, 0.05, rz * 2 + 0.08, 0x7fdcd6);
       part(S, SHAPE.cyl, 0, 0.002, 0, rx * 1.7, 0.05, rz * 1.7, C.sea);
-      part(S, SHAPE.cyl, 0, 0.006, 0, rx * 1.05, 0.05, rz * 1.05, C.deep);
+      part(M, SHAPE.cyl, 0, 0.006, 0, rx * 1.05, 0.05, rz * 1.05, 0x22a6cf);
       part(M, new THREE.TorusGeometry(1, 0.035, 4, 40), 0, 0.03, 0, rx * 0.93, rz * 0.93, 1, C.foam, Math.PI / 2, 0, 0);
       // boulders around the edge
       const rocks = [[-1.15, 0.45, 0.32], [-1.3, -0.15, 0.24], [1.05, -0.55, 0.36], [1.4, 0.1, 0.28], [0.3, 0.86, 0.22], [-0.5, -0.82, 0.2]];
@@ -232,6 +238,48 @@ export class Sydney extends Diorama {
         }
       });
     };
+    const lifebuoy = () => {
+      post(0, 0, 0, 0.1, 1.5, C.white);
+      slab(0, 1.42, 0, 0.36, 0.06, 0.08, C.white);
+      part(S, new THREE.TorusGeometry(0.3, 0.1, 8, 20), 0, 1.05, 0.09, 1, 1, 1, C.red);
+      for (let i = 0; i < 4; i++) {
+        const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+        part(S, SHAPE.box, Math.cos(a) * 0.3, 1.05 + Math.sin(a) * 0.3, 0.09, 0.08, 0.22, 0.22, C.white, 0, 0, a);
+      }
+    };
+    const beachBall = () => {
+      const cols = [C.red, C.white, 0x2f8fd6, C.white, C.yellow, C.white];
+      for (let i = 0; i < 6; i++) part(S, SHAPE.ballPanel, 0, 0.22, 0, 0.44, 0.44, 0.44, cols[i], 0, (i * Math.PI) / 3, 0);
+      for (const y of [0.0, 0.44]) ball(0, y, 0, 0.1, C.white, S, 0.4);
+    };
+    const shells = () => {
+      // a starfish and a few shells
+      for (let i = 0; i < 5; i++) {
+        const a = (i / 5) * Math.PI * 2;
+        part(M, SHAPE.sphere, Math.cos(a) * 0.12, 0.02, Math.sin(a) * 0.12, 0.26, 0.05, 0.08, 0xff8a4c, 0, -a, 0);
+      }
+      ball(0, 0.03, 0, 0.1, 0xff8a4c, M, 0.5);
+      for (const [x, z, c] of [[0.55, 0.2, 0xfff3e6], [0.75, -0.25, 0xffd8c8], [-0.45, 0.45, 0xf7e7ff]]) {
+        b.add(M, SHAPE.dome, x, 0, z, 0.16, 0.08, 0.13, 0, rng() * 3, 0, c);
+      }
+    };
+    /** a sagging string of warm bulbs between two points (current frame), lit after dusk */
+    const festoon = (x0, y0, z0, x1, y1, z1, n, sag = 0.3) => {
+      const cols = [0xffd27a, 0xffb36b, 0xfff0c2, 0xff9e8a];
+      const pt = (u) => [x0 + (x1 - x0) * u, y0 + (y1 - y0) * u - sag * 4 * u * (1 - u), z0 + (z1 - z0) * u];
+      for (let i = 0; i < n; i++) {
+        const a = pt(i / n);
+        const c = pt((i + 1) / n);
+        const len = Math.hypot(c[0] - a[0], c[1] - a[1], c[2] - a[2]);
+        const ry = -Math.atan2(c[2] - a[2], c[0] - a[0]);
+        const rz = Math.atan2(c[1] - a[1], Math.hypot(c[0] - a[0], c[2] - a[2])) - Math.PI / 2;
+        part(M, SHAPE.cyl6, (a[0] + c[0]) / 2, (a[1] + c[1]) / 2, (a[2] + c[2]) / 2, 0.015, len, 0.015, 0x3a3530, 0, ry, rz);
+        if (i > 0) {
+          b.lit(cols[i % 4], 0.3, () => ball(a[0], a[1] - 0.07, a[2], 0.1, 0xf3ead8, L));
+          if (i % 3 === 1) this.halo(a[0], a[1] - 0.07, a[2], 0.9, cols[i % 4]);
+        }
+      }
+    };
     const beachGrass = (n = 5) => {
       for (let i = 0; i < n; i++) {
         const a = rng() * Math.PI * 2;
@@ -242,19 +290,29 @@ export class Sydney extends Diorama {
     // ── place them ──────────────────────────────────────────────────────────
     const P = (x, z, ry, s, fn) => b.prop(x, at(x, z), z, ry, s, near(x, z), fn);
     b.pin(LAGOON.x, at(LAGOON.x, LAGOON.z), LAGOON.z, 0.1, () => b.at(LAGOON.x, at(LAGOON.x, LAGOON.z), LAGOON.z, 0, 1, rockPool));
-    P(-4.55, -1.55, 0.3, 1.05, () => gumTree(11, true));
-    P(-1.95, -3.95, -0.2, 0.78, () => gumTree(23));
+    P(-4.55, -1.55, 0.3, 1.05, () => gumTree(11));
+    P(-1.95, -3.95, -0.2, 0.78, () => gumTree(23, true));
     P(3.35, -2.55, -0.42, 0.95, lifeguardTower);
-    P(4.55, -0.95, -0.25, 1, () => surfboard(0x2ec4b6, C.white));
-    P(5.0, -0.3, -0.5, 0.95, () => surfboard(0xff6b6b, C.white));
-    P(4.15, -1.55, 0.1, 0.9, () => surfboard(0xffd21f, 0xff6b6b));
+    // surfboards planted in the sand right behind the dais (they stay below the falling cards)
+    P(-1.15, -3.35, 0.25, 0.95, () => surfboard(0x2ec4b6, C.white));
+    P(1.45, -3.25, -0.1, 0.92, () => surfboard(0xff6b6b, C.white));
+    P(2.05, -3.0, -0.3, 0.86, () => surfboard(0xffd21f, 0xff6b6b));
+    P(4.75, -0.75, -0.6, 1, lifebuoy);
     P(-4.1, 1.85, 0.4, 1, flag);
     P(2.55, 3.15, -0.3, 1, flag);
     P(3.15, 0.55, -0.35, 1, umbrella);
     P(2.65, 1.0, -0.25, 1, towel);
     P(-2.55, 2.75, 0.3, 1, sandcastle);
-    P(-3.55, -0.55, 0.42, 1, roadSign);
-    for (const [x, z] of [[-3.3, -2.35], [-0.6, -3.1], [1.0, -3.6], [-5.3, 0.05], [-2.4, -2.75]]) P(x, z, rng() * 3, 0.9 + rng() * 0.4, () => beachGrass());
+    P(-2.05, -2.6, 0.32, 0.95, roadSign);
+    for (const [x, z] of [[-0.9, -3.4], [-3.1, -1.25], [-4.6, 0.35], [2.4, -3.3], [-1.3, -2.5]]) P(x, z, rng() * 3, 0.9 + rng() * 0.4, () => beachGrass());
+    P(-1.75, 1.9, 0, 1, shells);
+    // festoon lights strung from the lifeguard tower to the lifebuoy post, and between the flags' corner and a gum
+    b.pin(4.2, at(4.2, -1.5), -1.5, 0.45, () => festoon(3.75, 2.2, -2.05, 4.68, 1.5, -0.72, 7, 0.22));
+    b.pin(-3.3, at(-3.3, -2.1), -2.1, 0.45, () => {
+      post(-2.6, at(-2.6, -1.25), -1.25, 0.06, 1.9, 0xe8e8e8, S);
+      festoon(-2.6, 1.85, -1.25, -4.2, 2.35, -1.75, 7, 0.25);
+    });
+    P(1.55, 2.6, 0.5, 1, beachBall);
 
     this.lagoon = [LAGOON.x, at(LAGOON.x, LAGOON.z) + 0.06, LAGOON.z];
   }
@@ -278,7 +336,7 @@ export class Sydney extends Diorama {
 
     // A ── a big steel arch bridge over the harbour, boats sailing underneath
     b.chunk(14, -0.6, -31, -0.3, 1, { delay: 0.86, phase: 0.6, amp: 0.3 }, () => {
-      addLand(b, 3.9, { depthScale: 0.72, top: beachTop((x, z) => (Math.abs(x) < 2.6 ? 1 : 0)) });
+      addLand(b, 3.9, { depthScale: 0.72, top: beachTop((x) => (Math.abs(x) < 2.6 ? 1 : 0)) });
       const span = 2.6;
       // sandstone pylons at each end
       for (const s of [-1, 1]) {
@@ -388,15 +446,17 @@ export class Sydney extends Diorama {
       for (let i = 0; i < 3; i++) post(-1.6 + i * 0.45, -0.3, 1.1, 0.07, 0.42, 0x8a6a48);
     });
 
-    // F ── a distant cluster of towers
-    b.chunk(-4, 13, -68, 0.2, 1, { delay: 1, phase: 5.1, amp: 0.4 }, () => {
-      addLand(b, 3.0);
-      const towers = [[-1.2, 0.2, 0.9, 4.2, 0x8fb7d6], [-0.1, -0.4, 1.1, 5.6, 0xd9d2c3], [1.0, 0.3, 0.9, 3.4, 0x7aa6c8], [0.4, 0.9, 0.8, 2.4, 0xe8dcc0]];
-      for (const [x, z, w, h, col] of towers) {
-        block(x, 0, z, w, h, w, col, M, 0.03);
-        for (let y = 0.4; y < h - 0.3; y += 0.45) b.lit(WINDOW, 0.2 + rng() * 0.9, () => slab(x, y, z + w / 2 + 0.01, w * 0.7, 0.18, 0.02, 0x5f7591, L));
-      }
-    });
+    // F ── a distant cluster of towers (not on low quality)
+    if (!this.low) {
+      b.chunk(-4, 13, -68, 0.2, 1, { delay: 1, phase: 5.1, amp: 0.4 }, () => {
+        addLand(b, 3.0);
+        const towers = [[-1.2, 0.2, 0.9, 4.2, 0x8fb7d6], [-0.1, -0.4, 1.1, 5.6, 0xd9d2c3], [1.0, 0.3, 0.9, 3.4, 0x7aa6c8], [0.4, 0.9, 0.8, 2.4, 0xe8dcc0]];
+        for (const [x, z, w, h, col] of towers) {
+          block(x, 0, z, w, h, w, col, M, 0.03);
+          for (let y = 0.4; y < h - 0.3; y += 0.45) b.lit(WINDOW, 0.2 + rng() * 0.9, () => slab(x, y, z + w / 2 + 0.01, w * 0.7, 0.18, 0.02, 0x5f7591, L));
+        }
+      });
+    }
   }
 
   ambient(fx, dt, quality) {
@@ -407,6 +467,6 @@ export class Sydney extends Diorama {
     const [x, y, z] = this.lagoon;
     const a = Math.random() * Math.PI * 2;
     const r = Math.sqrt(Math.random()) * 0.85;
-    fx.spark(x + Math.cos(a) * r * 1.3, y, z + Math.sin(a) * r * 0.75, 0, 0.05, 0, Math.random() < 0.5 ? 0xffffff : 0xbff6ff, 0.5 + Math.random() * 0.5, 0.5 + Math.random() * 0.5, 0, 1);
+    fx.spark(x + Math.cos(a) * r * 1.3, y, z + Math.sin(a) * r * 0.75, 0, 0.05, 0, Math.random() < 0.5 ? 0xffffff : 0xbff6ff, 1.0 + Math.random() * 0.8, 0.45 + Math.random() * 0.4, 0, 1);
   }
 }

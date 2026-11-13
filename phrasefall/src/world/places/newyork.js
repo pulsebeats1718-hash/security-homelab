@@ -5,7 +5,6 @@
  * steaming manhole. Distant chunks: an Art Deco tower, glass towers, a suspension bridge with
  * arched stone towers, a little park and rooftop water towers. All shapes are generic.
  */
-import * as THREE from 'three';
 import { mulberry32 } from '../../core/utils.js';
 import { Diorama, SHAPE, rbox, groundY, islandR, ribbon, pathX, addLand, tools } from './kit.js';
 
@@ -45,9 +44,10 @@ const WARM = 0xffc46b;
 const WINDOW = 0xe0a85c;
 const COOL = 0xbfe0ff;
 
-/** The avenue's centre line behind the dais, and its half width. */
+/** The avenue's centre line behind the dais, and its half width; the steaming manhole's x. */
 const streetZ = (x) => -2.95 + 0.045 * x * x;
 const HALF = 0.62;
+const MH = -2.0;
 
 /** A rooftop wooden water tower on stilts (local frame, base at y). */
 function waterTower(b, x, y, z, s = 1) {
@@ -285,10 +285,10 @@ export class NewYork extends Diorama {
       part(M, ribbon(path, HALF + 0.16, HALF + 0.55, 0.04, 0.1), 0, 0, 0, 1, 1, 1, C.walk);
       // double yellow centre line, dashed lane lines and a crosswalk
       for (const d of [-0.035, 0.035]) part(M, ribbon(path, d - 0.018, d + 0.018, 0.012, 0.02, 0.96), 0, 0, 0, 1, 1, 1, C.line);
-      for (let x = -2.6; x < -1.5; x += 0.18) {
+      for (let x = -3.75; x < -2.75; x += 0.18) {
         const z = streetZ(x);
         const dz = 0.09 * x;
-        if (Math.abs(x + 2.1) < 0.55 && islandR(x, z) < 0.93) part(M, SHAPE.box, x, at(x, z) + 0.012, z, 0.09, 0.012, HALF * 1.85, C.white, 0, -Math.atan(dz), 0);
+        if (islandR(x, z) < 0.93) part(M, SHAPE.box, x, at(x, z) + 0.012, z, 0.09, 0.012, HALF * 1.85, C.white, 0, -Math.atan(dz), 0);
       }
       // sidewalk joints
       for (let x = -3.4; x < 3.6; x += 0.58) {
@@ -299,9 +299,21 @@ export class NewYork extends Diorama {
         const pz = streetZ(x) + d / l;
         if (islandR(px, pz) < 0.93) part(M, SHAPE.box, px, at(px, pz) + 0.045, pz, 0.02, 0.012, 1.55, 0xb2afa7, 0, -Math.atan(dz), 0);
       }
-      manhole(0.95, streetZ(0.95) + 0.18);
+      manhole(MH, streetZ(MH) + 0.18);
     });
-    this.steam = [0.95, at(0.95, streetZ(0.95) + 0.18) + 0.08, streetZ(0.95) + 0.18];
+    // steam puffing out of the manhole (kept low: it stays under the falling cards)
+    {
+      const x = MH;
+      const z = streetZ(MH) + 0.18;
+      const y = at(x, z) + 0.12;
+      b.pin(x, y, z, 0.2, () => {
+        for (let i = 0; i < 4; i++) {
+          const ox = (rng() - 0.5) * 0.18;
+          b.rise(x + ox, y, z, 0.34, i / 4, 1.25, () => part(M, SHAPE.sphere, x + ox, y, z, 0.5, 0.42, 0.5, 0xf2f2f0));
+        }
+      });
+    }
+    this.steam = [MH, at(MH, streetZ(MH) + 0.18) + 0.08, streetZ(MH) + 0.18];
 
     // the block behind it
     const row = [
@@ -345,7 +357,8 @@ export class NewYork extends Diorama {
     const paved = (c, x, y, z, r) => c.setHex(Math.hypot(x, z) / r > 0.86 || y < -0.06 ? 0x6fc15a : (Math.floor(x * 1.4) + Math.floor(z * 1.4)) % 2 ? 0xc9c6bf : 0xbdbab2);
 
     /** windows on the four sides of a tower: cols × rows on each face, from y0 to y1 */
-    const windows = (w, d, y0, y1, cols, rows, col = C.glass, glow = WINDOW, faces = [0, 1, 3]) => {
+    const windows = (w, d, y0, y1, cols, rows0, col = C.glass, glow = WINDOW, faces = [0, 1, 3]) => {
+      const rows = this.low ? Math.ceil(rows0 / 2) : rows0;
       const ww = (w / cols) * 0.55;
       const hh = ((y1 - y0) / rows) * 0.55;
       for (const f of faces) {
@@ -503,26 +516,28 @@ export class NewYork extends Diorama {
       );
     });
 
-    // F ── rooftops with water towers
-    b.chunk(-4, 13, -68, 0.2, 1, { delay: 1, phase: 5.1, amp: 0.4 }, () => {
-      addLand(b, 3.0, { top: paved });
-      const bodies = [C.brick, 0xc98a5e, C.brown, 0xb4644c];
-      for (let i = 0; i < 4; i++) {
-        const x = -1.5 + i * 0.95;
-        const h = 1.6 + (i % 2) * 0.6;
-        block(x, 0, -0.4, 0.92, h, 1.2, bodies[i], M, 0.03);
-        windows(0.92, 1.2, 0.3, h - 0.25, 2, 2, C.glassDark, WINDOW, [0]);
-        if (i % 2 === 0) waterTower(b, x, h, -0.5, 0.8);
-      }
-    });
+    // F ── rooftops with water towers (not on low quality)
+    if (!this.low) {
+      b.chunk(-4, 13, -68, 0.2, 1, { delay: 1, phase: 5.1, amp: 0.4 }, () => {
+        addLand(b, 3.0, { top: paved });
+        const bodies = [C.brick, 0xc98a5e, C.brown, 0xb4644c];
+        for (let i = 0; i < 4; i++) {
+          const x = -1.5 + i * 0.95;
+          const h = 1.6 + (i % 2) * 0.6;
+          block(x, 0, -0.4, 0.92, h, 1.2, bodies[i], M, 0.03);
+          windows(0.92, 1.2, 0.3, h - 0.25, 2, 2, C.glassDark, WINDOW, [0]);
+          if (i % 2 === 0) waterTower(b, x, h, -0.5, 0.8);
+        }
+      });
+    }
   }
 
   ambient(fx, dt, quality) {
-    // steam curling out of the manhole
+    // wisps of steam drifting up from the manhole, between the puffs
     this.steamT -= dt;
-    if (this.steamT > 0) return;
-    this.steamT = quality === 'low' ? 0.35 : 0.16;
+    if (this.steamT > 0 || quality === 'low') return;
+    this.steamT = 0.22 + Math.random() * 0.2;
     const [x, y, z] = this.steam;
-    fx.spark(x + (Math.random() - 0.5) * 0.3, y, z + (Math.random() - 0.5) * 0.2, (Math.random() - 0.5) * 0.25, 0.5 + Math.random() * 0.35, (Math.random() - 0.5) * 0.15, 0x6d6e72, 2.6 + Math.random() * 1.4, 2.4 + Math.random() * 0.8, -0.12, 0.25);
+    fx.spark(x + (Math.random() - 0.5) * 0.3, y + 0.3, z + (Math.random() - 0.5) * 0.2, (Math.random() - 0.5) * 0.3, 0.45 + Math.random() * 0.3, (Math.random() - 0.5) * 0.15, 0xc9ccd2, 1.6 + Math.random() * 1.2, 1.4 + Math.random() * 0.5, 0, 0.3);
   }
 }
