@@ -52,14 +52,16 @@ export function createHud(app) {
   // ── pause menu ──────────────────────────────────────────────────────────
   const soundBtn = h('button.toggle', { 'data-quiet': '1', onclick: () => flip('sfxOn') });
   const musicBtn = h('button.toggle', { 'data-quiet': '1', onclick: () => flip('musicOn') });
+  const rankedNote = h('p', { hidden: true }, 'This is your ranked daily run. If you leave now, the score so far counts.');
   const pause = h(
     'div.modal',
     h(
       'div.panel',
       h('h2', 'Paused'),
+      rankedNote,
       h('button.btn.btn--gold', { onclick: () => game.resume() }, icon('play'), 'Resume'),
       h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' } }, soundBtn, musicBtn),
-      h('button.btn', { onclick: () => app.startGame() }, icon('refresh'), 'Restart'),
+      h('button.btn', { onclick: () => app.startGame({ mode: game.mode }) }, icon('refresh'), 'Restart'),
       h('button.btn.btn--ink', { 'data-sound': 'back', onclick: () => app.toMenu() }, icon('home'), 'Quit to menu')
     )
   );
@@ -105,6 +107,14 @@ export function createHud(app) {
     shownScore = value;
     scoreNum.textContent = formatScore(value);
     if (bump) retrigger(scoreNum, 'is-bump');
+    const daily = game.dailyInfo;
+    if (daily) {
+      // daily runs compare with the day's ranked score instead of the classic best
+      const ranked = save.dailyRecord(daily.dateId);
+      best.textContent = daily.ranked ? 'Ranked run' : ranked ? `Ranked ${formatScore(ranked.score)}` : 'Practice';
+      best.classList.toggle('is-beaten', !daily.ranked && !!ranked && value > ranked.score);
+      return;
+    }
     const record = save.data.best.score;
     const beaten = value > record && record > 0;
     best.textContent = beaten ? 'New best!' : record ? `Best ${formatScore(record)}` : 'First run';
@@ -115,6 +125,12 @@ export function createHud(app) {
     streakN.textContent = `×${n}`;
     streak.classList.toggle('is-off', n < 2);
     if (n >= 2) retrigger(streak, 'is-bump');
+  }
+
+  /** Daily runs show the challenge number and how far through its cards the player is. */
+  function setDaily(d) {
+    stageName.textContent = `Daily #${d.n}${d.ranked ? '' : ' · Practice'}`;
+    clear(pips).append(h('b.hud__count', `${d.index}/${d.total}`));
   }
 
   function setStage(stage, done) {
@@ -156,7 +172,7 @@ export function createHud(app) {
   }
 
   // ── game events ─────────────────────────────────────────────────────────
-  events.on('game:intro', ({ stage }) => {
+  events.on('game:intro', ({ stage, daily }) => {
     setScore(0, false);
     setStreak(0);
     setLives(SCORING.lives, false);
@@ -164,14 +180,17 @@ export function createHud(app) {
       x.style.animationDelay = `${i * 90}ms`;
       retrigger(x, 'is-in');
     });
-    setStage(stage, 0);
+    if (daily) setDaily(daily);
+    else setStage(stage, 0);
+    rankedNote.hidden = !daily?.ranked;
     buttons = [];
     clear(answers);
     answers.classList.add('is-empty');
     pause.classList.remove('is-on');
     hint.hidden = true;
     measure();
-    showBanner(`Stage ${stage.n}`, 'Ready?', stage.name);
+    if (daily) showBanner(`Daily challenge #${daily.n}`, 'Ready?', daily.ranked ? `${daily.total} expressions · one ranked go` : 'Practice run');
+    else showBanner(`Stage ${stage.n}`, 'Ready?', stage.name);
   });
 
   events.on('game:go', () => showBanner('', 'Go!'));
@@ -184,7 +203,8 @@ export function createHud(app) {
     );
     answers.append(...buttons);
     lock(false);
-    setStage(q.stage, game.correctInStage);
+    if (q.daily) setDaily(q.daily);
+    else setStage(q.stage, game.correctInStage);
     if (!save.data.tutorialDone && q.number === 1) showHint('Tap the meaning before the expression lands!');
   });
 
@@ -197,14 +217,15 @@ export function createHud(app) {
     }
     buttons[correctIndex]?.classList.add('is-right');
     if (!correct && choice != null) buttons[choice]?.classList.add('is-wrong');
-    if (correct) setStage(game.stageDef, game.correctInStage);
+    if (correct && !game.daily) setStage(game.stageDef, game.correctInStage);
   });
 
-  events.on('game:score', ({ score, gained, bonus, streak: n, x, y }) => {
+  events.on('game:score', ({ score, gained, bonus, speed, streak: n, x, y }) => {
     setScore(score);
     setStreak(n);
     ui.popup(`+${gained}`, x, y);
     if (bonus) ui.popup(`Streak ×${n}  +${bonus}`, x, y + 46, 'pop--bonus');
+    if (speed) ui.popup(`Quick +${speed}`, x, y + (bonus ? 90 : 46), 'pop--speed');
   });
 
   events.on('game:lives', ({ lives: n }) => {

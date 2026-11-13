@@ -1,6 +1,6 @@
 import { h, icon, clear } from '../dom.js';
 import { shots } from '../../game/shots.js';
-import { getExpression, TOTAL_EXPRESSIONS, BY_STAGE } from '../../data/expressions/index.js';
+import { getExpression, TOTAL_EXPRESSIONS, BY_STAGE, expressionsReady, whenExpressionsReady } from '../../data/expressions/index.js';
 import { STAGES } from '../../data/stages.js';
 
 const TABS = [
@@ -91,15 +91,35 @@ export function createCollection(app) {
     list.scrollTop = 0;
   }
 
+  function open() {
+    // open on the first shelf that has something in it
+    const first = TABS.find((t) => idsFor(t).length);
+    if (first && !idsFor(TABS.find((t) => t.id === tab)).length) tab = first.id;
+    render();
+  }
+
+  /** The expression files are still on their way: wait here, then open. */
+  function waitForData() {
+    progressText.textContent = '…';
+    meter.style.width = '0%';
+    clear(stagesEl);
+    clear(tabs);
+    clear(rows).append(h('div.empty', h('div.empty__ico', h('span.spinner')), h('div', h('b', 'Loading your collection…'), 'Fetching the expressions.')));
+    whenExpressionsReady().then(
+      () => ui.name === 'collection' && open(),
+      () =>
+        ui.name === 'collection' &&
+        clear(rows).append(h('div.empty', h('div.empty__ico', icon('alert')), h('div', h('b', 'Could not load the expressions'), 'Check your connection and try again.'), h('button.btn.btn--gold', { 'data-quiet': '1', onclick: () => waitForData() }, icon('refresh'), 'Try again')))
+    );
+  }
+
   return {
     el,
     shade: true,
     show() {
       app.stage.setShot(shots.backdrop(app.stage), 1.2);
-      // open on the first shelf that has something in it
-      const first = TABS.find((t) => idsFor(t).length);
-      if (first && !idsFor(TABS.find((t) => t.id === tab)).length) tab = first.id;
-      render();
+      if (expressionsReady()) open();
+      else waitForData();
     },
     key(e) {
       if (e.key === 'Escape') ui.go('menu');
