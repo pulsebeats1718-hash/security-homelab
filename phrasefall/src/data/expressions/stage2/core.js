@@ -28,7 +28,7 @@ export default [
   },
   {
     id: 'find-out',
-    text: 'find out',
+    text: 'find out (the truth)',
     type: 'phrasal',
     level: 1,
     meaning: 'discover a fact or some information',
@@ -119,7 +119,7 @@ export default [
   },
   {
     id: 'sort-out',
-    text: 'sort out',
+    text: 'sort out (a mix-up)',
     type: 'phrasal',
     level: 1,
     meaning: 'deal with a problem successfully',
@@ -158,7 +158,7 @@ export default [
   },
   {
     id: 'work-out',
-    text: 'work out',
+    text: 'work out (a puzzle)',
     type: 'phrasal',
     level: 1,
     meaning: 'find the answer by thinking carefully',

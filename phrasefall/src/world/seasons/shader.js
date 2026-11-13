@@ -171,11 +171,11 @@ export const seasonKey = (opts = {}) => `s${opts.kindAttr ? 'a' : opts.kind ?? 0
 /** Give a plain material the season look (Home's far islands, the island turf). */
 export function seasonMaterial(mat, opts = {}) {
   const before = mat.onBeforeCompile;
+  const baseKey = mat.customProgramCacheKey(); // includes any earlier patch (e.g. the grass wind)
   mat.onBeforeCompile = (shader, renderer) => {
     before?.call(mat, shader, renderer);
     seasonShader(shader, opts);
   };
-  const key = mat.customProgramCacheKey;
-  mat.customProgramCacheKey = () => `${key ? key.call(mat) : ''}|${seasonKey(opts)}`;
+  mat.customProgramCacheKey = () => `${baseKey}|${seasonKey(opts)}`;
   return mat;
 }
