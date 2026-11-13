@@ -8,6 +8,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { mulberry32 } from '../core/utils.js';
 import { Batch, UNIT, ISLAND, makeLand, rim, popK, std } from './places/kit.js';
+import { KIND, seasonMaterial } from './seasons/shader.js';
 
 /**
  * The island's random stream (seed 42) is shared with the Home Island dressing, which takes the
@@ -31,7 +32,8 @@ export class Island {
     while (draws < HOME_DRAWS) rng();
 
     const mats = (this.mats = {
-      grass: std(0xffffff, { vertexColors: true, roughness: 1 }),
+      // the turf takes the season look: warmer in autumn, fresher in spring, sand round the dais in summer, snow in winter
+      grass: seasonMaterial(std(0xffffff, { vertexColors: true, roughness: 1 }), { kind: KIND.TURF, sand: true, grassAttr: true }),
       rock: std(0xffffff, { vertexColors: true, flatShading: true }),
       stone: std(0xdcd3c3, { roughness: 0.85 }),
       leaf2: std(0x3fa65c),
@@ -42,6 +44,8 @@ export class Island {
     land.position.y = ISLAND.top;
     this.group.add(land);
     this.land = land;
+    const turfGeo = land.children[0].geometry;
+    turfGeo.setAttribute('aGrass', new THREE.BufferAttribute(new Float32Array(turfGeo.attributes.position.count).fill(1), 1));
 
     const onLand = (x, z) => Math.hypot(x, z / DEPTH) < RADIUS * rim(Math.atan2(z / DEPTH, x)) * 0.9;
 
@@ -88,6 +92,7 @@ export class Island {
           float sway = sin(uWind * 1.9 + instanceMatrix[3].x * 1.3 + instanceMatrix[3].z * 0.9) * 0.09 + sin(uWind * 3.1 + instanceMatrix[3].z * 2.0) * 0.04;
           transformed.x += sway * position.y * 3.0;`);
     };
+    seasonMaterial(tuftMat, { kind: KIND.TUFT, tip: true });
     const tufts = new THREE.InstancedMesh(tuftGeo, tuftMat, tuftCount);
     const dummy = new THREE.Object3D();
     const col = new THREE.Color();
@@ -151,43 +156,73 @@ export class Island {
     /** where the island's random draws end — Home's distant islands continue the stream from here */
     this.seedDraws = draws;
 
-    // ── ground the places can reshape ─────────────────────────────────────
-    const turf = land.children[0].geometry.attributes.color;
-    const instanced = (mesh) => ({ mesh, base: mesh.instanceMatrix.array.slice(0, mesh.count * 16), n: mesh.count, level: new Float32Array(mesh.count).fill(1), from: new Float32Array(mesh.count).fill(1), to: new Float32Array(mesh.count).fill(1), delay: Float32Array.from({ length: mesh.count }, (_, i) => ((i * 0.618) % 1) * 0.35) });
+    // ── ground the places (and seasons) can reshape ───────────────────────
+    const turf = turfGeo.attributes.color;
+    const instanced = (mesh, flowers = false) => ({ mesh, flowers, base: mesh.instanceMatrix.array.slice(0, mesh.count * 16), n: mesh.count, level: new Float32Array(mesh.count).fill(1), from: new Float32Array(mesh.count).fill(1), to: new Float32Array(mesh.count).fill(1), delay: Float32Array.from({ length: mesh.count }, (_, i) => ((i * 0.618) % 1) * 0.35) });
+    const grassAttr = turfGeo.attributes.aGrass;
     this.ground = {
       turf,
-      turfPos: land.children[0].geometry.attributes.position,
+      turfPos: turfGeo.attributes.position,
       base: turf.array.slice(),
       from: turf.array.slice(),
       to: turf.array.slice(),
-      sets: [instanced(tufts), { ...instanced(stems), twin: heads }],
+      grass: grassAttr,
+      grassFrom: grassAttr.array.slice(),
+      grassTo: grassAttr.array.slice(),
+      sets: [instanced(tufts), { ...instanced(stems, true), twin: heads }],
       t: 1,
-      spec: null,
+      place: null,
+      season: null,
     };
   }
 
   /**
    * Let a place reshape the turf: `spec.keep(x, z)` false hides the grass tufts and flowers there,
-   * `spec.tint(color, x, y, z)` recolours the grass top (land space; the top sits at y ≈ 0).
+   * `spec.tint(color, x, y, z)` recolours the grass top (land space; the top sits at y ≈ 0) and
+   * `spec.sand(x, z)` (0…1) says where it is no longer grass (for the season look).
    * `null` restores the plain island. Blends over ~0.9 s unless `instant`.
    */
   setGround(spec, instant = false) {
+    this.ground.place = spec ?? null;
+    this._refreshGround(instant, true);
+  }
+
+  /** The season's say over the grass: { keepTufts(x, z), keepFlowers(x, z) } or null. */
+  setSeasonGround(spec, instant = false) {
+    this.ground.season = spec ?? null;
+    this._refreshGround(instant, false);
+  }
+
+  _refreshGround(instant, recolour) {
     const g = this.ground;
-    g.spec = spec ?? null;
+    const spec = g.place;
+    const season = g.season;
     const p = g.turfPos;
-    const c = new THREE.Color();
     g.from.set(g.turf.array);
-    g.to.set(g.base);
-    if (spec?.tint) {
+    g.grassFrom.set(g.grass.array);
+    if (recolour) {
+      const c = new THREE.Color();
+      g.to.set(g.base);
+      g.grassTo.fill(1);
       for (let i = 0; i < p.count; i++) {
-        c.fromArray(g.base, i * 3);
-        spec.tint(c, p.getX(i), p.getY(i), p.getZ(i));
-        c.toArray(g.to, i * 3);
+        const x = p.getX(i);
+        const z = p.getZ(i);
+        if (spec?.tint) {
+          c.fromArray(g.base, i * 3);
+          spec.tint(c, x, p.getY(i), z);
+          c.toArray(g.to, i * 3);
+        }
+        if (spec?.sand) g.grassTo[i] = 1 - spec.sand(x, z);
       }
     }
     for (const set of g.sets) {
       set.from.set(set.level);
-      for (let i = 0; i < set.n; i++) set.to[i] = !spec?.keep || spec.keep(set.base[i * 16 + 12], set.base[i * 16 + 14]) ? 1 : 0;
+      const seasonKeep = set.flowers ? season?.keepFlowers : season?.keepTufts;
+      for (let i = 0; i < set.n; i++) {
+        const x = set.base[i * 16 + 12];
+        const z = set.base[i * 16 + 14];
+        set.to[i] = (!spec?.keep || spec.keep(x, z)) && (!seasonKeep || seasonKeep(x, z)) ? 1 : 0;
+      }
     }
     g.t = instant ? 1 : 0;
     this._groundStep(instant ? 1 : 0);
@@ -197,9 +232,16 @@ export class Island {
     const g = this.ground;
     const e = t >= 1 ? 1 : t * t * (3 - 2 * t);
     const arr = g.turf.array;
-    if (e === 1) arr.set(g.to);
-    else for (let i = 0; i < arr.length; i++) arr[i] = g.from[i] + (g.to[i] - g.from[i]) * e;
+    const gr = g.grass.array;
+    if (e === 1) {
+      arr.set(g.to);
+      gr.set(g.grassTo);
+    } else {
+      for (let i = 0; i < arr.length; i++) arr[i] = g.from[i] + (g.to[i] - g.from[i]) * e;
+      for (let i = 0; i < gr.length; i++) gr[i] = g.grassFrom[i] + (g.grassTo[i] - g.grassFrom[i]) * e;
+    }
     g.turf.needsUpdate = true;
+    g.grass.needsUpdate = true;
     for (const set of g.sets) {
       const im = set.mesh.instanceMatrix.array;
       for (let i = 0; i < set.n; i++) {

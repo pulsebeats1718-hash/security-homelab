@@ -7,6 +7,10 @@ import { mulberry32 } from '../../core/utils.js';
 import { makeGlowTexture } from '../sky.js';
 import { HOME_DRAWS } from '../island.js';
 import { Batch, UNIT, makeLand, std, popMaterial, popDepth, popU, popK } from './kit.js';
+import { KIND, seasonMaterial } from '../seasons/shader.js';
+
+/** How each of Home's materials reacts to the seasons. */
+const KINDS = { leaf: KIND.FOLIAGE, leaf2: KIND.FOLIAGE, blossom: KIND.BLOSSOM, blossom2: KIND.BLOSSOM };
 
 function addTree(b, rng, x, z, s, kind) {
   const lean = (rng() - 0.5) * 0.25;
@@ -48,7 +52,7 @@ export class Home {
     this.u = { uPop: { value: 1 }, uSink: { value: 0.32 } };
     const depth = popDepth(this.u);
     const pm = (color, o) => {
-      const m = popMaterial(std(color, o), this.u);
+      const m = popMaterial(std(color, o), this.u, { season: true });
       m.userData.depth = depth;
       return m;
     };
@@ -65,7 +69,7 @@ export class Home {
     };
 
     // ── static scenery, merged ────────────────────────────────────────────
-    const b = new Batch({ pop: true });
+    const b = new Batch({ pop: true, kinds: KINDS });
     const tree = (x, z, s, kind) => b.pin(x, 0, z, near(x, z), () => addTree(b, rng, x, z, s, kind));
     tree(-4.0, -2.2, 1.22, 'blossom');
     tree(4.3, -2.0, 1.08, 'green');
@@ -130,15 +134,16 @@ export class Home {
 
     // ── distant islands ───────────────────────────────────────────────────
     for (let i = HOME_DRAWS; i < island.seedDraws; i++) rng();
+    const sm = (color, o, kind = KIND.GENERIC) => seasonMaterial(std(color, o), { kind });
     const farMats = {
-      grass: island.mats.grass,
+      grass: sm(0xffffff, { vertexColors: true, roughness: 1 }, KIND.GROUND),
       rock: island.mats.rock,
-      stoneDark: std(0xa89f96, { flatShading: true }),
-      wood: std(0x9a6740),
-      leaf: std(0x58c46a),
-      leaf2: std(0x3fa65c),
-      blossom: std(0xffb3cf, { roughness: 1 }),
-      blossom2: std(0xff8fb8, { roughness: 1 }),
+      stoneDark: sm(0xa89f96, { flatShading: true }),
+      wood: sm(0x9a6740),
+      leaf: sm(0x58c46a, {}, KIND.FOLIAGE),
+      leaf2: sm(0x3fa65c, {}, KIND.FOLIAGE),
+      blossom: sm(0xffb3cf, { roughness: 1 }, KIND.BLOSSOM),
+      blossom2: sm(0xff8fb8, { roughness: 1 }, KIND.BLOSSOM),
     };
     this.far = [];
     const farDefs = [

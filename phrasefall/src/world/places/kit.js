@@ -17,6 +17,7 @@ import * as THREE from 'three';
 import { mergeGeometries, mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { makeGlowTexture } from '../sky.js';
+import { KIND, seasonShader, seasonKey } from '../seasons/shader.js';
 
 // ── floating land ─────────────────────────────────────────────────────────
 export const rim = (theta) => 1 + 0.07 * Math.sin(theta * 3 + 0.6) + 0.045 * Math.sin(theta * 5 + 2.1) + 0.03 * Math.sin(theta * 8 + 4.0);
@@ -170,7 +171,7 @@ export const UNIT = {
 export function addLand(b, r, { depthScale = 0.85, depth = r * 1.15, seg = b.low ? 24 : 36, top = null, key = 'matte' } = {}) {
   const grass = paint(landGeometry(GRASS_PROFILE, seg, r, depthScale), (c, x, y, z) => (top ? top(c, x, y, z, r) : grassColor(c, x, y, z, r, depthScale)));
   grass.deleteAttribute('uv');
-  b.add(key, grass, 0, 0, 0, 1, 1, 1, 0, 0, 0, null);
+  b.kind(KIND.GROUND, () => b.add(key, grass, 0, 0, 0, 1, 1, 1, 0, 0, 0, null));
   const rockProfile = ROCK_PROFILE.map(([rr, y]) => [rr, -0.5 + (y + 0.5) * (depth / 6.3)]);
   const rock = landGeometry(rockProfile, 16, r, depthScale, 0.085);
   rock.deleteAttribute('uv');
@@ -343,7 +344,8 @@ if (aAnim.x > 0.5) {
   }
 }
 #endif
-float pfU = clamp((uPop - aPop.w * ${STAGGER.toFixed(3)}) / ${(1 - STAGGER).toFixed(3)}, 0.0, 1.0);
+float pfDelay = aPop.w - 2.0 * floor(aPop.w * 0.5 + 0.001);
+float pfU = clamp((uPop - pfDelay * ${STAGGER.toFixed(3)}) / ${(1 - STAGGER).toFixed(3)}, 0.0, 1.0);
 float pfT = pfU - 1.0;
 if (pfU < 1.0) {
   transformed = aPop.xyz + (transformed - aPop.xyz) * (1.0 + 2.70158 * pfT * pfT * pfT + 1.70158 * pfT * pfT);
@@ -378,7 +380,7 @@ if (aGlow.a < -1.5) transformed = aAxis + (transformed - aAxis) * smoothstep(0.3
  *   anim  vertex colours, bobbing chunks and the motions above
  *   glow  emissive from the per-vertex glow colour (aGlow), lit when the theme's lamps pass its threshold
  */
-export function popMaterial(mat, u, { anim = false, glow = false } = {}) {
+export function popMaterial(mat, u, { anim = false, glow = false, season = false } = {}) {
   const defines = `${anim ? '#define PF_ANIM\n' : ''}${glow ? '#define PF_GLOW\n' : ''}`;
   mat.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, u);
@@ -391,8 +393,9 @@ export function popMaterial(mat, u, { anim = false, glow = false } = {}) {
         .replace('#include <common>', '#include <common>\nvarying vec3 vPfGlow;\nuniform float uGlowGain;')
         .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance = vPfGlow * uGlowGain;');
     }
+    if (season) seasonShader(shader, { kindAttr: true });
   };
-  mat.customProgramCacheKey = () => `pf-place-${anim ? 1 : 0}${glow ? 1 : 0}`;
+  mat.customProgramCacheKey = () => `pf-place-${anim ? 1 : 0}${glow ? 1 : 0}${season ? seasonKey({ kindAttr: true }) : ''}`;
   return mat;
 }
 
@@ -425,16 +428,18 @@ const ID = new THREE.Matrix4();
  * chunk bobbing, motion and glow attributes; build the geometry inside `prop` / `chunk` scopes.
  */
 export class Batch {
-  constructor({ pop = false, anim = false } = {}) {
+  constructor({ pop = false, anim = false, kinds = null } = {}) {
     this.items = new Map();
     this.pop = pop || anim;
     this.anim = anim;
+    /** material key → season KIND (otherwise the `kind` scope decides, GENERIC by default) */
+    this.kinds = kinds;
     this._m = new THREE.Matrix4();
     this._q = new THREE.Quaternion();
     this._e = new THREE.Euler();
     this.frame = new THREE.Matrix4();
     this._stack = [];
-    this.s = { anchor: null, delay: 0, bob: null, motion: null, glow: null };
+    this.s = { anchor: null, delay: 0, bob: null, motion: null, glow: null, kind: KIND.GENERIC };
     /** every prop / chunk: { x, y, z, delay, far } — used for the pop sparkles */
     this.props = [];
   }
@@ -458,7 +463,8 @@ export class Batch {
 
     if (this.pop) {
       const a = s.anchor ?? [this._m.elements[12], this._m.elements[13], this._m.elements[14]];
-      g.setAttribute('aPop', new THREE.BufferAttribute(fill(n, [a[0], a[1], a[2], s.delay]), 4));
+      const kind = this.kinds?.[key] ?? s.kind;
+      g.setAttribute('aPop', new THREE.BufferAttribute(fill(n, [a[0], a[1], a[2], s.delay + 2 * kind]), 4));
     }
     if (this.anim) {
       if (!keepColor) {
@@ -574,6 +580,11 @@ export class Batch {
     _rot.setFromMatrix4(this.frame);
     const dir = _w.set(dx, dy, dz).applyMatrix3(_rot).toArray();
     return this._scope(fn, null, { motion: { type: 3, speed: freq, phase: phase + 2.6, axis: dir, len: 0 } });
+  }
+
+  /** Parts added in `fn` react to the seasons as `kind` (seasons/shader.js KIND: FOLIAGE, WATER …). */
+  kind(kind, fn) {
+    return this._scope(fn, null, { kind });
   }
 
   /**
@@ -694,7 +705,7 @@ export class Diorama {
     this.group = new THREE.Group();
     this.u = { uPop: { value: 0 }, uSink: { value: 0.32 }, uTime: { value: 0 }, uLamps: { value: 0 }, uGlowGain: { value: 0.2 } };
     const depth = popDepth(this.u, { anim: true });
-    const mk = (o, glow = false) => popMaterial(new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0, ...o }), this.u, { anim: true, glow });
+    const mk = (o, glow = false) => popMaterial(new THREE.MeshStandardMaterial({ vertexColors: true, metalness: 0, ...o }), this.u, { anim: true, glow, season: !glow });
     this.mats = { matte: mk({ roughness: 0.85 }), satin: mk({ roughness: 0.42 }), glow: mk({ roughness: 0.45 }, true) };
     this.mats.matte.userData.depth = depth;
     this.mats.satin.userData.depth = depth;
