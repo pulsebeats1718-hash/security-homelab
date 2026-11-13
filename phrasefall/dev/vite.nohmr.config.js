@@ -6,5 +6,5 @@ import { fileURLToPath } from 'node:url';
 export default defineConfig({
   root: fileURLToPath(new URL('..', import.meta.url)),
   base: './',
-  server: { host: true, port: 5174, strictPort: true, hmr: false },
+  server: { host: true, port: Number(process.env.PREVIEW_PORT) || 5174, strictPort: true, hmr: false },
 });
