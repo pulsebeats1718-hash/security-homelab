@@ -23,6 +23,8 @@ export default {
   blurb: 'Scared of nothing except split infinitives.',
   accent: 0x9fd8ff,
   shot: 'orb',
+  // beach gear: the body is the sheet hanging from the head joint, so the ring goes round that (below the bow tie)
+  summer: { ring: { parent: 'head', y: -0.22 } },
 
   build(k) {
     const { THREE } = k;

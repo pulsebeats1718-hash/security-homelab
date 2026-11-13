@@ -163,6 +163,41 @@ function eyeExtent(eye) {
   };
 }
 
+/** A character that already wears glasses (rig.props.glasses) gets its own lenses tinted instead. */
+function tintOwnGlasses(rig, mats) {
+  const own = rig.props.glasses;
+  const panes = [];
+  own.traverse((o) => {
+    if (o.isMesh && o.material?.transparent && !o.userData.summer) panes.push(o);
+  });
+  if (!panes.length) return null;
+  const lensMat = mats.mat(LENS, { rough: 0.06, metal: 0.25, rim: 1.25, rimPower: 1.6, transparent: true, opacity: 0.84, depthWrite: false });
+  const glintMat = mats.mat(0x222222, { emissive: 0xffffff, emissiveIntensity: 0.9, rough: 0.3, rim: 0, transparent: true, opacity: 0.85, depthWrite: false });
+  const saved = panes.map((m) => [m, m.material]);
+  const glints = [];
+  for (const m of panes) {
+    m.material = lensMat;
+    const r = Math.min(m.scale.x, m.scale.y);
+    const glint = mesh(G.capsule(0.011, r * 0.62, 6), glintMat, false);
+    glint.position.copy(m.position).add(new THREE.Vector3(-r * 0.36 * Math.sign(m.parent.position.x || 1), r * 0.4, 0.014));
+    glint.rotation.z = 0.75 * Math.sign(m.parent.position.x || 1);
+    glint.renderOrder = 4;
+    m.parent.add(glint);
+    glints.push(glint);
+  }
+  return {
+    visible: true,
+    set(v) {
+      for (const g of glints) g.visible = v;
+      for (const [m, orig] of saved) m.material = v ? lensMat : orig;
+    },
+    remove() {
+      for (const g of glints) g.removeFromParent();
+      for (const [m, orig] of saved) m.material = orig;
+    },
+  };
+}
+
 function buildGlasses(rig, cfg, color, mats) {
   const face = rig.face;
   if (!face || face.eyes.length < 2) return null;
@@ -201,8 +236,9 @@ function buildGlasses(rig, cfg, color, mats) {
     const nz = n.clone().lerp(AXIS_Z, forward).normalize();
     const x = new THREE.Vector3().crossVectors(AXIS_Y, nz).normalize();
     const y = new THREE.Vector3().crossVectors(nz, x);
-    const hw = (ext.x * 1.5 + 0.022) * (cfg.scale ?? 1);
-    const hh = (ext.y * 1.08 + 0.018) * (cfg.scale ?? 1) * (cfg.scaleY ?? 1);
+    // sized to the eye (iris rings and lashes included), but never bigger than a sensible pair of shades
+    const hw = Math.min(ext.x * 1.5 + 0.022, R[0] * 0.29) * (cfg.scale ?? 1);
+    const hh = Math.min(ext.y * 1.08 + 0.018, hw * 1.02) * (cfg.scale ?? 1) * (cfg.scaleY ?? 1);
     // centre: a touch above the eye so the frame sits under the brows and clear of muzzles
     const c = eye.root.position.clone().addScaledVector(y, hh * 0.12 + (cfg.y ?? 0));
     const lift = ext.z + 0.016 + (hw * hw) / (2 * Rmean) + (cfg.lift ?? 0);
@@ -399,7 +435,7 @@ function buildRing(rig, cfg, colors, mats) {
 
 // ── per-frame upkeep: resting arms, KO lift, silhouette ──────────────────
 
-function makeTicker(rig, glasses, ring, cfgRing) {
+function makeTicker(rig, glasses, ring, cfgRing, ownGlasses) {
   const arms = [];
   if (ring && cfgRing.arms !== false) {
     for (const [side, s] of [['L', 1], ['R', -1]]) {
@@ -438,6 +474,10 @@ function makeTicker(rig, glasses, ring, cfgRing) {
   return (t, dt, r) => {
     const show = (r.fx?.silhouette?.value ?? 0) < 0.5;
     if (glasses) glasses.visible = show;
+    if (ownGlasses && ownGlasses.visible !== show) {
+      ownGlasses.visible = show;
+      ownGlasses.set(show);
+    }
     if (!ring) return;
     ring.frame.visible = show;
 
@@ -481,12 +521,13 @@ export function addSummerGear(rig, def = {}) {
   const colors = pickColors(rig, def, cfg);
   const springsBefore = rig.springs.length;
 
-  const glasses = cfg.glasses === false ? null : buildGlasses(rig, cfg.glasses ?? {}, colors[0], mats);
+  const ownGlasses = cfg.glasses !== false && rig.props.glasses?.isObject3D ? tintOwnGlasses(rig, mats) : null;
+  const glasses = cfg.glasses === false || ownGlasses ? null : buildGlasses(rig, cfg.glasses ?? {}, colors[0], mats);
   const ringCfg = cfg.ring === false ? null : cfg.ring ?? {};
   const ring = ringCfg ? buildRing(rig, ringCfg, colors, mats) : null;
   const addedSprings = rig.springs.slice(springsBefore);
 
-  const ticker = makeTicker(rig, glasses, ring, ringCfg ?? {});
+  const ticker = makeTicker(rig, glasses, ring, ringCfg ?? {}, ownGlasses);
   rig.tickers.unshift(ticker); // first, so prop tickers see the arms where they will be drawn
 
   const handle = {
@@ -494,6 +535,7 @@ export function addSummerGear(rig, def = {}) {
     ring: ring?.frame ?? null,
     remove() {
       glasses?.removeFromParent();
+      ownGlasses?.remove();
       ring?.frame.removeFromParent();
       const ti = rig.tickers.indexOf(ticker);
       if (ti >= 0) rig.tickers.splice(ti, 1);
