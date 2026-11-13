@@ -204,6 +204,24 @@ export const SHAPE = {
   halfDisc: new THREE.CylinderGeometry(0.5, 0.5, 1, 12, 1, false, 0, Math.PI).rotateX(Math.PI / 2).rotateZ(Math.PI / 2),
   /** square lantern glass, wider at the top */
   lantern: faceted(new THREE.CylinderGeometry(0.5 * Math.SQRT2, 0.36 * Math.SQRT2, 1, 4, 1).rotateY(Math.PI / 4)),
+  /** right-angled triangle (a sail): legs along +Y (luff, up the mast) and +X (foot), double sided */
+  sail: (() => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0], 3));
+    g.computeVertexNormals();
+    return g;
+  })(),
+  /** one of 8 slices of a cone (striped umbrellas): apex at (0, 1, 0), rim of radius 1 at y = 0, double sided */
+  wedge: (() => {
+    const a = Math.PI / 8;
+    const p0 = [0, 1, 0];
+    const p1 = [Math.cos(-a), 0, Math.sin(-a)];
+    const p2 = [Math.cos(a), 0, Math.sin(a)];
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute([...p0, ...p2, ...p1, ...p0, ...p1, ...p2], 3));
+    g.computeVertexNormals();
+    return g;
+  })(),
   /** flat triangle pennant hanging down from its top edge (0.5 each side of x = 0, tip at y = -1) */
   pennant: (() => {
     const g = new THREE.BufferGeometry();
@@ -233,6 +251,25 @@ export const clearShapeCache = () => {
   for (const g of rboxCache.values()) g.dispose();
   rboxCache.clear();
 };
+
+/**
+ * Shorthands for building props into a Batch (local coordinates of the current scope). `key` is the
+ * material: 'matte' (default), 'satin' (painted metal, cars) or 'glow' (lit at night).
+ */
+export function tools(b) {
+  return {
+    /** any geometry, centred at (x, y, z) */
+    part: (key, geo, x, y, z, sx, sy, sz, col, rx = 0, ry = 0, rz = 0) => b.add(key, geo, x, y, z, sx, sy, sz, rx, ry, rz, col),
+    /** soft box resting on y */
+    block: (x, y, z, w, h, d, col, key = 'matte', r = 0.05) => b.add(key, rbox(w, h, d, r), x, y + h / 2, z, 1, 1, 1, 0, 0, 0, col),
+    /** hard box resting on y */
+    slab: (x, y, z, w, h, d, col, key = 'matte', ry = 0) => b.add(key, SHAPE.box, x, y + h / 2, z, w, h, d, 0, ry, 0, col),
+    /** cylinder resting on y */
+    post: (x, y, z, dia, h, col, key = 'matte', geo = SHAPE.cyl8) => b.add(key, geo, x, y + h / 2, z, dia, h, dia, 0, 0, 0, col),
+    /** ball centred at y */
+    ball: (x, y, z, d, col, key = 'matte', sy = 1) => b.add(key, SHAPE.ball, x, y, z, d, d * sy, d, 0, 0, 0, col),
+  };
+}
 
 /** The matte material every piece of scenery uses. */
 export const std = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.92, metalness: 0, ...o });
@@ -303,6 +340,14 @@ vPfGlow = aGlow.rgb * smoothstep(aGlow.a, aGlow.a + 0.2, uLamps);
 #endif
 `;
 
+const VERT_NIGHT = /* glsl */ `
+#ifdef PF_GLOW
+#ifdef PF_ANIM
+if (aGlow.a < -1.5) transformed = aAxis + (transformed - aAxis) * smoothstep(0.3, 0.85, uLamps);
+#endif
+#endif
+`;
+
 /**
  * Patch a material with the place animation. `u` holds the place's shared uniforms
  * ({ uPop, uSink, uTime, uLamps, uGlowGain }): every material of a place reads the same objects.
@@ -316,7 +361,7 @@ export function popMaterial(mat, u, { anim = false, glow = false } = {}) {
     shader.vertexShader = shader.vertexShader
       .replace('#include <common>', `#include <common>\n${defines}${VERT_PARS}`)
       .replace('#include <beginnormal_vertex>', `#include <beginnormal_vertex>\n${VERT_NORMAL}`)
-      .replace('#include <begin_vertex>', `#include <begin_vertex>\n${VERT_POS}`);
+      .replace('#include <begin_vertex>', `#include <begin_vertex>\n${VERT_NIGHT}${VERT_POS}`);
     if (glow) {
       shader.fragmentShader = shader.fragmentShader
         .replace('#include <common>', '#include <common>\nvarying vec3 vPfGlow;\nuniform float uGlowGain;')
@@ -496,10 +541,13 @@ export class Batch {
     return this._scope(fn, null, { motion: { type: 3, speed: freq, phase: phase + 2.6, axis: dir, len: 0 } });
   }
 
-  /** Glow parts in `fn` light up in `color` once the theme's lamps pass `threshold` (−1: always lit). */
+  /**
+   * Glow parts in `fn` light up in `color` once the theme's lamps pass `threshold` (−1: always lit).
+   * 'night': only there after dark — the parts shrink onto the current spin pivot by day (beams).
+   */
   lit(color, threshold, fn) {
     _c.set(color);
-    return this._scope(fn, null, { glow: [_c.r, _c.g, _c.b, threshold] });
+    return this._scope(fn, null, { glow: [_c.r, _c.g, _c.b, threshold === 'night' ? -2 : threshold] });
   }
 
   build(materials, parent, shadows = true) {
