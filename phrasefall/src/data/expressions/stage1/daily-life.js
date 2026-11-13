@@ -7,7 +7,7 @@ export default [
     level: 1,
     meaning: 'asking which dish is being cooked this evening',
     distractors: ['asking which shop on the high street opens late', 'asking how much the weekly shopping cost', 'asking who is coming to visit this evening'],
-    example: "\"What's for tea? I'm starving.\" \"Shepherd's pie, nearly ready.\"",
+    example: '"What\'s for tea? I\'m starving." "Shepherd\'s pie, nearly ready."',
     synonyms: ["what's for dinner?", "what's for supper?"],
     register: 'Informal',
     context: 'Very common at home, especially in the north of England and Scotland, where tea means dinner.',
@@ -33,11 +33,11 @@ export default [
     level: 1,
     meaning: 'the meal has been cooked and is on the table',
     distractors: ['the restaurant has just opened its doors to guests', 'the shopping has arrived at the house', 'the cooker needs to be switched off'],
-    example: "\"Dinner's ready!\" shouted Mum from the kitchen. \"Wash your hands first.\"",
+    example: '"Dinner\'s ready!" shouted Mum from the kitchen. "Wash your hands first."',
     synonyms: ["food's ready", "it's on the table"],
     register: 'Neutral',
     context: 'Said at home to call everyone to eat; "tea" or "supper" can replace "dinner" in some areas.',
-    mistake: "Use the contraction \"dinner's ready\", not \"dinner is ready\" in speech; the full form sounds stiff.",
+    mistake: 'In parts of the North and Scotland "dinner" is the midday meal and "tea" the evening one, so the time of day shows which is meant.',
   },
   {
     id: 'take-your-shoes-off',
@@ -50,7 +50,7 @@ export default [
     synonyms: ['shoes off'],
     register: 'Neutral',
     context: 'A common request in British homes, and in some workplaces, mosques and temples.',
-    mistake: 'Say "take your shoes off", not "take off your shoes it" - with a pronoun the verb splits: "take them off".',
+    mistake: 'Say "take off", not "take out": "take out your shoes" means remove them from inside something, such as a bag.',
   },
   {
     id: 'mind-the-step',
@@ -63,7 +63,7 @@ export default [
     synonyms: ['watch your step', 'careful on the step'],
     register: 'Neutral',
     context: 'Often heard at doorways, buses, trains and old buildings; also written on signs.',
-    mistake: 'Say "mind the step", not "mind the steps" for a single raised step; the plural means several.',
+    mistake: 'Here "mind" means "be careful of", not "object to"; compare "mind your head" and "mind the gap".',
   },
   {
     id: 'keep-the-noise-down',
@@ -76,7 +76,7 @@ export default [
     synonyms: ['be quieter', 'pipe down'],
     register: 'Neutral',
     context: 'A polite order to children, flatmates or neighbours; stronger than "shh".',
-    mistake: 'Use "keep the noise down", not "keep the noise low" - "low" is not the usual collocate here.',
+    mistake: 'Say "keep the noise down" or "keep it down", not "keep down it": with a pronoun the particle goes after it.',
   },
   {
     id: 'tidy-your-room',
@@ -102,7 +102,7 @@ export default [
     synonyms: ['your go', 'over to you'],
     register: 'Neutral',
     context: 'Used in games, queues, washing-up rotas and conversations; "your go" is more casual.',
-    mistake: "Say \"It's your turn\", not \"It's your time\" - \"time\" does not mean a place in a sequence.",
+    mistake: 'Say "It\'s your turn", not "It\'s your time" - "time" does not mean a place in a sequence.',
   },
   {
     id: 'be-back-by-ten',
@@ -115,7 +115,7 @@ export default [
     synonyms: ['home by ten', 'back before ten'],
     register: 'Neutral',
     context: 'Common parental rule; "by" sets a limit, so you can be early but not late.',
-    mistake: "Use \"by ten\" for a deadline, not \"until ten\", which would mean staying away up to ten o'clock.",
+    mistake: 'Use "by ten" for a deadline, not "until ten", which would mean staying away up to ten o\'clock.',
   },
   {
     id: 'take-the-bins-out',
@@ -141,7 +141,7 @@ export default [
     synonyms: ['sleep in', 'sleep late'],
     register: 'Informal',
     context: 'A treat people look forward to at weekends and on holiday.',
-    mistake: '"Lie-in" is a noun with a hyphen; learners say "I lay in" or "a sleeping in" for this meaning.',
+    mistake: 'The verb is "have": "have a lie-in", not "make" or "do a lie-in". The verb form is "lie in" or "sleep in".',
   },
   {
     id: 'a-sunday-roast',
@@ -154,7 +154,7 @@ export default [
     synonyms: ['a roast dinner'],
     register: 'Neutral',
     context: 'A weekly British tradition, often with roast potatoes, gravy and Yorkshire pudding.',
-    mistake: 'Say "a Sunday roast" or "a roast dinner", not "a roasted Sunday" - "roast" is the noun here.',
+    mistake: 'Say "a roast dinner", not "a roasted dinner"; and it is often eaten at lunchtime, not in the evening.',
   },
   {
     id: 'a-cup-of-tea',
@@ -162,7 +162,7 @@ export default [
     type: 'everyday',
     level: 1,
     meaning: 'a hot drink made from leaves and water',
-    distractors: ['a small dish for holding sugar on the table', 'a meal eaten in the afternoon', 'a place where you can buy tickets'],
+    distractors: ['a small dish for holding sugar on the table', 'a biscuit that people dunk in coffee', 'a place where you can buy tickets'],
     example: 'Would you like a cup of tea or something stronger?',
     synonyms: ['a brew', 'a cuppa'],
     register: 'Neutral',
@@ -180,7 +180,7 @@ export default [
     synonyms: ["how d'you take it?"],
     register: 'Neutral',
     context: 'A routine question when someone makes you a tea or coffee at home or work.',
-    mistake: 'Say "milk and sugar?", not "with milk and with sugar?" - the short form is natural.',
+    mistake: 'In reply, "white" means with milk: "a white coffee" or "a white tea"; "black" means without milk.',
   },
   {
     id: 'ill-have-the-soup',
@@ -192,8 +192,8 @@ export default [
     example: "I'll have the soup, and then the fish, please.",
     synonyms: ["I'll go for the soup", "I'll take the soup"],
     register: 'Neutral',
-    context: "Used when ordering in a cafe or restaurant; \"I'll have\" sounds more natural than \"I want\".",
-    mistake: "Don't say \"I want the soup\" to a waiter; \"I'll have the soup\" is the polite way to order.",
+    context: 'Used when ordering in a cafe or restaurant; "I\'ll have" sounds more natural than "I want".',
+    mistake: 'Don\'t say "I want the soup" to a waiter; "I\'ll have the soup" is the polite way to order.',
   },
   {
     id: 'whats-on-the-menu',
@@ -202,11 +202,11 @@ export default [
     level: 2,
     meaning: 'asking which dishes are available',
     distractors: ['asking which films are showing at the cinema', 'asking which jobs are advertised', 'asking which seats are free'],
-    example: "\"What's on the menu today?\" \"Pie, soup and a chicken salad.\"",
+    example: '"What\'s on the menu today?" "Pie, soup and a chicken salad."',
     synonyms: ['what do you serve?'],
     register: 'Neutral',
-    context: "Also used jokingly, for example \"What's on the menu for the meeting?\" meaning what is planned.",
-    mistake: 'Say "on the menu", not "in the menu" for dishes offered; "in" suggests something inside a book.',
+    context: 'Also used jokingly, for example "What\'s on the menu for the meeting?" meaning what is planned.',
+    mistake: 'Say "on the menu", not "in the menu": dishes are "on" it. The menu is the list, not the food itself.',
   },
   {
     id: 'could-we-see-the-menu',
@@ -219,7 +219,7 @@ export default [
     synonyms: ['could we have the menu?'],
     register: 'Neutral',
     context: 'Used as soon as you sit down in a restaurant, often with "please".',
-    mistake: 'Say "see the menu", not "watch the menu" - "watch" is used for moving things like television.',
+    mistake: '"Could we" is politer than "can we"; a blunt "give me the menu" sounds like an order to the waiter.',
   },
   {
     id: 'table-for-two',
@@ -271,7 +271,7 @@ export default [
     synonyms: ["let's go halves", "let's share it"],
     register: 'Neutral',
     context: 'Common with friends in restaurants; "go halves" suggests just two people.',
-    mistake: 'Say "split the bill", not "divide the bill" - "divide" sounds like a maths exercise.',
+    mistake: 'Say "split the bill" or "go halves", not "break the bill"; "go Dutch" means each person pays for their own.',
   },
   {
     id: 'are-you-ready-to-order',
@@ -297,7 +297,7 @@ export default [
     synonyms: ['what would you like to drink?'],
     register: 'Neutral',
     context: 'A common offer from waiters, cabin crew and hosts; the short form sounds friendly.',
-    mistake: 'Say "anything to drink?", not "something to drink?" in a question; "any" is used in questions.',
+    mistake: 'Say "anything to drink?", not "anything for drink?"; after "anything" use to + verb, as in "anything to eat?".',
   },
   {
     id: 'still-or-sparkling',
@@ -344,7 +344,7 @@ export default [
     type: 'everyday',
     level: 1,
     meaning: 'asking if I may wear it to check the fit',
-    distractors: ['asking if I may pay for it later', 'asking if I may take it home to show someone', 'asking if I may swap it for a bigger shop'],
+    distractors: ['asking if I may pay for it later', 'asking if I may take it home to show someone', 'asking if I may leave it behind the counter'],
     example: 'Can I try this on, please? Where are the fitting rooms?',
     synonyms: ['may I try it on?'],
     register: 'Neutral',
@@ -401,7 +401,7 @@ export default [
     synonyms: ['pay with card'],
     register: 'Neutral',
     context: 'The usual way people choose how to settle a bill in the UK.',
-    mistake: 'Say "pay by card", not "pay with a card of bank" - "by" is the usual preposition for method of payment.',
+    mistake: 'Say "pay by card" or "pay with a card", not "pay in card"; "in" is used only with "in cash".',
   },
   {
     id: 'contactless',
@@ -414,7 +414,7 @@ export default [
     synonyms: ['tap to pay'],
     register: 'Neutral',
     context: 'The limit for a single contactless payment in the UK is around 100 pounds.',
-    mistake: 'Say "contactless", not "contact-less card" - it is one word, used as an adjective or noun.',
+    mistake: 'Say "contactless", not "touchless", which is rare in Britain; people "pay contactless" or "go contactless".',
   },
   {
     id: 'cash-or-card',
@@ -423,11 +423,11 @@ export default [
     level: 1,
     meaning: 'asking how you will pay for the goods',
     distractors: ['asking if you want a bag or not', 'asking if you have a loyalty scheme', 'asking if the item is a present for someone'],
-    example: "\"That's twelve pounds fifty. Cash or card?\" \"Card, please.\"",
+    example: '"That\'s twelve pounds fifty. Cash or card?" "Card, please."',
     synonyms: ['how would you like to pay?'],
     register: 'Neutral',
     context: 'The question a cashier asks at the till.',
-    mistake: 'Say "cash or card?", not "cash or with card?" - the question uses both words without "with".',
+    mistake: 'Answer with the choice: "Card, please." Replying "yes" does not answer an "or" question.',
   },
   {
     id: 'buy-one-get-one-free',
@@ -453,7 +453,7 @@ export default [
     synonyms: ['50% off', 'reduced by half'],
     register: 'Neutral',
     context: 'Seen on shop windows during sales; "half-price" with a hyphen is the adjective form before a noun.',
-    mistake: 'Say "half price", not "half of the price"; the second is possible but sounds less natural on a sign.',
+    mistake: 'Say "half price", not "half prices"; before a noun use "half-price" or "half-priced", as in "half-price tickets".',
   },
   {
     id: 'in-the-sales',
@@ -492,7 +492,7 @@ export default [
     synonyms: ['unavailable', 'sold out'],
     register: 'Neutral',
     context: "A shop assistant's way of saying they cannot supply an item right now.",
-    mistake: 'Say "out of stock", not "out from stock" - "out of" is the fixed preposition pair.',
+    mistake: 'Say "out of stock" or "we\'ve run out"; learners say "it is finished", which sounds odd about goods in a shop.',
   },
   {
     id: 'value-for-money',
@@ -505,7 +505,7 @@ export default [
     synonyms: ['good value', 'worth the money'],
     register: 'Neutral',
     context: 'A common way to judge restaurants, hotels and products; "good value" is shorter.',
-    mistake: 'Say "value for money", not "value of money" - the second means something else in economics.',
+    mistake: 'Say "good value for money" or just "good value", not "good value of money".',
   },
   {
     id: 'the-cashpoint',
@@ -527,10 +527,10 @@ export default [
     level: 1,
     meaning: 'asking whether you want a carrier for your shopping',
     distractors: ['asking whether you need a hand with your coat', 'asking whether you have lost your luggage', 'asking whether you want to look inside the shop'],
-    example: "\"Do you need a bag?\" \"No, thanks, I've brought my own.\"",
+    example: '"Do you need a bag?" "No, thanks, I\'ve brought my own."',
     synonyms: ['would you like a bag?'],
     register: 'Neutral',
-    context: 'Shops in England charge for plastic bags, so people often bring their own.',
+    context: 'Most UK shops charge for carrier bags, so people often bring their own.',
     mistake: 'Say "a carrier bag", not "a plastic" - British speakers say "carrier bag" for shopping bags.',
   },
   {
@@ -544,7 +544,7 @@ export default [
     synonyms: ["I'll have it", "I'll buy it"],
     register: 'Neutral',
     context: 'Said to the shop assistant when you choose something; also used at hotels for rooms.',
-    mistake: "Say \"I'll take it\", not \"I take it\" - the future form shows a decision made now.",
+    mistake: 'Not "I take it": the future "I\'ll" shows a decision made now. "I take it that..." is a different, formal phrase meaning "I assume".',
   },
   {
     id: 'were-closing-in-five-minutes',
@@ -553,7 +553,7 @@ export default [
     level: 2,
     meaning: 'the shop will shut very soon',
     distractors: ['the shop has just opened for the day', 'the shop will have a sale this week', 'the shop is moving to a new address'],
-    example: "\"Sorry, we're closing in five minutes,\" said the assistant, so I hurried.",
+    example: '"Sorry, we\'re closing in five minutes," said the assistant, so I hurried.',
     synonyms: ['we shut in five minutes'],
     register: 'Neutral',
     context: "A shop assistant's warning to customers near the end of the day.",
@@ -570,7 +570,7 @@ export default [
     synonyms: ['stand clear of the doors'],
     register: 'Neutral',
     context: 'A recorded announcement on trains and the Underground; many passengers now say "stand clear" too.',
-    mistake: 'Say "mind the doors", not "care the doors" - "mind" is the British verb for a warning.',
+    mistake: 'Say "mind the doors" or "mind the closing doors"; the Tube itself says "stand clear of the doors" and "mind the gap".',
   },
   {
     id: 'the-train-is-delayed',
@@ -583,7 +583,7 @@ export default [
     synonyms: ['the train is running late'],
     register: 'Neutral',
     context: 'The standard announcement on British railways, often followed by an apology.',
-    mistake: 'Say "delayed", not "late" for an announcement; "the train is late" is spoken, while stations say "delayed".',
+    mistake: '"Delay" is the noun: say "there is a delay" or "the train is delayed", not "the train has delay".',
   },
   {
     id: 'a-day-return',
@@ -596,7 +596,7 @@ export default [
     synonyms: ['a same-day return'],
     register: 'Neutral',
     context: 'The usual way of asking at the ticket office; an open return lasts longer.',
-    mistake: 'Say "a day return", not "a return of day" - "day" works as an adjective before "return".',
+    mistake: 'Say "a day return" or "a return", not "a round trip", which is American; a "single" is one-way only.',
   },
   {
     id: 'rush-hour',
@@ -609,7 +609,7 @@ export default [
     synonyms: ['peak time'],
     register: 'Neutral',
     context: 'Traditionally about 7 to 9 in the morning and 4.30 to 6.30 in the evening.',
-    mistake: 'Say "in the rush hour", not "on the rush hour" - "in" is used with periods of time.',
+    mistake: 'It lasts longer than an hour, twice a day. Say "in the rush hour" or "at rush hour", not "on the rush hour".',
   },
   {
     id: 'which-platform',
@@ -622,7 +622,7 @@ export default [
     synonyms: ['what platform is it?'],
     register: 'Neutral',
     context: 'A common question in busy stations, often answered by a screen or announcement.',
-    mistake: 'Say "which platform", not "what platform" at a station; "which" is used when the choice is limited.',
+    mistake: 'Say "platform 4" or "from platform 4", not "the platform 4": no article goes before a number here.',
   },
   {
     id: 'the-next-stop-is',
@@ -631,11 +631,11 @@ export default [
     level: 2,
     meaning: 'the place where it will halt after this',
     distractors: ['the place where the journey first began', 'the place where you pay for your ticket', 'the place where the driver finishes work'],
-    example: 'The next stop is Oxford Circus - change here for the Victoria line.',
+    example: 'The next stop is the library - please ring the bell if you want to get off.',
     synonyms: ['next station is'],
     register: 'Neutral',
-    context: 'Heard on buses, trains and the Tube, usually followed by the name of the stop.',
-    mistake: 'Say "the next stop is", not "the next stop will be at" - the present tense is normal in announcements.',
+    context: 'Heard on buses and trams; trains and the Tube say "the next station is".',
+    mistake: 'Buses have "stops", trains and the Tube have "stations": "the next station is Euston", but "the next stop is the library".',
   },
   {
     id: 'how-long-does-it-take',
@@ -648,7 +648,7 @@ export default [
     synonyms: ['how long will it take?'],
     register: 'Neutral',
     context: 'A very common travel question; the answer is "about two hours" or similar.',
-    mistake: 'Say "how long does it take", not "how much time does it take" - the first is the usual natural pattern.',
+    mistake: 'Use "how long" for duration, not "how much long" or "how many time": "how long does it take?".',
   },
   {
     id: 'how-far-is-it',
@@ -674,7 +674,7 @@ export default [
     synonyms: ['keep going', 'carry on straight'],
     register: 'Neutral',
     context: 'A basic direction phrase used with road names, junctions and landmarks.',
-    mistake: 'Say "go straight on", not "go straight until" without "on"; and "straight on" is not "straight ahead of".',
+    mistake: 'Do not confuse "straight on" (keep going, no turn) with "straight away" (immediately).',
   },
   {
     id: 'its-a-five-minute-walk',
@@ -778,7 +778,7 @@ export default [
     synonyms: ["I've just missed it"],
     register: 'Neutral',
     context: 'A common reason for lateness; the present perfect fits because the result matters now.',
-    mistake: "Say \"I've missed my train\", not \"I lost my train\" - \"lose\" means something different.",
+    mistake: 'Say "I\'ve missed my train", not "I lost my train" - "lose" means something different.',
   },
   {
     id: 'tap-in-and-tap-out',
@@ -791,7 +791,7 @@ export default [
     synonyms: ['touch in and out'],
     register: 'Neutral',
     context: 'A typical London transport instruction for contactless or Oyster cards.',
-    mistake: 'In London you must tap out as well as in, or you may be charged the maximum fare for the journey.',
+    mistake: 'Say "tap in" at the start and "tap out" at the end, not "tap on" or "tap off".',
   },
   {
     id: 'fill-it-up',
@@ -817,7 +817,7 @@ export default [
     synonyms: ['GPS', 'satellite navigation'],
     register: 'Informal',
     context: 'Short for satellite navigation; many people now use phone apps instead.',
-    mistake: 'Say "my sat nav says turn left", not "my navigation says"; "navigation" alone is not the usual noun for the device.',
+    mistake: 'Say "use the sat nav", not "use the navigator": a navigator is a person who reads the map in the passenger seat.',
   },
   {
     id: 'passport-control',
@@ -830,7 +830,7 @@ export default [
     synonyms: ['border control'],
     register: 'Neutral',
     context: 'At British airports, you go through it after you arrive from abroad.',
-    mistake: 'Say "passport control", not "passport checking" - the fixed noun phrase is what officials and signs use.',
+    mistake: 'Say "go through passport control", not "pass the passport control"; "go through" is the usual verb.',
   },
   {
     id: 'its-lovely-out',
@@ -843,7 +843,7 @@ export default [
     synonyms: ['lovely day', "it's a nice day"],
     register: 'Informal',
     context: 'A cheerful opener for small talk about sunshine.',
-    mistake: "Say \"it's lovely out\", not \"it's lovely outside weather\" - \"out\" is enough.",
+    mistake: 'Say "it\'s lovely out" or "a lovely day", not "a lovely weather": "weather" is uncountable and takes no "a".',
   },
   {
     id: 'its-chucking-it-down',
@@ -856,7 +856,7 @@ export default [
     synonyms: ["it's pouring", "it's tipping it down"],
     register: 'Very informal',
     context: 'A lively British way to describe heavy rain.',
-    mistake: "Learners say \"chucking down it\"; the correct order is \"it's chucking it down\", with \"it\" before \"down\".",
+    mistake: 'The phrase is fixed: "it\'s chucking it down" or "tipping it down", not "it\'s chucking rain"; it is also too informal for essays.',
   },
   {
     id: 'its-freezing',
@@ -869,7 +869,7 @@ export default [
     synonyms: ["it's bitterly cold"],
     register: 'Informal',
     context: 'Used for cold weather, and also for a cold room or a cold hand.',
-    mistake: "Say \"it's freezing\", not \"it freezes\" - the weather states use the continuous or \"it's\" form.",
+    mistake: '"Very freezing" is wrong: use "absolutely freezing". Use "I\'m freezing" for yourself, "it\'s freezing" for the weather.',
   },
   {
     id: 'its-baltic',
@@ -882,7 +882,7 @@ export default [
     synonyms: ["it's freezing", "it's arctic"],
     register: 'Very informal',
     context: 'Slang for very cold weather, from the Baltic Sea.',
-    mistake: "Say \"it's baltic\" with a lower-case b in speech; it is an adjective and does not take \"very\" - use \"absolutely\".",
+    mistake: 'Strong adjectives do not take "very": say "absolutely baltic", not "very baltic".',
   },
   {
     id: 'its-boiling',
@@ -895,7 +895,7 @@ export default [
     synonyms: ["it's roasting", "it's sweltering"],
     register: 'Informal',
     context: 'Used for hot weather or an overheated room.',
-    mistake: "Say \"it's boiling\", not \"it's boiled\" - the verb \"boil\" is used for water, not for the weather.",
+    mistake: 'Say "I\'m boiling" for yourself and "it\'s boiling" for weather; "boiled" and "very boiling" are wrong.',
   },
   {
     id: 'its-muggy',
@@ -908,7 +908,7 @@ export default [
     synonyms: ["it's close", "it's humid"],
     register: 'Informal',
     context: 'Used in British summers when the weather is hot but sticky.',
-    mistake: 'Say "muggy" for weather; "mug" means a cup or a person who is easily fooled.',
+    mistake: '"Muggy" describes hot, sticky air only, never a person; say "I\'m sweaty", not "I\'m muggy".',
   },
   {
     id: 'its-a-bit-nippy',
@@ -921,7 +921,7 @@ export default [
     synonyms: ["it's chilly", "it's a bit parky"],
     register: 'Informal',
     context: 'A mild, understated way to say it is cold.',
-    mistake: 'Say "a bit nippy", not "a bit nipping"; the adjective is "nippy".',
+    mistake: '"Nippy" also means quick, as in "a nippy little car"; for cold it describes weather or air, and it understates.',
   },
   {
     id: 'its-drizzling',
@@ -934,7 +934,7 @@ export default [
     synonyms: ["it's spitting"],
     register: 'Neutral',
     context: 'The word often describes the grey, light rain of British weather.',
-    mistake: "Say \"drizzling\" for light rain; learners often say \"it's small raining\", which is incorrect.",
+    mistake: 'Say "drizzling" for light rain; learners often say "it\'s small raining", which is incorrect.',
   },
   {
     id: 'its-looking-like-rain',
@@ -960,7 +960,7 @@ export default [
     synonyms: ["what's the weather going to be like?"],
     register: 'Neutral',
     context: 'A normal question before travel or outdoor plans; British people follow the BBC forecast closely.',
-    mistake: 'Say "the forecast", not "the forecasting"; "forecast" is the noun for the report.',
+    mistake: 'Say "forecast", not "prevision" (a false friend from Romance languages); "forecast" is also a verb: "they forecast rain".',
   },
   {
     id: 'better-take-a-brolly',
@@ -973,7 +973,7 @@ export default [
     synonyms: ['take an umbrella'],
     register: 'Informal',
     context: '"Brolly" is a friendly British word for an umbrella.',
-    mistake: 'Say "take a brolly" informally; "umbrella" is the standard form, and "brolly" is casual.',
+    mistake: '"Better take" drops "you had", which is fine in chat; in writing use "you had better take". "Brolly" is informal too.',
   },
   {
     id: 'wrap-up-warm',
@@ -986,7 +986,7 @@ export default [
     synonyms: ['dress warmly'],
     register: 'Informal',
     context: 'A caring instruction, often to children or friends on a winter day.',
-    mistake: 'Say "wrap up warm", not "wrap up warmly" - the adjective "warm" is normal in this fixed phrase.',
+    mistake: '"Wrap up" also means "finish" ("let\'s wrap up the meeting"); about clothes it means dress in layers, so context decides.',
   },
   {
     id: 'typical-british-weather',
@@ -1012,7 +1012,7 @@ export default [
     synonyms: ["it's miserable", "it's dismal"],
     register: 'Informal',
     context: 'Used for bad weather, but also for places, food and moods.',
-    mistake: 'Say "grim" as an adjective, not "grimly"; "grimly" is an adverb meaning in a serious, stern way.',
+    mistake: '"Grim" can also mean disgusting or very bad ("the toilets were grim"), not only stern or serious.',
   },
   {
     id: 'its-glorious-out-there',
@@ -1025,7 +1025,7 @@ export default [
     synonyms: ["it's gorgeous", "it's a beautiful day"],
     register: 'Neutral',
     context: 'More enthusiastic than "lovely"; common in British small talk when the sun appears.',
-    mistake: 'Say "glorious out there", not "glorious outdoor"; the adverb "out there" suits spoken English.',
+    mistake: 'Use the adjective: "it\'s glorious", not "it\'s gloriously"; the adverb needs another adjective, as in "gloriously sunny".',
   },
   {
     id: 'we-could-do-with-some-rain',
@@ -1048,10 +1048,10 @@ export default [
     meaning: 'the hour changes in autumn, so we get an extra hour',
     distractors: ['the hour changes in spring, so we lose an hour', 'the clocks stop working at night', 'the time is wrong at the station'],
     example: "Don't forget the clocks go back this weekend - an extra hour in bed!",
-    synonyms: ['the clocks fall back'],
+    synonyms: ['the clocks change'],
     register: 'Neutral',
-    context: 'Happens on the last Sunday in October in the UK; "spring forward" in March.',
-    mistake: 'Say "the clocks go back", not "the clock goes back"; "clocks" is plural because all of them change.',
+    context: 'Happens on the last Sunday in October in the UK; in March the clocks go forward.',
+    mistake: 'Say "go back" (autumn) and "go forward" (spring); "fall back" and "spring forward" are American.',
   },
   {
     id: 'im-on-my-break',
@@ -1077,7 +1077,7 @@ export default [
     synonyms: ["I'm in a meeting right now"],
     register: 'Neutral',
     context: 'A routine way to say you cannot take a call at work.',
-    mistake: 'Say "in a meeting", not "at a meeting" when you are busy during it; "at" is fine for location.',
+    mistake: 'Say "in a meeting", not "in meeting": "meeting" is countable here, so it needs "a".',
   },
   {
     id: 'ill-email-you',
@@ -1090,7 +1090,7 @@ export default [
     synonyms: ["I'll drop you an email"],
     register: 'Neutral',
     context: 'Workplace English uses "email" as a verb: "email me" or "email it to me".',
-    mistake: "Say \"I'll email you\", not \"I'll email to you\" - \"email\" takes the person directly as an object.",
+    mistake: 'Say "I\'ll email you", not "I\'ll email to you" - "email" takes the person directly as an object.',
   },
   {
     id: 'can-we-catch-up-later',
@@ -1103,7 +1103,7 @@ export default [
     synonyms: ['can we chat later?'],
     register: 'Informal',
     context: 'Used by colleagues and friends who are busy now but want to talk soon.',
-    mistake: 'Say "catch up later", not "catch me up later" - "catch up" is used without an object here.',
+    mistake: 'Here "catch up" means swap news, not reach someone ahead; say "catch up with" a person: "I\'ll catch up with you later".',
   },
   {
     id: 'im-off-sick',
@@ -1129,7 +1129,7 @@ export default [
     synonyms: ["I'm WFH", "I'm at home today"],
     register: 'Neutral',
     context: 'Very common since 2020; "WFH" is the written shorthand.',
-    mistake: 'Say "working from home", not "working at home" in the usual phrase, though "at home" is understood.',
+    mistake: 'Say "working from home", not "working in home"; use "at home" only for place: "I\'m at home today".',
   },
   {
     id: 'ive-got-a-deadline',
@@ -1139,10 +1139,10 @@ export default [
     meaning: 'I must finish something by a fixed time',
     distractors: ['I have a gap in my diary this afternoon', 'I have the freedom to choose my hours', 'I have an exam in the following year'],
     example: "I can't come out tonight - I've got a deadline tomorrow morning.",
-    synonyms: ["I'm up against it"],
+    synonyms: ["it's due tomorrow"],
     register: 'Neutral',
     context: 'Heard daily in offices, schools and newsrooms.',
-    mistake: "Say \"I've got a deadline\", not \"I've a dead line\" - it is one word, not two.",
+    mistake: 'Say "meet a deadline" or "miss a deadline", not "reach" or "do" a deadline.',
   },
   {
     id: 'thank-god-its-friday',
@@ -1155,7 +1155,7 @@ export default [
     synonyms: ['TGIF'],
     register: 'Informal',
     context: 'Said with relief at the end of a working week; some people use "thank goodness".',
-    mistake: "Say \"thank God it's Friday\", not \"thanks God\"; the right form uses \"thank\".",
+    mistake: 'Say "thank God it\'s Friday", not "thanks God"; the right form uses "thank".',
   },
   {
     id: 'see-you-monday',
@@ -1181,7 +1181,7 @@ export default [
     synonyms: ['fancy a pint?'],
     register: 'Informal',
     context: 'A normal invitation after work in British workplaces.',
-    mistake: 'Say "coming to the pub", not "coming at the pub" - "to" shows the destination.',
+    mistake: 'Keep the article: "the pub", not "pub": "coming to the pub" or "going to the pub".',
   },
   {
     id: 'ill-be-with-you-in-a-minute',
@@ -1194,7 +1194,7 @@ export default [
     synonyms: ["I'll be right with you"],
     register: 'Neutral',
     context: 'Said by staff to a waiting customer or visitor.',
-    mistake: "Say \"I'll be with you in a minute\", not \"I'll be with you after a minute\" - \"in\" shows time from now.",
+    mistake: '"In a minute" means soon, not exactly sixty seconds; "after a minute" sounds literal, so say "in a minute".',
   },
   {
     id: 'sit-down-please',
@@ -1207,7 +1207,7 @@ export default [
     synonyms: ['take a seat'],
     register: 'Neutral',
     context: 'Used by teachers, receptionists and hosts.',
-    mistake: 'Say "sit down, please", not "sit down please you" - no "you" is needed in an order.',
+    mistake: 'A bare "Sit down!" sounds rude, especially to adults; add "please" or say "take a seat".',
   },
   {
     id: 'quiet-please',
@@ -1220,7 +1220,7 @@ export default [
     synonyms: ['silence, please'],
     register: 'Neutral',
     context: "A teacher's phrase, but also found on signs in libraries and hospitals.",
-    mistake: 'Say "quiet, please", not "quiet please you" - the polite form needs only the adjective and "please".',
+    mistake: 'Say "quiet, please" or "silence, please", not "silent, please": "silent" describes places, not a request to people.',
   },
   {
     id: 'have-you-got-a-pen',
@@ -1232,7 +1232,7 @@ export default [
     example: "Have you got a pen I could borrow? Mine's run out.",
     synonyms: ['can I borrow a pen?'],
     register: 'Informal',
-    context: 'Very common British structure: "Have you got...?" replaces the American "Do you have...?".',
+    context: 'A very British structure; "Do you have a pen?" is also used in Britain today.',
     mistake: 'Say "Have you got a pen?", not "Do you got a pen?" - "got" cannot follow "do" like this.',
   },
   {
@@ -1259,7 +1259,7 @@ export default [
     synonyms: ["parents' night"],
     register: 'Neutral',
     context: 'A routine school event in the UK, usually each autumn.',
-    mistake: "Write \"parents' evening\" with an apostrophe after the s; \"parent's evening\" is wrong because it refers to many parents.",
+    mistake: 'Write "parents\' evening" with an apostrophe after the s; "parent\'s evening" is wrong because it refers to many parents.',
   },
   {
     id: 'ive-got-a-test',
@@ -1272,7 +1272,7 @@ export default [
     synonyms: ["I've got an exam"],
     register: 'Neutral',
     context: 'Used for school tests; "exam" is a bigger formal test.',
-    mistake: "Say \"I've got a test\", not \"I have got a test of tomorrow\" - time follows the noun with no \"of\".",
+    mistake: 'You "take" or "sit" a test, and "make a test" means create one; "I\'ve got a test" is the natural way to say it is coming.',
   },
   {
     id: 'im-revising',
@@ -1298,7 +1298,7 @@ export default [
     synonyms: ['did you have a good weekend?'],
     register: 'Neutral',
     context: 'The typical Monday-morning question in British offices and schools.',
-    mistake: 'Say "how was your weekend?", not "how did your weekend pass?" - "pass" does not sound natural here.',
+    mistake: 'Ask it on Monday, in the past tense; on Friday say "have a good weekend", not "how was your weekend?".',
   },
   {
     id: 'got-any-plans-for-the-weekend',
@@ -1311,7 +1311,7 @@ export default [
     synonyms: ['any plans for the weekend?'],
     register: 'Informal',
     context: 'A typical Friday small-talk question between colleagues.',
-    mistake: 'Say "plans for the weekend", not "plans on the weekend" - "for" is the usual preposition here.',
+    mistake: 'Say "at the weekend" in Britain; "on the weekend" is American. "Plans for the weekend" is fine.',
   },
   {
     id: 'im-clocking-off',
@@ -1337,7 +1337,7 @@ export default [
     synonyms: ["I'll make a note of it"],
     register: 'Neutral',
     context: 'Used when agreeing a meeting or appointment; "diary" is British for the calendar book.',
-    mistake: 'Say "diary" for appointments in Britain; American "calendar" can sound odd, and "diary" can also mean a personal journal.',
+    mistake: 'A "diary" is for appointments; an "agenda" is a meeting plan, so do not use it as a Romance-language false friend.',
   },
   {
     id: 'ive-got-an-appointment',
@@ -1350,7 +1350,7 @@ export default [
     synonyms: ["I've got a booking"],
     register: 'Neutral',
     context: 'Used for doctors, dentists, banks and many services.',
-    mistake: 'Say "an appointment with the dentist", not "an appointment to the dentist" - "with" goes before the person.',
+    mistake: 'Say "an appointment at the dentist\'s" or "with the dentist", not "to the dentist"; for friends say "meet up", not "appointment".',
   },
   {
     id: 'id-like-to-book-an-appointment',
@@ -1376,7 +1376,7 @@ export default [
     synonyms: ['I should see the GP'],
     register: 'Neutral',
     context: 'In the UK, "GP" is the usual word for a family doctor.',
-    mistake: 'Say "see a doctor", not "look a doctor" - "see" means to consult in this sense.',
+    mistake: 'Say "see a doctor" or "go to the doctor\'s", not "look for a doctor": "look for" means search, "see" means consult.',
   },
   {
     id: 'ive-got-a-sore-throat',
@@ -1388,8 +1388,8 @@ export default [
     example: "I've got a sore throat and a runny nose - I think it's a cold.",
     synonyms: ['my throat hurts'],
     register: 'Neutral',
-    context: "Common symptom; Britons also say \"I've got a cold\" or \"I've lost my voice\".",
-    mistake: "Say \"I've got a sore throat\", not \"I have a pain in throat\"; \"a sore throat\" is the fixed phrase.",
+    context: 'Common symptom; Britons also say "I\'ve got a cold" or "I\'ve lost my voice".',
+    mistake: 'Say "a sore throat", not "a throat pain"; "sore" is also used for "a sore back" and "sore feet".',
   },
   {
     id: 'ive-got-a-headache',
@@ -1402,7 +1402,7 @@ export default [
     synonyms: ['my head hurts'],
     register: 'Neutral',
     context: 'Also used figuratively: "This paperwork is a headache."',
-    mistake: 'Say "a headache", not "a head ache" - it is one word; and "ache" is never a verb here.',
+    mistake: 'Say "I\'ve got a headache", not "I have headache"; for other pains use "a pain in my back", not "a pain in back".',
   },
   {
     id: 'ive-got-a-temperature',
@@ -1428,7 +1428,7 @@ export default [
     synonyms: ['I feel queasy', 'I feel ill'],
     register: 'Informal',
     context: 'In British English "sick" often means vomiting; Americans use "sick to my stomach".',
-    mistake: 'Say "I feel sick" for nausea; "I am sick" usually means you are ill for days, not nauseous.',
+    mistake: 'In Britain "I was sick" means I vomited; for illness say "I\'m ill" or "I\'m not well"; "sick" for ill is more American.',
   },
   {
     id: 'where-does-it-hurt',
@@ -1441,7 +1441,7 @@ export default [
     synonyms: ["where's the pain?"],
     register: 'Neutral',
     context: 'A common question from doctors, nurses and parents.',
-    mistake: 'Say "where does it hurt?", not "where does it hurts?" - "does" takes the base verb.',
+    mistake: 'Name the part with "my ... hurts" or "I\'ve got a pain in my ..."; "it hurts me" is rare.',
   },
   {
     id: 'take-two-tablets',
@@ -1453,7 +1453,7 @@ export default [
     example: 'Take two tablets with water every four hours, but no more than eight a day.',
     synonyms: ['take two pills'],
     register: 'Neutral',
-    context: "A pharmacist's or doctor's instruction; \"tablets\" is more British than \"pills\".",
+    context: 'A pharmacist\'s or doctor\'s instruction; "tablets" is more British than "pills".',
     mistake: 'Say "take two tablets", not "eat two tablets" - "take" is the correct verb for medicine.',
   },
   {
@@ -1461,13 +1461,13 @@ export default [
     text: 'three times a day',
     type: 'everyday',
     level: 2,
-    meaning: 'in the morning, at noon and in the evening',
+    meaning: 'on three separate occasions every day',
     distractors: ['once only, as late in the day as you can', 'on the third day of every single month', 'after exactly three hours of good rest'],
     example: 'Take one capsule three times a day, after meals.',
-    synonyms: ['thrice daily'],
+    synonyms: ['three times daily'],
     register: 'Neutral',
     context: 'Common on medicine labels and in health advice; "twice a day" is also frequent.',
-    mistake: 'Say "three times a day", not "three times per day" in casual speech; "per" is more formal.',
+    mistake: 'Say "three times a day", not "three times by day"; here "a" means "each", as in "twice a week".',
   },
   {
     id: 'on-prescription',
@@ -1493,7 +1493,7 @@ export default [
     synonyms: ["I've sprained my ankle"],
     register: 'Neutral',
     context: 'Common after sport or slipping; "sprained" is slightly more medical.',
-    mistake: "Use \"my\" with body parts: \"I've twisted my ankle\", not \"I've twisted the ankle\".",
+    mistake: 'Use "my" with body parts: "I\'ve twisted my ankle", not "I\'ve twisted the ankle".',
   },
   {
     id: 'ive-got-a-cold',
@@ -1505,8 +1505,8 @@ export default [
     example: "I've got a cold, so I'll keep my distance - I don't want to pass it on.",
     synonyms: ["I've caught a cold"],
     register: 'Neutral',
-    context: "The most common minor illness; \"I've got the flu\" is more serious.",
-    mistake: "Say \"I've got a cold\", not \"I have cold\" - \"a cold\" is a countable noun for the illness.",
+    context: 'The most common minor illness; "I\'ve got the flu" is more serious.',
+    mistake: 'Say "I\'ve got a cold", not "I have cold" - "a cold" is a countable noun for the illness.',
   },
   {
     id: 'im-run-down',
@@ -1519,7 +1519,7 @@ export default [
     synonyms: ["I'm worn out", "I'm below par"],
     register: 'Informal',
     context: 'Used when someone is not ill, but not at their best.',
-    mistake: 'Say "run down" as an adjective, not "running down" - the past participle form is used.',
+    mistake: 'Say "I\'m run down", not "I\'m running down"; "run-down" also describes shabby places: "a run-down area".',
   },
   {
     id: 'ive-cut-myself',
@@ -1597,7 +1597,7 @@ export default [
     synonyms: ["your mic's off"],
     register: 'Informal',
     context: 'Probably the most-said sentence of video calls.',
-    mistake: "Say \"you're on mute\", not \"you're in mute\" - \"on\" is the fixed preposition for settings.",
+    mistake: 'Say "you\'re on mute", not "you\'re in mute" - "on" is the fixed preposition for settings.',
   },
   {
     id: 'can-you-see-my-screen',
@@ -1623,7 +1623,7 @@ export default [
     synonyms: ["I'll share the link"],
     register: 'Neutral',
     context: 'A common offer in emails, chats and meetings.',
-    mistake: 'Say "send you a link", not "send a link to you" in casual speech; the shorter form is natural.',
+    mistake: 'Say "a link to the article", not "a link of the article"; the preposition for links is "to".',
   },
   {
     id: 'ill-drop-you-a-text',
@@ -1636,7 +1636,7 @@ export default [
     synonyms: ["I'll text you later"],
     register: 'Informal',
     context: 'In British English, "text" means an SMS; "drop you a" keeps it casual.',
-    mistake: 'Say "send a text" or "text me", not "send a text message" in casual speech; both are fine but the short form is common.',
+    mistake: 'Say "drop me a text", not "drop me a message text"; "text" is both noun and verb: "I\'ll text you".',
   },
   {
     id: 'a-missed-call',
@@ -1675,7 +1675,7 @@ export default [
     synonyms: ["my battery's nearly gone"],
     register: 'Informal',
     context: 'Used often in everyday life; "dying" is also used, meaning very low.',
-    mistake: "Say \"my phone's dying\" or \"about to die\", not \"my phone is going to be died\" - the verb is \"die\".",
+    mistake: 'Say "my phone\'s dead" when it is flat and "about to die" when nearly flat; "is died" is wrong.',
   },
   {
     id: 'no-signal',
@@ -1685,10 +1685,10 @@ export default [
     meaning: 'the phone cannot connect to a network',
     distractors: ['the phone is switched off completely', 'the phone is not ringing loud enough for me', 'the phone is tucked away in a bag'],
     example: "I've got no signal out here in the countryside.",
-    synonyms: ['no reception', 'no bars'],
+    synonyms: ['no reception'],
     register: 'Neutral',
     context: 'Common in rural areas, on trains and in buildings.',
-    mistake: 'Say "no signal", not "no sign" - "signal" is the phone network strength.',
+    mistake: '"Signal" is uncountable: "I\'ve got no signal", not "no signals"; "bars" is more American.',
   },
   {
     id: 'whats-the-wi-fi-password',
@@ -1701,7 +1701,7 @@ export default [
     synonyms: ['can I have the Wi-Fi code?'],
     register: 'Neutral',
     context: "A routine question at cafes, hotels and friends' homes.",
-    mistake: 'Write "Wi-Fi" with a hyphen and capital letters; saying "wifi password" is fine in speech.',
+    mistake: 'Say "Wi-Fi" as "why-fy", not "wee-fee"; and "Wi-Fi" is not plural: "the Wi-Fi is down".',
   },
   {
     id: 'its-gone-to-voicemail',
@@ -1714,7 +1714,7 @@ export default [
     synonyms: ['it went to answerphone'],
     register: 'Neutral',
     context: '"Answerphone" is also British; "voicemail" is the usual word on mobiles.',
-    mistake: 'Say "it went to voicemail", not "it went to the voice-mail box" - the short form is normal.',
+    mistake: 'Say "went to voicemail", not "went on voicemail"; "go to" is the fixed pairing.',
   },
   {
     id: 'whos-calling',
@@ -1723,11 +1723,11 @@ export default [
     level: 2,
     meaning: 'asking the caller to give their name',
     distractors: ['asking the caller where they are from', 'asking the caller why they are late', 'asking the caller when they will arrive'],
-    example: "\"Hello, Smith and Co.\" \"Hi, could I speak to Ben?\" \"Who's calling, please?\"",
+    example: '"Hello, Smith and Co." "Hi, could I speak to Ben?" "Who\'s calling, please?"',
     synonyms: ["may I ask who's calling?"],
     register: 'Neutral',
     context: 'A polite telephone question for secretaries and receptionists.',
-    mistake: "Say \"who's calling?\", not \"who is speaking?\" - the second is often used by non-native speakers on the phone.",
+    mistake: 'Do not ask "who are you?" on the phone; say "who\'s calling, please?" to stay polite.',
   },
   {
     id: 'its-gone-viral',
@@ -1740,7 +1740,7 @@ export default [
     synonyms: ["it's blown up"],
     register: 'Informal',
     context: 'Used for videos, jokes and posts that many people see online.',
-    mistake: 'Say "gone viral", not "become viral" - "go viral" is the common collocation.',
+    mistake: 'Say "go viral" or "gone viral", not "get viralled"; "viral" is an adjective, not a verb.',
   },
   {
     id: 'ive-been-hacked',
@@ -1753,7 +1753,7 @@ export default [
     synonyms: ["my account's been compromised"],
     register: 'Informal',
     context: 'Used when an online account or device is attacked; "hacked off" has a very different meaning.',
-    mistake: "Say \"I've been hacked\", not \"I was hacking\" - the passive voice shows that someone did it to you.",
+    mistake: 'Say "I\'ve been hacked" (passive); "I hacked" means you did the hacking. "Hacked off" means annoyed.',
   },
   {
     id: 'wheres-the-loo',
@@ -1792,7 +1792,7 @@ export default [
     synonyms: ['pass me the salt, please'],
     register: 'Neutral',
     context: 'Used at the table; "pass" is the polite verb here, not "give".',
-    mistake: 'Say "could you pass the salt?", not "could you give me the salt?" if you want to sound natural at a meal.',
+    mistake: 'A bare "Pass the salt" sounds blunt; add "could you" or "please", not "give me the salt".',
   },
   {
     id: 'ill-put-the-washing-on',
@@ -1805,7 +1805,7 @@ export default [
     synonyms: ["I'll do a wash"],
     register: 'Informal',
     context: 'Common domestic announcement; "washing" is the British noun for laundry.',
-    mistake: 'Say "do the washing" or "put the washing on", not "do the laundry" in British homes; "laundry" is more American.',
+    mistake: '"Washing" is uncountable: "the washing", not "a washing"; "do the washing" means the whole job.',
   },
   {
     id: 'its-bin-day',
@@ -1818,7 +1818,7 @@ export default [
     synonyms: ['bin day tomorrow'],
     register: 'Informal',
     context: 'Councils collect rubbish on a weekly or fortnightly schedule, usually on a fixed day.',
-    mistake: 'Say "bin day", not "rubbish day"; both are understood, but "bin day" is the usual phrase.',
+    mistake: 'It is "bin day" even if only recycling is collected; "bin" is also a verb meaning throw away: "bin it".',
   },
   {
     id: 'the-bus-is-due-at-six',
@@ -1831,14 +1831,14 @@ export default [
     synonyms: ['the bus is scheduled for six'],
     register: 'Neutral',
     context: '"Due" suggests the expected time in timetables and announcements.',
-    mistake: 'Say "due at six", not "due until six"; "until" cannot be used for a single point in time.',
+    mistake: 'Say "due at six" for a clock time and "due in ten minutes" for a wait; "due until" and "due after" are wrong.',
   },
   {
     id: 'ill-pick-you-up-at-eight',
     text: "I'll pick you up at eight",
     type: 'everyday',
     level: 1,
-    meaning: 'I will come in my car to fetch you',
+    meaning: 'I will come to collect you',
     distractors: ['I will wait for you outside at that time', 'I will carry you home at that time', 'I will lift you onto the bus at that time'],
     example: "I'll pick you up at eight, so be ready.",
     synonyms: ["I'll collect you at eight"],
@@ -1883,6 +1883,6 @@ export default [
     synonyms: ['what time do you knock off?'],
     register: 'Neutral',
     context: 'A common question between colleagues or friends planning an evening.',
-    mistake: 'Say "what time do you finish", not "when do you finish at" - no preposition at the end.',
+    mistake: 'Do not add "at" at the end; "at" goes before the time: "I finish at five", not "when do you finish at?".',
   },
 ];
