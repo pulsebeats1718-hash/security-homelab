@@ -1870,7 +1870,7 @@ export default [
     synonyms: ['free of charge'],
     register: 'Informal',
     context: 'Very common in speech; "free of charge" is more formal.',
-    mistake: 'Do not say "free for" without "for": "for free" or just "free"; not "in free".',
+    mistake: 'Say "for free", not "by free" or "in free": "I got it for free".',
   },
   {
     id: 'for-a-change',
