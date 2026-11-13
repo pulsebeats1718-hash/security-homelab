@@ -2,7 +2,7 @@
 export default [
   {
     id: 'take-over',
-    text: 'take over',
+    text: 'take over (a company)',
     type: 'phrasal',
     level: 1,
     meaning: 'gain control of something',
@@ -67,7 +67,7 @@ export default [
   },
   {
     id: 'get-through',
-    text: 'get through',
+    text: 'get through (the winter)',
     type: 'phrasal',
     level: 1,
     meaning: 'survive a hard period or task',
@@ -119,7 +119,7 @@ export default [
   },
   {
     id: 'come-round',
-    text: 'come round',
+    text: 'come round (for tea)',
     type: 'phrasal',
     level: 2,
     meaning: 'visit someone at their home',
@@ -197,7 +197,7 @@ export default [
   },
   {
     id: 'cut-back',
-    text: 'cut back',
+    text: 'cut back (on sweets)',
     type: 'phrasal',
     level: 1,
     meaning: 'spend or use less',
@@ -249,7 +249,7 @@ export default [
   },
   {
     id: 'give-away',
-    text: 'give away',
+    text: 'give away (old clothes)',
     type: 'phrasal',
     level: 1,
     meaning: 'give something for nothing',
@@ -340,7 +340,7 @@ export default [
   },
   {
     id: 'fall-for',
-    text: 'fall for',
+    text: 'fall for (a stranger)',
     type: 'phrasal',
     level: 1,
     meaning: 'begin to love someone deeply',
@@ -353,7 +353,7 @@ export default [
   },
   {
     id: 'stand-for',
-    text: 'stand for',
+    text: 'stand for (an acronym)',
     type: 'phrasal',
     level: 2,
     meaning: 'be a short form of something',
@@ -457,7 +457,7 @@ export default [
   },
   {
     id: 'fall-apart',
-    text: 'fall apart',
+    text: 'fall apart (an old chair)',
     type: 'phrasal',
     level: 1,
     meaning: 'break into pieces',
@@ -483,7 +483,7 @@ export default [
   },
   {
     id: 'get-by',
-    text: 'get by',
+    text: 'get by (on a low wage)',
     type: 'phrasal',
     level: 1,
     meaning: 'manage with just enough',
@@ -496,7 +496,7 @@ export default [
   },
   {
     id: 'stand-by',
-    text: 'stand by',
+    text: 'stand by (a friend)',
     type: 'phrasal',
     level: 2,
     meaning: 'stay loyal to someone in trouble',
@@ -522,7 +522,7 @@ export default [
   },
   {
     id: 'fall-behind',
-    text: 'fall behind',
+    text: 'fall behind (the leaders)',
     type: 'phrasal',
     level: 2,
     meaning: 'fail to keep up with others',
@@ -561,7 +561,7 @@ export default [
   },
   {
     id: 'hand-over',
-    text: 'hand over',
+    text: 'hand over (the keys)',
     type: 'phrasal',
     level: 1,
     meaning: 'give something to someone else',
@@ -574,7 +574,7 @@ export default [
   },
   {
     id: 'pull-over',
-    text: 'pull over',
+    text: 'pull over (at the services)',
     type: 'phrasal',
     level: 1,
     meaning: 'stop at the side of the road',
@@ -587,7 +587,7 @@ export default [
   },
   {
     id: 'go-over',
-    text: 'go over',
+    text: 'go over (a report)',
     type: 'phrasal',
     level: 2,
     meaning: 'check something carefully',
@@ -600,7 +600,7 @@ export default [
   },
   {
     id: 'go-through',
-    text: 'go through',
+    text: 'go through (a break-up)',
     type: 'phrasal',
     level: 1,
     meaning: 'experience something difficult',
@@ -613,7 +613,7 @@ export default [
   },
   {
     id: 'see-through',
-    text: 'see through',
+    text: 'see through (a liar)',
     type: 'phrasal',
     level: 3,
     meaning: 'realise you are being tricked',
@@ -652,7 +652,7 @@ export default [
   },
   {
     id: 'hang-around',
-    text: 'hang around',
+    text: 'hang around (the house)',
     type: 'phrasal',
     level: 1,
     meaning: 'spend time doing very little',
@@ -678,7 +678,7 @@ export default [
   },
   {
     id: 'come-back',
-    text: 'come back',
+    text: 'come back (home)',
     type: 'phrasal',
     level: 1,
     meaning: 'return to a place',
@@ -691,7 +691,7 @@ export default [
   },
   {
     id: 'call-back',
-    text: 'call back',
+    text: 'call back (a caller)',
     type: 'phrasal',
     level: 1,
     meaning: 'phone someone again',
@@ -704,7 +704,7 @@ export default [
   },
   {
     id: 'hold-back',
-    text: 'hold back',
+    text: 'hold back (your anger)',
     type: 'phrasal',
     level: 1,
     meaning: 'keep yourself or others in check',
@@ -730,7 +730,7 @@ export default [
   },
   {
     id: 'pay-back',
-    text: 'pay back',
+    text: 'pay back (a loan)',
     type: 'phrasal',
     level: 1,
     meaning: 'return money you have borrowed',
@@ -782,7 +782,7 @@ export default [
   },
   {
     id: 'put-away',
-    text: 'put away',
+    text: 'put away (the shopping)',
     type: 'phrasal',
     level: 1,
     meaning: 'store something in its place',
@@ -795,7 +795,7 @@ export default [
   },
   {
     id: 'throw-away',
-    text: 'throw away',
+    text: 'throw away (a receipt)',
     type: 'phrasal',
     level: 1,
     meaning: 'put something in the bin',
@@ -899,7 +899,7 @@ export default [
   },
   {
     id: 'deal-with',
-    text: 'deal with',
+    text: 'deal with (a complaint)',
     type: 'phrasal',
     level: 1,
     meaning: 'take action to solve a problem or task',
@@ -925,7 +925,7 @@ export default [
   },
   {
     id: 'make-for',
-    text: 'make for',
+    text: 'make for (the exit)',
     type: 'phrasal',
     level: 3,
     meaning: 'move towards a place',
@@ -977,7 +977,7 @@ export default [
   },
   {
     id: 'go-ahead',
-    text: 'go ahead',
+    text: 'go ahead (a wedding)',
     type: 'phrasal',
     level: 1,
     meaning: 'happen or start as planned',
@@ -990,7 +990,7 @@ export default [
   },
   {
     id: 'get-ahead',
-    text: 'get ahead',
+    text: 'get ahead (at work)',
     type: 'phrasal',
     level: 2,
     meaning: 'become more successful in life',
@@ -1003,7 +1003,7 @@ export default [
   },
   {
     id: 'take-apart',
-    text: 'take apart',
+    text: 'take apart (an engine)',
     type: 'phrasal',
     level: 2,
     meaning: 'separate something into its pieces',
@@ -1042,7 +1042,7 @@ export default [
   },
   {
     id: 'go-by',
-    text: 'go by',
+    text: 'go by (the years)',
     type: 'phrasal',
     level: 2,
     meaning: 'pass, as time does',
@@ -1055,7 +1055,7 @@ export default [
   },
   {
     id: 'leave-behind',
-    text: 'leave behind',
+    text: 'leave behind (an umbrella)',
     type: 'phrasal',
     level: 2,
     meaning: 'go away without taking something with you',
@@ -1068,7 +1068,7 @@ export default [
   },
   {
     id: 'get-together',
-    text: 'get together',
+    text: 'get together (with friends)',
     type: 'phrasal',
     level: 1,
     meaning: 'meet socially',
@@ -1081,7 +1081,7 @@ export default [
   },
   {
     id: 'put-together',
-    text: 'put together',
+    text: 'put together (a bookcase)',
     type: 'phrasal',
     level: 1,
     meaning: 'make something by joining parts',
@@ -1094,7 +1094,7 @@ export default [
   },
   {
     id: 'go-against',
-    text: 'go against',
+    text: 'go against (the rules)',
     type: 'phrasal',
     level: 2,
     meaning: 'oppose or defy something',
@@ -1159,7 +1159,7 @@ export default [
   },
   {
     id: 'get-across',
-    text: 'get across',
+    text: 'get across (a message)',
     type: 'phrasal',
     level: 3,
     meaning: 'make others understand your message',

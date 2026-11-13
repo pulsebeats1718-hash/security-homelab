@@ -2,7 +2,7 @@
 export default [
   {
     id: 'run-over',
-    text: 'run over',
+    text: 'run over (a pedestrian)',
     type: 'phrasal',
     level: 1,
     meaning: 'knock someone down with a vehicle',
@@ -15,7 +15,7 @@ export default [
   },
   {
     id: 'turn-over',
-    text: 'turn over',
+    text: 'turn over (a page)',
     type: 'phrasal',
     level: 1,
     meaning: 'flip something onto its other side',
@@ -41,7 +41,7 @@ export default [
   },
   {
     id: 'talk-over',
-    text: 'talk over',
+    text: 'talk over (a plan)',
     type: 'phrasal',
     level: 1,
     meaning: 'discuss something before deciding',
@@ -80,7 +80,7 @@ export default [
   },
   {
     id: 'carry-over',
-    text: 'carry over',
+    text: 'carry over (holiday days)',
     type: 'phrasal',
     level: 2,
     meaning: 'move something to the next period',
@@ -119,7 +119,7 @@ export default [
   },
   {
     id: 'run-through',
-    text: 'run through',
+    text: 'run through (a speech)',
     type: 'phrasal',
     level: 1,
     meaning: 'go over something briefly to practise',
@@ -184,7 +184,7 @@ export default [
   },
   {
     id: 'put-through',
-    text: 'put through',
+    text: 'put through (a call)',
     type: 'phrasal',
     level: 1,
     meaning: 'connect someone on a phone call',
@@ -223,7 +223,7 @@ export default [
   },
   {
     id: 'look-round',
-    text: 'look round',
+    text: 'look round (a museum)',
     type: 'phrasal',
     level: 1,
     meaning: 'walk through a place to see it',
@@ -366,7 +366,7 @@ export default [
   },
   {
     id: 'take-back',
-    text: 'take back',
+    text: 'take back (a faulty item)',
     type: 'phrasal',
     level: 1,
     meaning: 'return something to where you got it',
@@ -431,7 +431,7 @@ export default [
   },
   {
     id: 'set-back',
-    text: 'set back',
+    text: 'set back (a project)',
     type: 'phrasal',
     level: 2,
     meaning: 'delay the progress of something',
@@ -496,7 +496,7 @@ export default [
   },
   {
     id: 'walk-away',
-    text: 'walk away',
+    text: 'walk away (from a row)',
     type: 'phrasal',
     level: 1,
     meaning: 'leave a problem without facing it',
@@ -730,7 +730,7 @@ export default [
   },
   {
     id: 'go-after',
-    text: 'go after',
+    text: 'go after (a job)',
     type: 'phrasal',
     level: 2,
     meaning: 'chase or try hard to get',
@@ -821,7 +821,7 @@ export default [
   },
   {
     id: 'cover-for',
-    text: 'cover for',
+    text: 'cover for (a colleague)',
     type: 'phrasal',
     level: 1,
     meaning: "do someone's work while they are away",
@@ -1068,7 +1068,7 @@ export default [
   },
   {
     id: 'pull-apart',
-    text: 'pull apart',
+    text: 'pull apart (two fighters)',
     type: 'phrasal',
     level: 2,
     meaning: 'separate things by force',
@@ -1185,7 +1185,7 @@ export default [
   },
   {
     id: 'come-together',
-    text: 'come together',
+    text: 'come together (in a crisis)',
     type: 'phrasal',
     level: 1,
     meaning: 'unite to work as one',
@@ -1198,7 +1198,7 @@ export default [
   },
   {
     id: 'pull-together',
-    text: 'pull together',
+    text: 'pull together (as a team)',
     type: 'phrasal',
     level: 2,
     meaning: 'work as a team towards a goal',
@@ -1315,7 +1315,7 @@ export default [
   },
   {
     id: 'go-under',
-    text: 'go under',
+    text: 'go under (a small shop)',
     type: 'phrasal',
     level: 2,
     meaning: 'fail financially and close',
