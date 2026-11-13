@@ -2,7 +2,7 @@
 export default [
   {
     id: 'take-off',
-    text: 'take off',
+    text: 'take off (a plane)',
     type: 'phrasal',
     level: 1,
     meaning: 'leave the ground and begin to fly',
@@ -41,7 +41,7 @@ export default [
   },
   {
     id: 'pay-off',
-    text: 'pay off',
+    text: 'pay off (hard work)',
     type: 'phrasal',
     level: 1,
     meaning: 'bring good results after effort',
@@ -80,7 +80,7 @@ export default [
   },
   {
     id: 'write-off',
-    text: 'write off',
+    text: 'write off (a car)',
     type: 'phrasal',
     level: 2,
     meaning: 'treat something as lost or ruined',
@@ -93,7 +93,7 @@ export default [
   },
   {
     id: 'kick-off',
-    text: 'kick off',
+    text: 'kick off (a match)',
     type: 'phrasal',
     level: 1,
     meaning: 'start, especially a match or an event',
@@ -119,7 +119,7 @@ export default [
   },
   {
     id: 'lay-off',
-    text: 'lay off',
+    text: 'lay off (staff)',
     type: 'phrasal',
     level: 2,
     meaning: 'dismiss workers when there is no work',
@@ -171,7 +171,7 @@ export default [
   },
   {
     id: 'tick-off',
-    text: 'tick off',
+    text: 'tick off (a list)',
     type: 'phrasal',
     level: 2,
     meaning: 'mark a task on a list as done',
@@ -249,7 +249,7 @@ export default [
   },
   {
     id: 'drop-off',
-    text: 'drop off',
+    text: 'drop off (a child)',
     type: 'phrasal',
     level: 1,
     meaning: 'take someone somewhere and leave them',
@@ -262,7 +262,7 @@ export default [
   },
   {
     id: 'see-off',
-    text: 'see off',
+    text: 'see off (a friend)',
     type: 'phrasal',
     level: 1,
     meaning: 'say goodbye to someone leaving',
@@ -275,7 +275,7 @@ export default [
   },
   {
     id: 'switch-off',
-    text: 'switch off',
+    text: 'switch off (a light)',
     type: 'phrasal',
     level: 1,
     meaning: 'stop a device working',
@@ -288,7 +288,7 @@ export default [
   },
   {
     id: 'turn-off',
-    text: 'turn off',
+    text: 'turn off (the TV)',
     type: 'phrasal',
     level: 1,
     meaning: 'stop a tap or machine running',
@@ -301,7 +301,7 @@ export default [
   },
   {
     id: 'get-off',
-    text: 'get off',
+    text: 'get off (a bus)',
     type: 'phrasal',
     level: 1,
     meaning: 'leave a bus or train',
@@ -314,7 +314,7 @@ export default [
   },
   {
     id: 'knock-off',
-    text: 'knock off',
+    text: 'knock off (work)',
     type: 'phrasal',
     level: 2,
     meaning: 'finish work for the day',
@@ -353,7 +353,7 @@ export default [
   },
   {
     id: 'cut-off',
-    text: 'cut off',
+    text: 'cut off (a village)',
     type: 'phrasal',
     level: 1,
     meaning: 'isolate a place or stop a supply',
@@ -392,7 +392,7 @@ export default [
   },
   {
     id: 'sign-off',
-    text: 'sign off',
+    text: 'sign off (an email)',
     type: 'phrasal',
     level: 2,
     meaning: 'end an email or a broadcast',
@@ -431,7 +431,7 @@ export default [
   },
   {
     id: 'run-off',
-    text: 'run off',
+    text: 'run off (from a shop)',
     type: 'phrasal',
     level: 1,
     meaning: 'hurry away from a place or person',
@@ -444,7 +444,7 @@ export default [
   },
   {
     id: 'hold-off',
-    text: 'hold off',
+    text: 'hold off (a decision)',
     type: 'phrasal',
     level: 2,
     meaning: 'wait before doing something',
@@ -535,7 +535,7 @@ export default [
   },
   {
     id: 'come-off',
-    text: 'come off',
+    text: 'come off (a plan)',
     type: 'phrasal',
     level: 3,
     meaning: 'turn out to be successful',
@@ -587,7 +587,7 @@ export default [
   },
   {
     id: 'break-down',
-    text: 'break down',
+    text: 'break down (a car)',
     type: 'phrasal',
     level: 1,
     meaning: 'stop working because of a fault',
@@ -613,7 +613,7 @@ export default [
   },
   {
     id: 'slow-down',
-    text: 'slow down',
+    text: 'slow down (a driver)',
     type: 'phrasal',
     level: 1,
     meaning: 'reduce your speed',
@@ -626,7 +626,7 @@ export default [
   },
   {
     id: 'settle-down',
-    text: 'settle down',
+    text: 'settle down (with a partner)',
     type: 'phrasal',
     level: 1,
     meaning: 'start a quiet, steady life',
@@ -730,7 +730,7 @@ export default [
   },
   {
     id: 'pin-down',
-    text: 'pin down',
+    text: 'pin down (a cause)',
     type: 'phrasal',
     level: 2,
     meaning: 'identify something exactly',
@@ -808,7 +808,7 @@ export default [
   },
   {
     id: 'wind-down',
-    text: 'wind down',
+    text: 'wind down (after work)',
     type: 'phrasal',
     level: 2,
     meaning: 'relax after a busy time',
@@ -873,7 +873,7 @@ export default [
   },
   {
     id: 'shut-down',
-    text: 'shut down',
+    text: 'shut down (a factory)',
     type: 'phrasal',
     level: 1,
     meaning: 'stop a machine or business',
@@ -912,7 +912,7 @@ export default [
   },
   {
     id: 'run-down',
-    text: 'run down',
+    text: 'run down (a rival)',
     type: 'phrasal',
     level: 2,
     meaning: 'criticise someone unfairly',
@@ -925,7 +925,7 @@ export default [
   },
   {
     id: 'knock-down',
-    text: 'knock down',
+    text: 'knock down (a wall)',
     type: 'phrasal',
     level: 2,
     meaning: 'destroy a building or wall',
@@ -938,7 +938,7 @@ export default [
   },
   {
     id: 'bring-down',
-    text: 'bring down',
+    text: 'bring down (a government)',
     type: 'phrasal',
     level: 2,
     meaning: 'make a person or government lose power',
@@ -977,7 +977,7 @@ export default [
   },
   {
     id: 'hand-down',
-    text: 'hand down',
+    text: 'hand down (clothes)',
     type: 'phrasal',
     level: 2,
     meaning: 'give to a later generation',
@@ -1055,7 +1055,7 @@ export default [
   },
   {
     id: 'hold-down',
-    text: 'hold down',
+    text: 'hold down (a job)',
     type: 'phrasal',
     level: 2,
     meaning: 'manage to keep a job',
@@ -1068,7 +1068,7 @@ export default [
   },
   {
     id: 'fall-down',
-    text: 'fall down',
+    text: 'fall down (the stairs)',
     type: 'phrasal',
     level: 1,
     meaning: 'lose balance and hit the ground',

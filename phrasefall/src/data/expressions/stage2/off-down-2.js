@@ -2,7 +2,7 @@
 export default [
   {
     id: 'break-off',
-    text: 'break off',
+    text: 'break off (an engagement)',
     type: 'phrasal',
     level: 1,
     meaning: 'end a relationship or talks suddenly',
@@ -41,7 +41,7 @@ export default [
   },
   {
     id: 'drive-off',
-    text: 'drive off',
+    text: 'drive off (a car)',
     type: 'phrasal',
     level: 1,
     meaning: 'leave a place in a car',
@@ -80,7 +80,7 @@ export default [
   },
   {
     id: 'let-off',
-    text: 'let off',
+    text: 'let off (a pupil)',
     type: 'phrasal',
     level: 1,
     meaning: 'not punish someone who has done wrong',
@@ -249,7 +249,7 @@ export default [
   },
   {
     id: 'head-off',
-    text: 'head off',
+    text: 'head off (on a trip)',
     type: 'phrasal',
     level: 1,
     meaning: 'set out for a place',
@@ -327,7 +327,7 @@ export default [
   },
   {
     id: 'send-off',
-    text: 'send off',
+    text: 'send off (a parcel)',
     type: 'phrasal',
     level: 1,
     meaning: 'post something to be delivered',
