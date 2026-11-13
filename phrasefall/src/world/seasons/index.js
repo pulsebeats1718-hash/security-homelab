@@ -22,12 +22,12 @@ const SEASON_TIME = 1.6;
 
 /** Per-season light: colour multipliers (lerped in by the season's weight) and intensity changes. */
 const LIGHT = {
-  spring: { sunLight: 0xfffcf2, hemiSky: 0xf4fff2, hemiGround: 0xeeffe0, fog: 0xf6fff6, sun: 1.04, hemi: 1.03, exposure: 0.02 },
-  summer: { sunLight: 0xfff0d4, hemiSky: 0xfff7ea, hemiGround: 0xfff0d6, fog: 0xfff4e6, skyTop: 0xf2f8ff, sun: 1.14, hemi: 1.06, exposure: 0.05 },
-  autumn: { sunLight: 0xffeacf, hemiSky: 0xfff3e6, hemiGround: 0xffe2c2, fog: 0xfff0e2, sun: 1.0, hemi: 1.0, exposure: 0 },
-  winter: { sunLight: 0xe8f0ff, hemiSky: 0xedf3ff, hemiGround: 0xe6eeff, fog: 0xeef4ff, skyHorizon: 0xf2f6ff, skyBottom: 0xf2f6ff, sun: 0.95, hemi: 1.1, exposure: 0.045, fogDensity: 1.12 },
+  spring: { tint: { sunLight: 0xfffcf2, hemiSky: 0xf4fff2, hemiGround: 0xeeffe0, fog: 0xf6fff6 }, sun: 1.04, hemi: 1.03, exposure: 0.02, fog: 1 },
+  summer: { tint: { sunLight: 0xfff0d4, hemiSky: 0xfff7ea, hemiGround: 0xfff0d6, fog: 0xfff4e6, skyTop: 0xf2f8ff }, sun: 1.14, hemi: 1.06, exposure: 0.05, fog: 1 },
+  autumn: { tint: { sunLight: 0xffeacf, hemiSky: 0xfff3e6, hemiGround: 0xffe2c2, fog: 0xfff0e2 }, sun: 1, hemi: 1, exposure: 0, fog: 1 },
+  winter: { tint: { sunLight: 0xe8f0ff, hemiSky: 0xedf3ff, hemiGround: 0xe6eeff, fog: 0xeef4ff, skyHorizon: 0xf2f6ff, skyBottom: 0xf2f6ff }, sun: 0.95, hemi: 1.1, exposure: 0.045, fog: 1.12 },
 };
-const TINTS = Object.fromEntries(Object.entries(LIGHT).map(([k, l]) => [k, Object.fromEntries(Object.entries(l).filter(([, v]) => v > 1).map(([key, hex]) => [key, new THREE.Color(hex)]))]));
+for (const l of Object.values(LIGHT)) for (const key of Object.keys(l.tint)) l.tint[key] = new THREE.Color(l.tint[key]);
 
 /** Where summer's sand lies around the dais (matches the turf shader). */
 const sandEdge = (x, z) => {
@@ -122,11 +122,11 @@ export class Seasons {
       const w = this.w[k];
       if (w <= 0) continue;
       const l = LIGHT[k];
-      for (const [key, c] of Object.entries(TINTS[k])) if (out[key]?.isColor) out[key].multiply(_c.copy(_white).lerp(c, w));
+      for (const [key, c] of Object.entries(l.tint)) out[key].multiply(_c.copy(_white).lerp(c, w));
       out.sunIntensity *= 1 + (l.sun - 1) * w;
       out.hemiIntensity *= 1 + (l.hemi - 1) * w;
       out.exposure += l.exposure * w;
-      if (l.fogDensity) out.fogDensity *= 1 + (l.fogDensity - 1) * w;
+      out.fogDensity *= 1 + (l.fog - 1) * w;
     }
     // particles and butterflies are unlit: give them the scene's light
     this.light.copy(out.hemiSky).multiplyScalar(out.hemiIntensity * 0.55).add(_c.copy(out.sunLight).multiplyScalar(out.sunIntensity * 0.2));

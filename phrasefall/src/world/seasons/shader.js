@@ -142,7 +142,9 @@ if (dot(uSeason, uSeason) > 0.0) {
   if (uSeason.w > 0.0 && k < 5.5 || uSeason.w > 0.0 && k > 6.5) {
     float lo = leafy || (k > 1.5 && k < 2.5) || (k > 4.5 && k < 5.5) ? 0.12 : ground ? 0.18 : 0.5;
     float snow = smoothstep(lo, lo + 0.3, up + (n - 0.5) * 0.3);
-    if (k > 7.5) snow = smoothstep(0.0, 0.4, vPfTip) * 0.9;
+    #ifdef PF_TIP
+    snow = smoothstep(0.04, 0.3, vPfTip) * 0.85;
+    #endif
     if (k > 3.5 && k < 4.5) { c = mix(c, ${lin(0xb7dcea)}, uSeason.w * 0.65); snow = 0.0; }
     if (ground) snow *= 1.0 - water;
     c = mix(c, vec3(lum) * vec3(0.9, 0.97, 1.1), uSeason.w * 0.28);

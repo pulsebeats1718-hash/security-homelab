@@ -726,6 +726,7 @@ export class Diorama {
   }
 
   finish() {
+    this.props = this.b.props;
     this.b.build(this.mats, this.group, (key) => key !== 'glow');
     if (this.haloList.length) {
       this.halos = new Halos(this.haloList, this.u);

@@ -1,7 +1,8 @@
 /**
  * Environment — lights, sky, island, clouds and the theme system that blends
  * between times of day as the player climbs through the stages, plus the place
- * the island has travelled to (Home Island, London, New York, Sydney).
+ * the island has travelled to (Home Island, London, New York, Sydney) and the
+ * season it is dressed for (spring, summer, autumn, winter).
  */
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
@@ -9,6 +10,7 @@ import { THEMES, COLOR_KEYS, NUMBER_KEYS } from './themes.js';
 import { Sky, makeGlowTexture } from './sky.js';
 import { Island } from './island.js';
 import { Places } from './places/index.js';
+import { Seasons } from './seasons/index.js';
 import { Clouds, Motes } from './clouds.js';
 import { rimShared } from '../characters/kit/materials.js';
 import { ease, lerp } from '../core/utils.js';
@@ -47,6 +49,7 @@ export class Environment {
     this.sky = new Sky(scene);
     this.island = new Island(scene, { quality: q });
     this.places = new Places(scene, this.island, { quality: q });
+    this.seasons = new Seasons(scene, this.island, this.places, q);
     this.clouds = new Clouds(scene, { quality: q });
     this.motes = new Motes(scene, { quality: q });
 
@@ -62,6 +65,8 @@ export class Environment {
 
     this.themeName = 'sunrise';
     this.v = {};
+    /** the theme values tinted for the season (what the lights, sky and scenery actually use) */
+    this.vs = {};
     this._from = {};
     this._to = THEMES.sunrise;
     this._mix = 1;
@@ -103,9 +108,27 @@ export class Environment {
     if (e) this.stage.renderer.compile(e.place.group, this.stage.camera, this.stage.scene);
   }
 
-  /** Let the current place spawn its ambient particles (petals, leaves, steam …). Call once a frame. */
+  /**
+   * Dress the world for a season: 'spring' | 'summer' | 'autumn' | 'winter' (unknown ids mean
+   * autumn). Not instant: blends over ~1.6 s. Safe to call repeatedly, before or after setPlace;
+   * the season stays when the place changes.
+   */
+  setSeason(season, { instant = false } = {}) {
+    this.seasons.set(season, { instant });
+    if (instant) this._apply();
+  }
+
+  /** Id of the current season. */
+  get season() {
+    return this.seasons.current;
+  }
+
+  /**
+   * Let the current place spawn its ambient particles (petals, leaves, steam …). Call once a frame.
+   * (The season's own particles — leaves, snow, petals, butterflies — run by themselves on the GPU.)
+   */
   ambient(fx, dt, quality = this.stage.qualityName) {
-    this.places.ambient(fx, dt, quality);
+    this.places.ambient(fx, dt, quality, this.seasons.current);
   }
 
   /** Blend to a theme over `seconds`. */
@@ -150,7 +173,7 @@ export class Environment {
   }
 
   _apply() {
-    const v = this.v;
+    const v = this.seasons.tint(this.v, this.vs);
     const scene = this.stage.scene;
     const dim = 1 - (this.dim ?? 0) * 0.45;
     scene.fog.color.copy(v.fog);
@@ -176,6 +199,7 @@ export class Environment {
   }
 
   update(dt, t) {
+    let dirty = this.seasons.blending;
     if (this._mix < 1) {
       this._mix = Math.min(1, this._mix + dt / this._dur);
       const e = ease.inOutCubic(this._mix);
@@ -185,11 +209,13 @@ export class Environment {
       for (const k of NUMBER_KEYS) this.v[k] = lerp(this._from[k], to[k], e);
       this._sunDir.copy(this._fromSun).lerp(dirFrom(to.sun, this._a), e).normalize();
       this._skySun.copy(this._fromSky).lerp(dirFrom(to.skySun, this._b), e).normalize();
-      this._apply();
+      dirty = true;
     } else if (this._dimApplied !== this.dim) {
       this._dimApplied = this.dim;
-      this._apply();
+      dirty = true;
     }
+    this.seasons.update(t, dt, this.stage);
+    if (dirty) this._apply();
     this.sky.update(t, this.stage.camera, this.stage.pixelRatio);
     this.island.update(t, dt);
     this.places.update(t, dt);

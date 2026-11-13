@@ -7,7 +7,8 @@
  * with a little overshoot, nearest first, the distant chunks last (≈1.1 s in all).
  *
  * A place exposes: group, ground (see Island.setGround), props ([{x, y, z, delay, far}]),
- * setPop(p), apply(v), update(t, dt), ambient(fx, dt, quality).
+ * setPop(p), apply(v), update(t, dt), ambient(fx, dt, quality, season); optionally `avoid`
+ * ([{x, z, r}] — water the season dressing keeps off) and `has` (beach things it already has).
  */
 import * as THREE from 'three';
 import { PLACES } from '../../data/places.js';
@@ -111,10 +112,10 @@ export class Places {
   }
 
   /** Ambient particles of the current place, plus a puff of sparkles as each new prop pops up. */
-  ambient(fx, dt, quality) {
+  ambient(fx, dt, quality, season = 'autumn') {
     const e = this.entries.get(this.current);
     if (!e) return;
-    if (e.p > 0.5) e.place.ambient?.(fx, dt, quality);
+    if (e.p > 0.5) e.place.ambient?.(fx, dt, quality, season);
     if (e.sparkled === Infinity || !e.place.props) return;
     const props = e.place.props;
     while (e.sparkled < props.length) {

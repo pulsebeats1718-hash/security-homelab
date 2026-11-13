@@ -567,13 +567,14 @@ export class London extends Diorama {
     }
   }
 
-  ambient(fx, dt, quality) {
-    // plane-tree leaves drifting down
+  ambient(fx, dt, quality, season) {
+    // plane-tree leaves drifting down in autumn
+    if (season !== 'autumn') return;
     this.leafT -= dt;
     if (this.leafT > 0 || quality === 'low') return;
     this.leafT = 0.7 + Math.random() * 1.1;
     const [x, y, z] = this.trees[(Math.random() * this.trees.length) | 0];
-    const cols = [0xa9c94a, 0xd9b043, 0x8fbf4a, 0xc98f3a];
+    const cols = [0xd9b043, 0xe0782c, 0xc98f3a, 0xb5562a];
     fx.petal(x + (Math.random() - 0.5) * 2.2, y + Math.random() * 0.8, z + (Math.random() - 0.3) * 1.6, cols[(Math.random() * cols.length) | 0]);
   }
 }

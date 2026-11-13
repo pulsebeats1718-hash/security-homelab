@@ -17,6 +17,9 @@ import { KIND, seasonMaterial } from './seasons/shader.js';
  */
 export const HOME_DRAWS = 40;
 
+/** [x, z, size] of the stepping stones leading to the dais (seasonal props keep clear of them). */
+export const STEPPING_STONES = [[0.2, 2.3, 0.42], [-0.3, 3.1, 0.36], [0.35, 3.85, 0.32], [-2.3, 0.9, 0.3], [2.4, 1.1, 0.34]];
+
 const GROUND_TIME = 0.9;
 const _m = new THREE.Matrix4();
 const _s = new THREE.Vector3();
@@ -54,7 +57,7 @@ export class Island {
     const dais = new THREE.Mesh(new THREE.LatheGeometry([[1.68, -0.2], [1.66, -0.09], [1.6, -0.025], [1.5, 0], [0, 0]].map(([r, y]) => new THREE.Vector2(r, y)), 48), mats.stone);
     dais.receiveShadow = true;
     this.group.add(dais);
-    [[0.2, 2.3, 0.42], [-0.3, 3.1, 0.36], [0.35, 3.85, 0.32], [-2.3, 0.9, 0.3], [2.4, 1.1, 0.34]].forEach(([x, z, s]) => b.add('stone', UNIT.cyl, x, -0.07, z, s, 0.08, s * 0.82, 0, rng() * 3, 0));
+    STEPPING_STONES.forEach(([x, z, s]) => b.add('stone', UNIT.cyl, x, -0.07, z, s, 0.08, s * 0.82, 0, rng() * 3, 0));
     b.build(mats, this.group, true);
 
     // ── streak ring set into the dais ─────────────────────────────────────

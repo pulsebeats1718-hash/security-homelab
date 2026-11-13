@@ -208,8 +208,9 @@ export class Home {
     }
   }
 
-  /** Blossom petals drifting off the tree. */
-  ambient(fx, dt, quality) {
+  /** Blossom petals drifting off the tree (while it is in blossom: spring and summer). */
+  ambient(fx, dt, quality, season) {
+    if (season === 'autumn' || season === 'winter') return;
     this.petalT -= dt;
     if (this.petalT <= 0 && quality !== 'low') {
       this.petalT = 0.5 + Math.random() * 0.9;

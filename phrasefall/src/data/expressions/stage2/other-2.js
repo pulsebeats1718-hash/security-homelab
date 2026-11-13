@@ -1198,7 +1198,7 @@ export default [
   },
   {
     id: 'pull-together',
-    text: 'pull together (as a team)',
+    text: 'pull together (as a family)',
     type: 'phrasal',
     level: 2,
     meaning: 'work as a team towards a goal',

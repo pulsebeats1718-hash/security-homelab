@@ -52,6 +52,9 @@ export class Sydney extends Diorama {
     super(island, quality);
     this.rng = mulberry32(1788);
     this.glintT = 0;
+    /** beach things Sydney already has (summer adds only the rest), and water to keep off */
+    this.has = ['umbrella', 'towel', 'bucket', 'ball'];
+    this.avoid = [{ x: LAGOON.x, z: LAGOON.z, r: 1.7 }];
     this.build();
     this.far();
     this.finish();

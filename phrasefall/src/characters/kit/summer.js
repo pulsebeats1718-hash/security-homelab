@@ -24,7 +24,8 @@
  *     glasses: false | {
  *       scale, scaleY,             // lens size multipliers
  *       y, lift,                   // move the lenses up / further out (metres)
- *       forward,                   // 0 = lenses follow the eyes' wrap, 1 = flat to the front (default 0.35)
+ *       forward,                   // 0 = lenses follow the eyes' wrap, 1 = flat to the front (default 0.2)
+ *       nudge,                     // how far a lens may simply be pushed out before it shrinks instead (0.03)
  *       temples: false,            // no arms back to the ears (helmets, hoods …)
  *       maxLift,                   // how far the lenses may be pushed out to clear the face (default 0.07)
  *     },
@@ -223,7 +224,7 @@ function buildGlasses(rig, cfg, color, mats) {
 
   const R = rig.headRadii ?? [0.57, 0.52, 0.53];
   const Rmean = (R[0] + R[1] + R[2]) / 3;
-  const forward = cfg.forward ?? 0.35;
+  const forward = cfg.forward ?? 0.2;
   const maxLift = cfg.maxLift ?? 0.07;
   const ray = new THREE.Raycaster();
   const wo = new THREE.Vector3();
@@ -245,15 +246,18 @@ function buildGlasses(rig, cfg, color, mats) {
     return { eye, side: eye.side, n, nz, x, y, hw, hh, c, lift };
   });
 
-  // push the lenses out just enough to clear whatever sits in front of the eyes (snouts, beaks …)
-  const clearance = (L) => {
+  // keep the lenses close to the face: where a snout, beak or fringe would poke through a lens,
+  // first make the lens smaller and move it away from the obstacle; only then push it out a little
+  const RING_PTS = [[0, 0]];
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * TAU;
+    RING_PTS.push([Math.cos(a) * 0.96, Math.sin(a) * 0.96]);
+  }
+  const probe = (L) => {
     let need = 0;
-    const pts = [[0, 0]];
-    for (let i = 0; i < 10; i++) {
-      const a = (i / 10) * TAU;
-      pts.push([Math.cos(a) * 0.96, Math.sin(a) * 0.96]);
-    }
-    for (const [u, v] of pts) {
+    let below = 0;
+    let above = 0;
+    for (const [u, v] of RING_PTS) {
       const p = L.c.clone().addScaledVector(L.x, u * L.hw).addScaledVector(L.y, v * L.hh).addScaledVector(L.nz, L.lift);
       const from = p.clone().addScaledVector(L.nz, 0.6);
       parent.localToWorld(wo.copy(from));
@@ -262,24 +266,26 @@ function buildGlasses(rig, cfg, color, mats) {
       ray.far = 1.4;
       const hit = ray.intersectObjects(blockers, false)[0];
       if (!hit) continue;
-      const local = parent.worldToLocal(hit.point.clone());
-      const depth = local.sub(p).dot(L.nz); // > 0: the face pokes out in front of the lens plane here
-      need = Math.max(need, depth + 0.012);
+      const depth = parent.worldToLocal(hit.point.clone()).sub(p).dot(L.nz) + 0.012; // > 0: pokes through
+      if (depth <= 0) continue;
+      need = Math.max(need, depth);
+      if (v < -0.2) below = Math.max(below, depth);
+      if (v > 0.2) above = Math.max(above, depth);
     }
-    return need;
+    return { need, below, above };
   };
+  const nudge = cfg.nudge ?? 0.03;
   for (const L of lenses) {
-    for (let k = 0; k < 4; k++) {
-      const need = clearance(L);
-      if (need <= 0) break;
-      if (need <= maxLift || k === 3) {
+    for (let k = 0; k < 7; k++) {
+      const { need, below, above } = probe(L);
+      if (need <= nudge || k === 6) {
         L.lift += Math.min(need, maxLift);
         break;
       }
-      // a big snout or beak in the way: smaller lenses, nudged up, then try again
-      L.hh *= 0.86;
-      L.hw *= 0.94;
-      L.c.addScaledVector(L.y, L.hh * 0.1);
+      const dir = below >= above ? 1 : -1; // snout below → go up; hat brim or fringe above → go down
+      L.hh *= 0.9;
+      L.hw *= 0.96;
+      L.c.addScaledVector(L.y, dir * L.hh * 0.09);
     }
   }
   // both lenses at the same depth so the frame stays symmetric
