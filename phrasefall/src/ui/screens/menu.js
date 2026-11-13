@@ -28,7 +28,7 @@ export function createMenu(app) {
   const dailyTitle = h('span.daily__title');
   const dailySub = h('span.daily__sub');
   const dailyTag = h('span.daily__tag');
-  const dailyBtn = h('button.daily', { 'data-quiet': '1', onclick: () => start('daily') }, h('span.daily__ico', icon('calendar')), h('span.daily__text', dailyTitle, dailySub), dailyTag);
+  const dailyBtn = h('button.daily', { 'data-quiet': '1', title: 'The same cards for everyone today', onclick: () => start('daily') }, h('span.daily__ico', icon('calendar')), h('span.daily__text', dailyTitle, dailySub), dailyTag);
   const status = h('div.menu__status', { hidden: true, role: 'status' });
 
   const openBoards = () => ui.go(ui.screens.has('leaderboard') ? 'leaderboard' : 'records', { from: 'menu' });
@@ -107,11 +107,11 @@ export function createMenu(app) {
     dailyTitle.textContent = `Daily challenge #${dailyNumber(today)}`;
     clear(dailyTag);
     if (rec) {
-      dailySub.textContent = `Next in ${formatCountdown(msToNextDaily())} · replay to practise`;
+      dailySub.textContent = `Next in ${formatCountdown(msToNextDaily())} · practise`;
       dailyTag.append(h('span.daily__score', formatScore(rec.score)), h('span.daily__score-label', 'Your score'));
       dailyBtn.classList.add('is-done');
     } else {
-      dailySub.textContent = `Not played yet · ${DAILY_CARDS} cards, same for everyone`;
+      dailySub.textContent = `Not played yet · ${DAILY_CARDS} cards`;
       dailyTag.append(h('span.daily__new', 'New'));
       dailyBtn.classList.remove('is-done');
     }

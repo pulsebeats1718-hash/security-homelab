@@ -15,7 +15,8 @@ export const shots = {
 
   /** Title + main menu: character large, the island and sky on show. */
   menu(s) {
-    if (portrait(s)) return { fx: 0, fy: 1.15, fz: 0, yaw: -0.22, pitch: 0.11, span: clamp(8.4 - (s.height - 640) / 400, 7.0, 8.6), ox: 0, oy: s.height * 0.045, drift: 1 };
+    // portrait: lifted clear of the Play / Daily challenge / tiles stack at the bottom
+    if (portrait(s)) return { fx: 0, fy: 1.15, fz: 0, yaw: -0.22, pitch: 0.11, span: clamp(8.4 - (s.height - 640) / 400, 7.0, 8.6), ox: 0, oy: s.height * 0.045 - 62, drift: 1 };
     return { fx: 0, fy: 1.15, fz: 0, yaw: -0.3, pitch: 0.1, span: 5.9, ox: s.width * 0.19, oy: s.height * 0.08, drift: 1 };
   },
 
