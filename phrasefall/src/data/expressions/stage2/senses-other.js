@@ -2589,4 +2589,1016 @@ export default [
     "context": "Used when someone changes from supporting to opposing a person.",
     "mistake": "Say \"turned against him\", not \"turned on against him\"; use one particle."
   },
+  {
+    "id": "take-over-from-a-colleague",
+    "text": "take over (from a colleague)",
+    "type": "phrasal",
+    "level": 2,
+    "meaning": "start doing someone else's job",
+    "distractors": [
+      "report them to the manager",
+      "lend them some money for lunch",
+      "thank them for a birthday present"
+    ],
+    "example": "Can you take over from Sam at six? I have to leave early.",
+    "synonyms": [
+      "replace",
+      "step in for"
+    ],
+    "register": "Neutral",
+    "context": "Common at work when one person finishes a shift or task and another carries on.",
+    "mistake": "Use \"from\" for the person: \"take over from Sam\", not \"take over of Sam\"."
+  },
+  {
+    "id": "turn-over-evidence",
+    "text": "turn over (evidence)",
+    "type": "phrasal",
+    "level": 3,
+    "meaning": "give it to the authorities",
+    "distractors": [
+      "hide it from the police completely",
+      "copy it for your own records",
+      "lose it by accident on the bus"
+    ],
+    "example": "The bank was ordered to turn over the documents to the court.",
+    "synonyms": [
+      "hand over",
+      "surrender"
+    ],
+    "register": "Formal",
+    "context": "Formal, used for documents or evidence given to police or a court.",
+    "mistake": "Use \"to\" for the receiver: \"turn the files over to the police\", not \"turn the files the police\"."
+  },
+  {
+    "id": "talk-over-a-colleague",
+    "text": "talk over (a colleague)",
+    "type": "phrasal",
+    "level": 2,
+    "meaning": "speak while someone else is speaking",
+    "distractors": [
+      "speak very quietly to them",
+      "translate what they just said",
+      "argue with them in private"
+    ],
+    "example": "Please don't talk over me; let me finish my point.",
+    "synonyms": [
+      "interrupt",
+      "speak over"
+    ],
+    "register": "Neutral",
+    "context": "Common in meetings and debates; talking over someone is considered rude.",
+    "mistake": "Say \"talk over me\", not \"talk me over\"; the person comes after \"over\"."
+  },
+  {
+    "id": "boil-over-a-pan",
+    "text": "boil over (a pan)",
+    "type": "phrasal",
+    "level": 2,
+    "meaning": "rise and spill over the edge",
+    "distractors": [
+      "cook slowly for a long time",
+      "stay warm until later",
+      "go cold in the fridge"
+    ],
+    "example": "The milk boiled over and made a mess on the hob.",
+    "synonyms": [
+      "spill over",
+      "overflow"
+    ],
+    "register": "Neutral",
+    "context": "Used for liquids heated in a pan or kettle that rise and spill out.",
+    "mistake": "Say \"the milk boiled over\", not \"the milk overboiled\"; \"overboil\" is not normal."
+  },
+  {
+    "id": "roll-over-in-bed",
+    "text": "roll over (in bed)",
+    "type": "phrasal",
+    "level": 2,
+    "meaning": "turn your body to the other side",
+    "distractors": [
+      "climb out of bed and dress",
+      "stretch both arms in the air",
+      "move quietly to another room"
+    ],
+    "example": "He rolled over and went back to sleep.",
+    "synonyms": [
+      "turn over",
+      "flip over"
+    ],
+    "register": "Neutral",
+    "context": "Used for turning your body, a baby or a pet while lying down.",
+    "mistake": "Use \"over\", not \"up\": \"roll over\", since \"roll up\" means curl something into a tube."
+  },
+  {
+    "id": "roll-over-the-jackpot",
+    "text": "roll over (the jackpot)",
+    "type": "phrasal",
+    "level": 3,
+    "meaning": "carry the prize to the next draw",
+    "distractors": [
+      "be given to a local charity",
+      "be shared equally between winners",
+      "be paid out to one person"
+    ],
+    "example": "The lottery jackpot rolled over for the fourth week running.",
+    "synonyms": [
+      "carry over"
+    ],
+    "register": "Neutral",
+    "context": "Used when nobody wins a lottery or prize, so it grows for next time.",
+    "mistake": "Say \"the jackpot rolled over\", not \"rolled out\"; \"roll out\" means launch."
+  },
+  {
+    "id": "stay-over-after-a-party",
+    "text": "stay over (after a party)",
+    "type": "phrasal",
+    "level": 2,
+    "meaning": "sleep at someone else's home",
+    "distractors": [
+      "leave the party very early",
+      "drive home in the dark",
+      "wake up everyone at dawn"
+    ],
+    "example": "You can stay over if the last train has gone.",
+    "synonyms": [
+      "sleep over",
+      "stay the night"
+    ],
+    "register": "Informal",
+    "context": "Used for sleeping at a friend's or relative's home, often after an evening out.",
+    "mistake": "Say \"stay over\", not \"stay over night\"; \"stay the night\" is also natural."
+  },
+  {
+    "id": "bring-over",
+    "text": "bring over",
+    "type": "phrasal",
+    "level": 2,
+    "meaning": "bring something to someone's home",
+    "distractors": [
+      "take it back to the shop later",
+      "throw it in the bin at home",
+      "sell it to a neighbour"
+    ],
+    "example": "Shall I bring some wine over on Saturday?",
+    "synonyms": [
+      "bring round",
+      "take over"
+    ],
+    "register": "Informal",
+    "context": "Used when you carry food, drink or other items to where someone lives.",
+    "mistake": "Say \"bring it over\", not \"bring over it\"; a pronoun goes in the middle."
+  },
+  {
+    "id": "fall-over-on-ice",
+    "text": "fall over (on ice)",
+    "type": "phrasal",
+    "level": 1,
+    "meaning": "drop to the ground from standing",
+    "distractors": [
+      "jump high into the air",
+      "climb onto a low wall",
+      "run very fast downhill"
+    ],
+    "example": "The toddler fell over twice on the way to the park.",
+    "synonyms": [
+      "trip",
+      "tumble"
+    ],
+    "register": "Neutral",
+    "context": "Used for people or objects that go down from an upright position.",
+    "mistake": "Say \"he fell over\", not \"he was fallen over\"; this verb has no passive."
+  },
+  {
+    "id": "get-through-to-the-final",
+    "text": "get through (to the final)",
+    "type": "phrasal",
+    "level": 3,
+    "meaning": "reach the next stage of a contest",
+    "distractors": [
+      "lose by a single goal",
+      "arrive late to the match",
+      "leave the team for good"
+    ],
+    "example": "Wales got through to the final with a late goal.",
+    "synonyms": [
+      "reach",
+      "progress"
+    ],
+    "register": "Neutral",
+    "context": "Used for sports, quizzes and competitions that are played in rounds.",
+    "mistake": "Say \"get through to the final\", not \"get to through the final\"; keep \"through\" next to \"get\"."
+  },
+  {
+    "id": "go-through-a-packet",
+    "text": "go through (a packet)",
+    "type": "phrasal",
+    "level": 3,
+    "meaning": "use up a lot of something",
+    "distractors": [
+      "keep it for another day",
+      "buy it in a different shop",
+      "share it with a friend"
+    ],
+    "example": "We go through a loaf of bread every two days.",
+    "synonyms": [
+      "get through",
+      "use up"
+    ],
+    "register": "Informal",
+    "context": "Used for food and supplies that disappear quickly, especially in a family.",
+    "mistake": "Say \"go through a litre of milk\", not \"go with a litre of milk\"."
+  },
+  {
+    "id": "follow-through-a-swing",
+    "text": "follow through (a swing)",
+    "type": "phrasal",
+    "level": 3,
+    "meaning": "complete the movement of a shot",
+    "distractors": [
+      "stop it half-way through",
+      "start it again from the top",
+      "check it on the screen"
+    ],
+    "example": "In golf you must follow through after you hit the ball.",
+    "synonyms": [
+      "complete the stroke"
+    ],
+    "register": "Neutral",
+    "context": "Used in golf, tennis and cricket for the finish of a movement.",
+    "mistake": "Say \"follow through\", not \"follow up\", for finishing a swing."
+  },
+  {
+    "id": "read-through-a-contract",
+    "text": "read through (a contract)",
+    "type": "phrasal",
+    "level": 2,
+    "meaning": "read all of it from start to finish",
+    "distractors": [
+      "sign it without reading a word",
+      "copy it into a new file",
+      "throw it away after lunch"
+    ],
+    "example": "Read through the contract carefully before you sign.",
+    "synonyms": [
+      "read over",
+      "go through"
+    ],
+    "register": "Neutral",
+    "context": "Used for reading a whole document or text slowly and carefully.",
+    "mistake": "Say \"read it through\", not \"read through it\" when the object is \"it\"; both are accepted but \"read it through\" is more natural."
+  },
+  {
+    "id": "think-through-a-plan",
+    "text": "think through (a plan)",
+    "type": "phrasal",
+    "level": 2,
+    "meaning": "consider every detail beforehand",
+    "distractors": [
+      "share the idea with the press",
+      "forget about it after a day",
+      "write it out on paper twice"
+    ],
+    "example": "You should think this through before you resign.",
+    "synonyms": [
+      "consider",
+      "weigh up"
+    ],
+    "register": "Neutral",
+    "context": "Used when you consider every detail and result before you act.",
+    "mistake": "Say \"think it through\", not \"think through it\"; a pronoun goes in the middle."
+  },
+  {
+    "id": "work-through-a-to-do-list",
+    "text": "work through (a to-do list)",
+    "type": "phrasal",
+    "level": 2,
+    "meaning": "deal with each item in turn",
+    "distractors": [
+      "put it in the recycling bin",
+      "add many new items to it",
+      "forget the first few items"
+    ],
+    "example": "I'll work through the emails after lunch.",
+    "synonyms": [
+      "plough through",
+      "get through"
+    ],
+    "register": "Neutral",
+    "context": "Used for tasks or papers that you do one after another.",
+    "mistake": "Say \"work through the list\", not \"work across the list\"."
+  },
+  {
+    "id": "work-through-feelings",
+    "text": "work through (feelings)",
+    "type": "phrasal",
+    "level": 3,
+    "meaning": "slowly come to terms with them",
+    "distractors": [
+      "hide them from everyone you know",
+      "talk about them a little less",
+      "write them down in a hurry"
+    ],
+    "example": "She's working through the shock with a counsellor.",
+    "synonyms": [
+      "process",
+      "deal with"
+    ],
+    "register": "Neutral",
+    "context": "Used for emotions or problems that you deal with over time.",
+    "mistake": "Say \"work through grief\", not \"work out grief\"; \"work out\" means solve or exercise."
+  },
+  {
+    "id": "wade-through-paperwork",
+    "text": "wade through (paperwork)",
+    "type": "phrasal",
+    "level": 3,
+    "meaning": "slowly deal with lots of boring work",
+    "distractors": [
+      "throw it all away in anger",
+      "sign it quickly without reading it",
+      "ask for even more of it"
+    ],
+    "example": "I spent the weekend wading through tax forms.",
+    "synonyms": [
+      "plough through",
+      "slog through"
+    ],
+    "register": "Informal",
+    "context": "Used for slowly reading or dealing with a lot of dull or hard material.",
+    "mistake": "Say \"wade through paperwork\", not \"wade into paperwork\"; \"wade into\" means start fiercely."
+  },
+  {
+    "id": "hang-around-with-friends",
+    "text": "hang around (with friends)",
+    "type": "phrasal",
+    "level": 2,
+    "meaning": "spend time with a group casually",
+    "distractors": [
+      "argue about money all evening",
+      "ask them for advice at work",
+      "work for them at weekends"
+    ],
+    "example": "He hangs around with the footballers from school.",
+    "synonyms": [
+      "spend time",
+      "knock about"
+    ],
+    "register": "Informal",
+    "context": "Informal for being with friends in a relaxed way.",
+    "mistake": "Say \"hang around with friends\", not \"hang around friends\"; use \"with\"."
+  },
+  {
+    "id": "go-round-a-bug",
+    "text": "go round (a bug)",
+    "type": "phrasal",
+    "level": 3,
+    "meaning": "spread from person to person",
+    "distractors": [
+      "be left in a cardboard box",
+      "be hard to find in shops",
+      "be kept in a jar at home"
+    ],
+    "example": "There's a nasty cold going round the office.",
+    "synonyms": [
+      "spread",
+      "do the rounds"
+    ],
+    "register": "Informal",
+    "context": "Used for colds, rumours or news that spread among people.",
+    "mistake": "Say \"going round the office\", not \"going round in the office\"; no \"in\"."
+  },
+  {
+    "id": "send-round-an-email",
+    "text": "send round (an email)",
+    "type": "phrasal",
+    "level": 2,
+    "meaning": "send it to a group of people",
+    "distractors": [
+      "keep it as a draft for later",
+      "delete it by mistake today",
+      "print it out twice for everyone"
+    ],
+    "example": "Could you send round the agenda before the meeting?",
+    "synonyms": [
+      "circulate",
+      "send out"
+    ],
+    "register": "Neutral",
+    "context": "Used at work for sending a message or document to many people.",
+    "mistake": "Say \"send round the notes\", not \"send round of the notes\"; no \"of\"."
+  },
+  {
+    "id": "wait-around",
+    "text": "wait around",
+    "type": "phrasal",
+    "level": 2,
+    "meaning": "stay somewhere while you wait",
+    "distractors": [
+      "rush off in a big hurry",
+      "make plans with your friends",
+      "call someone back later"
+    ],
+    "example": "I spent an hour waiting around for the delivery.",
+    "synonyms": [
+      "hang about",
+      "hang around"
+    ],
+    "register": "Informal",
+    "context": "Used when you stay in a place waiting for something or someone.",
+    "mistake": "Say \"wait around for a delivery\", not \"wait around a delivery\"; add \"for\"."
+  },
+  {
+    "id": "sit-around",
+    "text": "sit around",
+    "type": "phrasal",
+    "level": 2,
+    "meaning": "spend time doing nothing useful",
+    "distractors": [
+      "work at a desk all day long",
+      "go for a long run before lunch",
+      "cook a big meal for everyone"
+    ],
+    "example": "Don't just sit around all day; help me with the dishes.",
+    "synonyms": [
+      "laze about",
+      "loaf about"
+    ],
+    "register": "Informal",
+    "context": "Used for being idle, often with a hint of criticism.",
+    "mistake": "Say \"sit around the house\", not \"sit around in the house\"; no \"in\"."
+  },
+  {
+    "id": "potter-about",
+    "text": "potter about",
+    "type": "phrasal",
+    "level": 3,
+    "meaning": "spend time doing small jobs happily",
+    "distractors": [
+      "rush to finish one big task",
+      "work very hard on one thing",
+      "sit still all morning"
+    ],
+    "example": "I like to potter about in the garden on Sunday morning.",
+    "synonyms": [
+      "mooch about",
+      "tinker"
+    ],
+    "register": "Informal",
+    "context": "Very British, for a slow and pleasant time doing little jobs.",
+    "mistake": "Say \"potter about in the garden\", not \"potter about at the garden\"; use \"in\"."
+  },
+  {
+    "id": "faff-about",
+    "text": "faff about",
+    "type": "phrasal",
+    "level": 3,
+    "meaning": "waste time on small unimportant things",
+    "distractors": [
+      "get straight to the point",
+      "finish the job in a hurry",
+      "ask a stranger for directions"
+    ],
+    "example": "Stop faffing about and put your shoes on.",
+    "synonyms": [
+      "mess about",
+      "dither"
+    ],
+    "register": "Very informal",
+    "context": "Very informal British phrase for wasting time on small fiddly things.",
+    "mistake": "Say \"faff about\", not \"faff out\"; it means waste time, not make a mistake."
+  },
+  {
+    "id": "get-back-your-money",
+    "text": "get back (your money)",
+    "type": "phrasal",
+    "level": 2,
+    "meaning": "receive something lost or lent",
+    "distractors": [
+      "spend it on lunch with friends",
+      "give it to a charity shop",
+      "lose it in the shopping centre"
+    ],
+    "example": "I never got my deposit back from the landlord.",
+    "synonyms": [
+      "recover",
+      "be given back"
+    ],
+    "register": "Neutral",
+    "context": "Used for money or things returned after you gave them up.",
+    "mistake": "Say \"get it back\", not \"get back it\"; a pronoun goes in the middle."
+  },
+  {
+    "id": "take-back-an-ex",
+    "text": "take back (an ex)",
+    "type": "phrasal",
+    "level": 3,
+    "meaning": "accept someone again after a split",
+    "distractors": [
+      "sell them to a stranger",
+      "remember them with fondness",
+      "ask them to move out of the house"
+    ],
+    "example": "She took him back after he said sorry.",
+    "synonyms": [
+      "forgive",
+      "have back"
+    ],
+    "register": "Neutral",
+    "context": "Used for accepting a person again after they have left or hurt you.",
+    "mistake": "Say \"take him back\", not \"take back him\"; a pronoun goes in the middle."
+  },
+  {
+    "id": "take-back-a-friend",
+    "text": "take back (a friend)",
+    "type": "phrasal",
+    "level": 2,
+    "meaning": "drive someone to where they live",
+    "distractors": [
+      "ask them to move out of your home",
+      "remind them of an old promise",
+      "lend them some money for the bus"
+    ],
+    "example": "I'll take you back to your hotel after dinner.",
+    "synonyms": [
+      "drive home",
+      "give a lift to"
+    ],
+    "register": "Neutral",
+    "context": "Used for carrying or driving someone to where they came from.",
+    "mistake": "Use \"to\" for the place: \"take her back to the hotel\", not \"take her back the hotel\"."
+  },
+  {
+    "id": "call-back-for-an-interview",
+    "text": "call back (for an interview)",
+    "type": "phrasal",
+    "level": 3,
+    "meaning": "ask to return for another round",
+    "distractors": [
+      "send a thank-you note afterwards",
+      "say no by email straight away",
+      "offer a free gift at the door"
+    ],
+    "example": "Five of the applicants were called back for a second interview.",
+    "synonyms": [
+      "invite back",
+      "recall"
+    ],
+    "register": "Neutral",
+    "context": "Used when an employer or casting team asks someone to return for another round.",
+    "mistake": "Say \"called back for an interview\", not \"called back to an interview\"; use \"for\"."
+  },
+  {
+    "id": "hold-back-a-pupil",
+    "text": "hold back (a pupil)",
+    "type": "phrasal",
+    "level": 3,
+    "meaning": "keep a child in the same year",
+    "distractors": [
+      "move a child up to a better class",
+      "send a child to another school",
+      "give a child a prize at the end"
+    ],
+    "example": "Some parents ask the school to hold their child back a year.",
+    "synonyms": [
+      "keep back"
+    ],
+    "register": "Neutral",
+    "context": "Used for keeping a student in the same year, or stopping someone from progressing.",
+    "mistake": "Say \"hold her back\", not \"hold back her\"; a pronoun goes in the middle."
+  },
+  {
+    "id": "cut-back-a-hedge",
+    "text": "cut back (a hedge)",
+    "type": "phrasal",
+    "level": 3,
+    "meaning": "trim a plant to make it smaller",
+    "distractors": [
+      "water it every day in spring",
+      "dig it up and plant another",
+      "move it into a larger pot"
+    ],
+    "example": "We cut back the hedge every spring.",
+    "synonyms": [
+      "prune",
+      "trim"
+    ],
+    "register": "Neutral",
+    "context": "Used for trimming plants to keep them tidy or help them grow.",
+    "mistake": "Say \"cut it back\", not \"cut back it\"; a pronoun goes in the middle."
+  },
+  {
+    "id": "pay-back-a-favour",
+    "text": "pay back (a favour)",
+    "type": "phrasal",
+    "level": 2,
+    "meaning": "do something kind in return",
+    "distractors": [
+      "ask for another gift",
+      "forget about it quickly",
+      "keep it a secret from others"
+    ],
+    "example": "Let me buy you lunch to pay you back for the lift.",
+    "synonyms": [
+      "repay",
+      "return"
+    ],
+    "register": "Neutral",
+    "context": "Used for doing something helpful to thank someone for their kindness.",
+    "mistake": "Say \"pay you back for the lift\", not \"pay you back of the lift\"; use \"for\"."
+  },
+  {
+    "id": "set-back-from-the-road",
+    "text": "set back (from the road)",
+    "type": "phrasal",
+    "level": 3,
+    "meaning": "stand some distance from something",
+    "distractors": [
+      "face the main road directly",
+      "run along the edge of a path",
+      "stand right next to the gate"
+    ],
+    "example": "The house is set back from the road behind tall trees.",
+    "synonyms": [
+      "stand back",
+      "be away from"
+    ],
+    "register": "Neutral",
+    "context": "Used for buildings that are not close to a road or street.",
+    "mistake": "Say \"set back from the road\", not \"set back of the road\"; use \"from\"."
+  },
+  {
+    "id": "bring-back-a-souvenir",
+    "text": "bring back (a souvenir)",
+    "type": "phrasal",
+    "level": 2,
+    "meaning": "return from a trip carrying it",
+    "distractors": [
+      "send it by post to someone",
+      "throw it away at the airport",
+      "keep it a secret from others"
+    ],
+    "example": "Can you bring me back a postcard from Rome?",
+    "synonyms": [
+      "fetch",
+      "carry back"
+    ],
+    "register": "Neutral",
+    "context": "Used when you carry something back from a trip or a shop.",
+    "mistake": "Say \"bring me back some milk\", not \"bring back to me some milk\"; the person goes in the middle."
+  },
+  {
+    "id": "bring-back-memories",
+    "text": "bring back (memories)",
+    "type": "phrasal",
+    "level": 2,
+    "meaning": "make you remember the past",
+    "distractors": [
+      "give a gift to an old friend",
+      "send a message by post",
+      "make a task more difficult"
+    ],
+    "example": "This song always brings back memories of summer 2010.",
+    "synonyms": [
+      "recall",
+      "remind you of"
+    ],
+    "register": "Neutral",
+    "context": "Used for things that make you remember an event or a time.",
+    "mistake": "Say \"brings back memories\", not \"brings memory back to me\"; the plural noun is normal."
+  },
+  {
+    "id": "step-back-from-the-edge",
+    "text": "step back (from the edge)",
+    "type": "phrasal",
+    "level": 2,
+    "meaning": "move a short way backwards",
+    "distractors": [
+      "leap forward over it",
+      "run towards it quickly",
+      "stand on top of it"
+    ],
+    "example": "Please step back from the platform edge.",
+    "synonyms": [
+      "move back"
+    ],
+    "register": "Neutral",
+    "context": "Used for moving a few steps away from something.",
+    "mistake": "Say \"step back from the edge\", not \"step back of the edge\"; use \"from\"."
+  },
+  {
+    "id": "step-back-from-a-project",
+    "text": "step back (from a project)",
+    "type": "phrasal",
+    "level": 3,
+    "meaning": "view a situation from a distance",
+    "distractors": [
+      "stand very close to the problem",
+      "ask others to do all the work",
+      "work on it all through the night"
+    ],
+    "example": "Let's step back and ask what we are trying to achieve.",
+    "synonyms": [
+      "take a step back",
+      "detach"
+    ],
+    "register": "Neutral",
+    "context": "Used for looking at a problem calmly and in a wider way.",
+    "mistake": "Say \"take a step back\", not \"make a step back\"; use \"take\"."
+  },
+  {
+    "id": "play-back-a-recording",
+    "text": "play back (a recording)",
+    "type": "phrasal",
+    "level": 2,
+    "meaning": "play something you recorded",
+    "distractors": [
+      "erase it for good",
+      "record it again from scratch",
+      "sell it online for money"
+    ],
+    "example": "Can you play back the message for me?",
+    "synonyms": [
+      "replay"
+    ],
+    "register": "Neutral",
+    "context": "Used for audio or video that you listen to or watch again.",
+    "mistake": "Say \"play it back\", not \"play back it\"; a pronoun goes in the middle."
+  },
+  {
+    "id": "get-away-for-a-weekend",
+    "text": "get away (for a weekend)",
+    "type": "phrasal",
+    "level": 1,
+    "meaning": "go somewhere for a short break",
+    "distractors": [
+      "run away from a place",
+      "win a big prize at a draw",
+      "make a mistake at work"
+    ],
+    "example": "We're getting away for a weekend in Devon.",
+    "synonyms": [
+      "escape",
+      "go away"
+    ],
+    "register": "Neutral",
+    "context": "Used when you leave home for a short holiday.",
+    "mistake": "Say \"get away for the weekend\", not \"get away on the weekend\"; use \"for\"."
+  },
+  {
+    "id": "give-away-a-penalty",
+    "text": "give away (a penalty)",
+    "type": "phrasal",
+    "level": 3,
+    "meaning": "let the other team score easily",
+    "distractors": [
+      "miss a goal from close range",
+      "win a trophy in the final",
+      "pass the ball back to the keeper"
+    ],
+    "example": "He gave away a penalty with a clumsy tackle.",
+    "synonyms": [
+      "concede"
+    ],
+    "register": "Informal",
+    "context": "Used in football and rugby for a foul that helps the other team.",
+    "mistake": "Say \"give away a penalty\", not \"give up a penalty\"; \"give up\" means stop."
+  },
+  {
+    "id": "take-away-a-privilege",
+    "text": "take away (a privilege)",
+    "type": "phrasal",
+    "level": 2,
+    "meaning": "remove something from someone",
+    "distractors": [
+      "give someone more of it",
+      "ask someone to share it",
+      "give it back to the owner"
+    ],
+    "example": "The school took away his phone for the day.",
+    "synonyms": [
+      "remove",
+      "confiscate"
+    ],
+    "register": "Neutral",
+    "context": "Used when someone loses a right, object or freedom.",
+    "mistake": "Say \"take it away from him\", not \"take away it\"; the object goes in the middle."
+  },
+  {
+    "id": "take-away-a-lesson",
+    "text": "take away (a lesson)",
+    "type": "phrasal",
+    "level": 3,
+    "meaning": "learn a useful idea from something",
+    "distractors": [
+      "forget it in a week",
+      "write a long report about it",
+      "argue about it later on"
+    ],
+    "example": "The main thing to take away from the talk is to plan early.",
+    "synonyms": [
+      "learn",
+      "come away with"
+    ],
+    "register": "Neutral",
+    "context": "Often about the main idea someone remembers after an event.",
+    "mistake": "Say \"key takeaway\" for the noun; the verb is \"take away\"."
+  },
+  {
+    "id": "go-away-for-a-weekend",
+    "text": "go away (for a weekend)",
+    "type": "phrasal",
+    "level": 2,
+    "meaning": "leave home for a short trip",
+    "distractors": [
+      "stay at home on your own",
+      "move to a new town for work",
+      "pay a bill on time"
+    ],
+    "example": "We're going away for the weekend, so please feed the cat.",
+    "synonyms": [
+      "get away",
+      "travel"
+    ],
+    "register": "Neutral",
+    "context": "Used when you leave your home for a short holiday.",
+    "mistake": "Say \"go away for the weekend\", not \"go away on the weekend\"; use \"for\"."
+  },
+  {
+    "id": "fire-away",
+    "text": "fire away",
+    "type": "phrasal",
+    "level": 2,
+    "meaning": "start asking your questions",
+    "distractors": [
+      "say nothing at all",
+      "run out of the room",
+      "ask for something to drink"
+    ],
+    "example": "\"Can I ask you something?\" \"Fire away.\"",
+    "synonyms": [
+      "go ahead",
+      "shoot"
+    ],
+    "register": "Informal",
+    "context": "Used in conversation to invite someone to ask a question.",
+    "mistake": "Say \"fire away\" to invite questions; do not use it to mean \"leave\"."
+  },
+  {
+    "id": "go-after-a-minister",
+    "text": "go after (a minister)",
+    "type": "phrasal",
+    "level": 3,
+    "meaning": "attack or criticise strongly",
+    "distractors": [
+      "ask for help from",
+      "offer a lift to",
+      "wave goodbye to"
+    ],
+    "example": "The papers went after the minister over his expenses.",
+    "synonyms": [
+      "attack",
+      "pursue"
+    ],
+    "register": "Neutral",
+    "context": "Used when newspapers, lawyers or rivals attack someone publicly.",
+    "mistake": "Say \"go after someone\", not \"go at after someone\"; \"after\" is the only particle."
+  },
+  {
+    "id": "get-by-in-spanish",
+    "text": "get by (in Spanish)",
+    "type": "phrasal",
+    "level": 3,
+    "meaning": "manage with limited ability",
+    "distractors": [
+      "speak it perfectly well",
+      "forget it almost completely",
+      "teach it to other people"
+    ],
+    "example": "I can get by in French when I'm on holiday.",
+    "synonyms": [
+      "cope",
+      "manage"
+    ],
+    "register": "Neutral",
+    "context": "Used when your skill is not perfect but is enough for daily needs.",
+    "mistake": "Say \"get by in Spanish\", not \"get by at Spanish\"."
+  },
+  {
+    "id": "stand-by-a-decision",
+    "text": "stand by (a decision)",
+    "type": "phrasal",
+    "level": 3,
+    "meaning": "refuse to change what you said",
+    "distractors": [
+      "change it after one day",
+      "pass it on to a friend",
+      "forget it very quickly"
+    ],
+    "example": "The minister said she stands by every word.",
+    "synonyms": [
+      "defend",
+      "back"
+    ],
+    "register": "Neutral",
+    "context": "Often used for statements, decisions and promises that someone will not change.",
+    "mistake": "Say \"stand by a decision\", not \"stand on a decision\"; \"stand by\" is the common phrase."
+  },
+  {
+    "id": "fall-behind-with-rent",
+    "text": "fall behind (with rent)",
+    "type": "phrasal",
+    "level": 2,
+    "meaning": "be late paying a regular bill",
+    "distractors": [
+      "pay it twice by mistake",
+      "argue with the landlord",
+      "borrow money to pay it"
+    ],
+    "example": "She fell behind with her rent after losing her job.",
+    "synonyms": [
+      "get behind",
+      "be in arrears"
+    ],
+    "register": "Neutral",
+    "context": "Used for rent, bills and work that are not done on time.",
+    "mistake": "Say \"fall behind with the rent\", not \"fall behind of the rent\"."
+  },
+  {
+    "id": "check-against-a-list",
+    "text": "check against (a list)",
+    "type": "phrasal",
+    "level": 3,
+    "meaning": "compare it with something else",
+    "distractors": [
+      "lose it in the post",
+      "read it aloud to a friend",
+      "print it out twice"
+    ],
+    "example": "Check your answers against the list at the back.",
+    "synonyms": [
+      "compare with"
+    ],
+    "register": "Neutral",
+    "context": "Used for comparing facts, answers or names with a list.",
+    "mistake": "Say \"check against\", not \"check to\"; use \"against\" for comparing."
+  },
+  {
+    "id": "go-under-anaesthetic",
+    "text": "go under (anaesthetic)",
+    "type": "phrasal",
+    "level": 3,
+    "meaning": "become unconscious for an operation",
+    "distractors": [
+      "wake up after the operation",
+      "walk out of the ward",
+      "sign a form before the visit"
+    ],
+    "example": "I was nervous before I went under.",
+    "synonyms": [
+      "be put under"
+    ],
+    "register": "Neutral",
+    "context": "Used for patients who become unconscious before surgery.",
+    "mistake": "Say \"go under\", not \"go over\", for being put to sleep by medicine."
+  },
+  {
+    "id": "get-past-security",
+    "text": "get past (security)",
+    "type": "phrasal",
+    "level": 2,
+    "meaning": "manage to go beyond a barrier",
+    "distractors": [
+      "fail to arrive at all",
+      "wait outside all day",
+      "hand over a ticket"
+    ],
+    "example": "The fans couldn't get past the guards.",
+    "synonyms": [
+      "pass",
+      "get by"
+    ],
+    "register": "Neutral",
+    "context": "Used for guards, gates, barriers or other things in the way.",
+    "mistake": "Say \"get past the guard\", not \"get passed the guard\"; \"past\" has no \"-ed\" here."
+  },
+  {
+    "id": "look-past-his-flaws",
+    "text": "look past (his flaws)",
+    "type": "phrasal",
+    "level": 3,
+    "meaning": "ignore faults to see the good",
+    "distractors": [
+      "point them out at once",
+      "make a list of every one",
+      "laugh at them in public"
+    ],
+    "example": "You have to look past his flaws and see what he does well.",
+    "synonyms": [
+      "overlook",
+      "see beyond"
+    ],
+    "register": "Neutral",
+    "context": "Used for ignoring faults or small problems to see what matters.",
+    "mistake": "Say \"look past\", not \"look passed\"; \"past\" has no \"-ed\" here."
+  },
 ];
