@@ -29,6 +29,7 @@ import { createToday } from './ui/screens/today.js';
 import { createJourney } from './ui/screens/journey.js';
 import { createNotifier } from './ui/notify.js';
 import { Progress } from './game/progress.js';
+import { currentSeason } from './data/seasons.js';
 import { createAccount } from './ui/account.js';
 import { createOnline } from './online/index.js';
 import { loadExpressions, expressionsReady } from './data/expressions/index.js';
@@ -83,6 +84,18 @@ async function boot() {
     }
     if (env.place !== id) env.setPlace?.(id, { instant });
     return true;
+  };
+  // the season (autumn leaves, winter snow, spring flowers, summer beach): the calendar, or Settings
+  app.season = currentSeason(save.settings.season);
+  env.setSeason?.(app.season, { instant: true });
+  hero.summer = app.season === 'summer';
+  /** Re-check the season (Settings changed, or the calendar moved on) and dress the world for it. */
+  app.applySeason = () => {
+    const next = currentSeason(save.settings.season);
+    if (next === app.season) return;
+    app.season = next;
+    env.setSeason?.(next);
+    hero.setSummer?.(next === 'summer');
   };
   // a cloud sync can bring a streak or place from another device: catch up when the save changes
   save.onChange(() => {

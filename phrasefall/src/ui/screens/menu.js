@@ -221,6 +221,7 @@ export function createMenu(app) {
     accountSlot,
     show() {
       app.game.settleInterruptedDaily?.();
+      app.applySeason?.(); // the calendar may have moved into a new season
       progress.touch();
       setLoading(false);
       refresh();

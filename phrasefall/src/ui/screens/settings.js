@@ -1,6 +1,7 @@
 import { h, icon, clear } from '../dom.js';
 import { shots } from '../../game/shots.js';
 import { PACE, STAGES } from '../../data/stages.js';
+import { SEASONS, getSeason, seasonFor } from '../../data/seasons.js';
 import { TOTAL_EXPRESSIONS, expressionsReady, whenExpressionsReady } from '../../data/expressions/index.js';
 import { CHARACTERS } from '../../characters/index.js';
 import { avatar, googleMark, signInButton, syncText } from '../account.js';
@@ -62,6 +63,14 @@ export function createSettings(app) {
   const sfx = volume('sfx', 'sfxOn', 'sound', 'Sound effects');
   const pace = segmented('Fall speed', 'gauge', 'pace', Object.entries(PACE).map(([k, v]) => [k, v.label]), 'Relaxed gives you more reading time. Scores are the same at every speed.');
   const quality = segmented('Graphics', 'monitor', 'quality', [['auto', 'Auto'], ['high', 'High'], ['medium', 'Medium'], ['low', 'Low']], 'Auto picks the best setting for your device and adapts if the frame rate dips.', (v) => app.setQuality(v));
+  const season = segmented(
+    'Season',
+    'leaf',
+    'season',
+    [['auto', 'Auto'], ...SEASONS.map((s) => [s.id, s.name])],
+    `Auto follows the calendar where you are: it is ${getSeason(seasonFor()).name.toLowerCase()} now.`,
+    () => app.applySeason?.()
+  );
 
   const motion = h('button.switch', { role: 'switch', 'aria-label': 'Reduce motion', 'data-quiet': '1' });
   const syncMotion = () => {
@@ -197,6 +206,7 @@ export function createSettings(app) {
         sfx.row,
         pace.row,
         quality.row,
+        season.row,
         h('div.set', h('span.set__ico', icon('wind')), h('span.set__label', 'Reduce motion'), motion, h('p.set__note', 'Calms screen shake and camera drift.')),
         resetRow,
         app.online?.available ? h('p.about', 'When you are signed in, your nickname, character and scores appear on the public leaderboards. Your cloud save is private to your account.') : null,
@@ -215,6 +225,7 @@ export function createSettings(app) {
       sfx.sync();
       pace.sync();
       quality.sync();
+      season.sync();
       syncMotion();
       syncReset(false);
       syncAccount(false);

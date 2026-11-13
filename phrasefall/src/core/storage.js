@@ -5,7 +5,7 @@
  *
  * Shape (version 1; new fields are optional, so older saves load unchanged):
  *
- *   settings      { music, sfx, musicOn, sfxOn, pace, quality, reduceMotion, … }
+ *   settings      { music, sfx, musicOn, sfxOn, pace, quality, reduceMotion, season, … }
  *   character     selected character id
  *   unlocked      character ids                   seenUnlocks  ids already celebrated
  *   best          { score, streak, stage }        classic games only (streak: any game)
@@ -72,7 +72,7 @@ const blankQuests = () => ({ p0: 0, p1: 0, p2: 0, d0: false, d1: false, d2: fals
 
 const defaults = () => ({
   version: 1,
-  settings: { music: 0.6, sfx: 0.8, musicOn: true, sfxOn: true, pace: 'standard', quality: 'auto', reduceMotion: false },
+  settings: { music: 0.6, sfx: 0.8, musicOn: true, sfxOn: true, pace: 'standard', quality: 'auto', reduceMotion: false, season: 'auto' },
   character: 'fox',
   unlocked: ROSTER.filter((r) => r.rule.type === 'start').map((r) => r.id),
   seenUnlocks: [],
