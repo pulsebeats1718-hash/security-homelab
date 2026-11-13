@@ -265,7 +265,7 @@ export class London extends Diorama {
 
     // the cobbled crescent, its kerbs and the pavement behind it
     const path = pathX(streetZ, -6.4, 7.0, 0.2);
-    b.pin(0, at(0, -2.86), -2.86, 0.0, () => {
+    b.pin(0, at(0, -2.86), -2.86, 0.0, () => b.kind(KIND.PAVED, () => {
       part(M, ribbon(path, -HALF, HALF, 0.0, 0.1), 0, 0, 0, 1, 1, 1, C.grout);
       part(M, ribbon(path, HALF, HALF + 0.14, 0.05, 0.12), 0, 0, 0, 1, 1, 1, C.kerb);
       part(M, ribbon(path, -HALF - 0.14, -HALF, 0.05, 0.12), 0, 0, 0, 1, 1, 1, C.kerb);
@@ -289,7 +289,7 @@ export class London extends Diorama {
         const pz = streetZ(x) + d / l;
         if (islandR(px, pz) < 0.93) part(M, SHAPE.box, px, at(px, pz) + 0.026, pz, 0.025, 0.012, 1.5, 0xb4aea2, 0, -Math.atan(dz), 0);
       }
-    });
+    }));
 
     // terraces along the back of the crescent
     const terrace = [
@@ -338,6 +338,8 @@ export class London extends Diorama {
 
     // the turf: no grass on the crescent, the pavement or under the terraces
     this.ground = { keep: (x, z) => z > streetZ(x) + HALF + 0.3 };
+    /** open ground in front of the crescent (where season props may go) */
+    this.free = (x, z) => z > streetZ(x) + HALF + 0.45;
 
     this.far();
   }

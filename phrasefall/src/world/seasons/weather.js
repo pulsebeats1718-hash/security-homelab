@@ -40,7 +40,8 @@ void main() {
   float swayF = snow ? 0.55 : 0.9;
   float swayA = kind < 0.5 ? 1.1 : snow ? 0.35 : 0.9;
   vec3 p = position;
-  p.x = mod(p.x + uTime * (snow ? 0.12 : 0.3) + 24.0, 48.0) - 24.0;
+  // the background drifts along on the breeze; the fringe in front of the card only sways in place
+  if (p.z < 0.0) p.x = mod(p.x + uTime * (snow ? 0.12 : 0.3) + 24.0, 48.0) - 24.0;
   p.x += sin(uTime * swayF * (0.7 + aSeed.y * 0.4) + aSeed.x * 40.0) * swayA;
   p.z += cos(uTime * swayF * 0.6 + aSeed.x * 23.0) * swayA * 0.4;
   p.y = y;
@@ -98,7 +99,7 @@ void main() {
 export class Weather {
   constructor(scene, quality) {
     const low = quality === 'low';
-    const counts = [low ? 90 : 170, low ? 420 : 860, low ? 70 : 140];
+    const counts = [low ? 110 : 220, low ? 420 : 860, low ? 70 : 140];
     const rng = mulberry32(2024);
     const n = counts[0] + counts[1] + counts[2];
     const pos = new Float32Array(n * 3);
@@ -113,12 +114,16 @@ export class Weather {
           // a thin fringe in front of the card plane, well out to the sides
           x = (rng() < 0.5 ? -1 : 1) * (3.8 + rng() * 11);
           z = 1.5 + rng() * 4.5;
+        } else if (k === 2) {
+          // petals stay closer to the island
+          x = (rng() * 2 - 1) * 14;
+          z = -1.4 - Math.pow(rng(), 1.4) * 14;
         } else {
           x = (rng() * 2 - 1) * 24;
           z = -1.4 - Math.pow(rng(), 0.8) * 34;
         }
         pos.set([x, 0, z], i * 3);
-        const size = k === 0 ? 0.2 + rng() * 0.12 : k === 1 ? 0.06 + rng() * 0.08 : 0.13 + rng() * 0.07;
+        const size = k === 0 ? 0.26 + rng() * 0.16 : k === 1 ? 0.08 + rng() * 0.1 : 0.15 + rng() * 0.08;
         seed.set([rng(), 0.6 + rng() * 0.8, size, (j + 0.5) / count], i * 4);
         kind[i] = k;
       }
@@ -207,8 +212,8 @@ export class Butterflies {
       side.push(0, 0, 0);
     }
     const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-    geo.setAttribute('aWing', new THREE.Float32BufferAttribute(side.map((s) => s * 1.0), 1));
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos.map((v) => v * 1.45), 3));
+    geo.setAttribute('aWing', new THREE.Float32BufferAttribute(side, 1));
     const n = quality === 'low' ? 2 : 4;
     const paths = [
       [-2.7, 1.6, -2.9, 0.3, 1.2, 0.35, 0.7, 0.55],

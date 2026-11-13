@@ -278,7 +278,7 @@ export class NewYork extends Diorama {
 
     // ── the avenue ──────────────────────────────────────────────────────────
     const path = pathX(streetZ, -6.4, 7.0, 0.2);
-    b.pin(0, at(0, -2.95), -2.95, 0.0, () => {
+    b.pin(0, at(0, -2.95), -2.95, 0.0, () => b.kind(KIND.PAVED, () => {
       part(M, ribbon(path, -HALF, HALF, 0.0, 0.1), 0, 0, 0, 1, 1, 1, C.asphalt);
       part(M, ribbon(path, HALF, HALF + 0.16, 0.06, 0.13), 0, 0, 0, 1, 1, 1, C.kerb);
       part(M, ribbon(path, -HALF - 0.16, -HALF, 0.06, 0.13), 0, 0, 0, 1, 1, 1, C.kerb);
@@ -301,7 +301,7 @@ export class NewYork extends Diorama {
         if (islandR(px, pz) < 0.93) part(M, SHAPE.box, px, at(px, pz) + 0.045, pz, 0.02, 0.012, 1.55, 0xb2afa7, 0, -Math.atan(dz), 0);
       }
       manhole(MH, streetZ(MH) + 0.18);
-    });
+    }));
     // steam puffing out of the manhole (kept low: it stays under the falling cards)
     {
       const x = MH;
@@ -348,6 +348,8 @@ export class NewYork extends Diorama {
     this.ground = {
       keep: (x, z) => z > streetZ(x) + HALF + 0.75,
     };
+    /** open ground in front of the avenue (where season props may go) */
+    this.free = (x, z) => z > streetZ(x) + HALF + 0.85;
   }
 
   // ── distant chunks ────────────────────────────────────────────────────────

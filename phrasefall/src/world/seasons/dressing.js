@@ -3,7 +3,7 @@
  *
  *   autumn  leaf litter scattered over the island
  *   spring  clusters of flowers that sprout and grow when spring arrives, and a few more
- *           popping up now and then over the next minute
+ *           popping up now and then over the next couple of minutes
  *   winter  a snowman beside the dais (and a couple of snowballs)
  *   summer  a deckchair under a striped beach umbrella, a towel, a bucket and spade and a beach
  *           ball (a place lists what it already has in `place.has`: Sydney only gets the chair)
@@ -26,17 +26,35 @@ const hashString = (s) => [...s].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >
 
 /** Spots already in use: the place's props, the stepping stones, water, the dais. */
 function occupied(place) {
-  const taken = (place.props ?? []).filter((p) => !p.far).map((p) => ({ x: p.x, z: p.z, r: 0.5 }));
+  const taken = (place.props ?? []).filter((p) => !p.far).map((p) => ({ x: p.x, z: p.z, r: 0.42 }));
   for (const [x, z, s] of STEPPING_STONES) taken.push({ x, z, r: s + 0.15 });
   for (const a of place.avoid ?? []) taken.push({ x: a.x, z: a.z, r: a.r, water: true });
   taken.push({ x: 0, z: 0, r: 2.1, dais: true });
   return taken;
 }
 
-/** The first candidate [x, z, ry] that keeps `clear` away from everything taken. */
-function pick(cands, taken, clear) {
+/**
+ * Candidate spots on rings around the dais, in order of preference: angles in degrees
+ * (0 = straight behind the dais, ±90 = to the sides, 180 = in front), radii outwards.
+ * Each spot faces the dais.
+ */
+function ring(angles, radii) {
+  const out = [];
+  for (const a of angles) {
+    for (const r of radii) {
+      const t = (a * Math.PI) / 180;
+      const x = Math.sin(t) * r;
+      const z = -Math.cos(t) * r * 0.82;
+      out.push([x, z, Math.atan2(-x, -z)]);
+    }
+  }
+  return out;
+}
+
+/** The first candidate [x, z, ry] on free ground that keeps `clear` away from everything taken. */
+function pick(cands, taken, clear, free) {
   for (const [x, z, ry] of cands) {
-    if (islandR(x, z) > 0.86) continue;
+    if (islandR(x, z) > 0.86 || (free && !free(x, z))) continue;
     if (taken.some((t) => Math.hypot(t.x - x, t.z - z) < clear + t.r)) continue;
     return { x, z, ry };
   }
@@ -55,7 +73,7 @@ export class Dressing {
     const taken = occupied(place);
     if (season === 'autumn') this._litter(rng, taken);
     else if (season === 'spring') this._flowers(place, rng, taken);
-    else this._props((b, t) => (season === 'winter' ? this._snowman(b, t, taken) : this._beach(b, t, taken, place)));
+    else this._props((b, t) => (season === 'winter' ? this._snowman(b, t, taken, place) : this._beach(b, t, taken, place)));
   }
 
   setPop(p) {
@@ -170,8 +188,8 @@ export class Dressing {
       dummy.updateMatrix();
       mesh.setMatrixAt(placed, dummy.matrix);
       mesh.setColorAt(placed, c.set(FLOWERS[(rng() * FLOWERS.length) | 0]));
-      // most sprout as spring arrives, the rest pop up now and then over the next minute
-      start[placed] = placed < n * 0.65 ? 0.15 + rng() * 2.4 : 5 + rng() * 65;
+      // most sprout as spring arrives, the rest pop up now and then over the next couple of minutes
+      start[placed] = placed < n * 0.65 ? 0.15 + rng() * 2.4 : 5 + rng() * 150;
       placed++;
     }
     mesh.count = placed;
@@ -190,22 +208,12 @@ export class Dressing {
     b.build({ matte: mat }, this.group, true);
   }
 
-  _snowman(b, { part, ball, post, slab }, taken) {
-    const spot = pick(
-      [
-        [-2.2, -1.2, 0.45],
-        [2.25, -1.25, -0.45],
-        [-2.55, 0.5, 0.6],
-        [2.6, 0.45, -0.6],
-        [-1.75, -2.1, 0.25],
-        [1.8, -2.1, -0.25],
-        [-3.2, -0.6, 0.6],
-      ],
-      taken,
-      0.5
-    );
+  _snowman(b, { part, ball, post, slab }, taken, place) {
+    // beside the dais, behind or to the side of the character (never in front of it)
+    const spot = pick(ring([-55, 55, -40, 40, -70, 70, -85, 85, -25, 25], [2.6, 3.0, 3.4, 3.9]), taken, 0.4, place.free);
     if (!spot) return;
-    const { x, z, ry } = spot;
+    const { x, z } = spot;
+    const ry = spot.ry * 0.6;
     b.prop(x, groundY(x, z), z, ry, 1, 0.3, () => {
       const snow = 0xf6f9ff;
       ball(0, 0.27, 0, 0.62, snow);
@@ -232,7 +240,7 @@ export class Dressing {
   _beach(b, { part, ball, post, slab }, taken, place) {
     const has = new Set(place.has ?? []);
     const put = (cands, clear, fn) => {
-      const spot = pick(cands, taken, clear);
+      const spot = pick(cands, taken, clear, place.free);
       if (!spot) return;
       taken.push({ x: spot.x, z: spot.z, r: clear });
       b.prop(spot.x, groundY(spot.x, spot.z), spot.z, spot.ry, 1, Math.min(0.6, Math.hypot(spot.x, spot.z) / 9), fn);
@@ -240,19 +248,8 @@ export class Dressing {
     const cream = 0xfff7ec;
     // a deckchair (striped canvas on a wooden frame) under a striped umbrella, out to the side
     put(
-      [
-        [3.25, 0.7, -0.75],
-        [-3.3, 0.55, 0.75],
-        [3.45, -0.45, -1.0],
-        [-3.5, -0.5, 1.0],
-        [3.0, 1.75, -0.5],
-        [-3.05, 1.8, 0.5],
-        [3.1, -1.55, -1.2],
-        [-3.9, 0.3, 0.9],
-        [3.9, 0.1, -0.9],
-        [-2.2, -2.1, 0.5],
-        [2.3, -2.0, -0.5],
-      ],
+      // facing halfway between out to the sky and the camera, so its striped canvas shows
+      ring([105, -105, 90, -90, 120, -120, 75, -75, 135, -135, 60, -60], [3.4, 3.9, 4.4]).map(([x, z, ry]) => [x, z, Math.atan2(-Math.sin(ry), 1 - Math.cos(ry))]),
       0.7,
       () => {
         const wood = 0xb98a5a;
@@ -276,15 +273,7 @@ export class Dressing {
     );
     if (!has.has('towel')) {
       put(
-        [
-          [2.25, 2.05, -0.45],
-          [-2.15, 2.2, 0.4],
-          [2.6, 1.25, -0.6],
-          [-2.65, 1.3, 0.6],
-          [2.9, 2.6, -0.3],
-          [-1.9, 2.7, 0.3],
-          [1.75, 2.75, -0.3],
-        ],
+        ring([132, -132, 118, -118, 145, -145, 105, -105], [2.95, 3.4, 3.9]),
         0.45,
         () => {
           for (let i = 0; i < 6; i++) slab(-0.38 + i * 0.152, 0, 0, 0.152, 0.022, 1.25, i % 2 ? cream : 0xffb02e);
@@ -293,13 +282,8 @@ export class Dressing {
     }
     if (!has.has('bucket')) {
       put(
-        [
-          [1.6, 2.75, 0.3],
-          [-1.5, 2.85, -0.3],
-          [2.1, 3.1, 0.2],
-          [-2.0, 3.1, -0.2],
-        ],
-        0.35,
+        ring([150, -150, 160, -160, 140, -140], [3.3, 3.7, 4.1]),
+        0.3,
         () => {
           post(0, 0, 0, 0.22, 0.2, 0x2ec4b6, M, SHAPE.cyl);
           post(0, 0.19, 0, 0.24, 0.025, 0x27a89c, M, SHAPE.cyl);
@@ -311,13 +295,8 @@ export class Dressing {
     }
     if (!has.has('ball')) {
       put(
-        [
-          [-1.75, 2.05, 0],
-          [1.95, 2.0, 0],
-          [-2.35, 2.6, 0],
-          [2.4, 2.5, 0],
-        ],
-        0.35,
+        ring([-128, 128, -140, 140, -115, 115], [2.55, 3.0, 3.5]),
+        0.3,
         () => {
           const cols = [0xe8262c, cream, 0x2f8fd6, cream, 0xffd21f, cream];
           for (let i = 0; i < 6; i++) part(M, SHAPE.ballPanel, 0, 0.22, 0, 0.44, 0.44, 0.44, cols[i], 0, (i * Math.PI) / 3, 0);

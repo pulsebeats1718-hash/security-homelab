@@ -13,7 +13,7 @@
  * each place gets its own dressing, built the first time it is needed.
  */
 import * as THREE from 'three';
-import { SEASON_U } from './shader.js';
+import { SEASON_U, sandEdge } from './shader.js';
 import { Weather, Butterflies } from './weather.js';
 import { Dressing } from './dressing.js';
 
@@ -29,17 +29,11 @@ const LIGHT = {
 };
 for (const l of Object.values(LIGHT)) for (const key of Object.keys(l.tint)) l.tint[key] = new THREE.Color(l.tint[key]);
 
-/** Where summer's sand lies around the dais (matches the turf shader). */
-const sandEdge = (x, z) => {
-  const qz = z / 0.82;
-  const th = Math.atan2(qz, x);
-  return Math.hypot(x, qz) - (3.25 + 0.22 * Math.sin(th * 3 + 1.3) + 0.13 * Math.sin(th * 7 + 0.4));
-};
 const GROUND = {
   spring: null,
   summer: { keepTufts: (x, z) => sandEdge(x, z) > 0.1, keepFlowers: (x, z) => sandEdge(x, z) > 0.1 },
   autumn: null,
-  winter: { keepFlowers: () => false },
+  winter: { keepTufts: (x, z) => Math.abs(Math.sin(x * 12.9898 + z * 78.233) * 43758.5453) % 1 < 0.3, keepFlowers: () => false },
 };
 
 const _c = new THREE.Color();

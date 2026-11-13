@@ -24,6 +24,16 @@ export const KIND = {
   PLAIN: 6, // never changes
   TURF: 7, // the main island's turf: GROUND plus the summer sand around the dais
   TUFT: 8, // grass blades: golden in autumn, frosted tips in winter
+  PAVED: 9, // roads and pavements: a patchy dusting of snow, so they still read as streets
+};
+
+/** Summer's sand around the dais: radius (in x; z is squashed like the island) and edge wobble. */
+export const SAND = { r: 3.95, a: 0.26, b: 0.14 };
+/** Signed distance (roughly) from summer's sand edge: negative on the sand. */
+export const sandEdge = (x, z) => {
+  const qz = z / 0.82;
+  const th = Math.atan2(qz, x);
+  return Math.hypot(x, qz) - (SAND.r + SAND.a * Math.sin(th * 3 + 1.3) + SAND.b * Math.sin(th * 7 + 0.4));
 };
 
 /** Season weights (spring, summer, autumn, winter) shared by every patched material. */
@@ -37,7 +47,7 @@ const lin = (hex) => {
 const VERT_PARS = /* glsl */ `
 varying vec3 vPfWorld;
 varying float vPfKind;
-varying vec3 vPfAnchor;
+varying float vPfHash;
 #ifdef PF_GRASS_ATTR
 attribute float aGrass;
 varying float vPfGrass;
@@ -55,13 +65,15 @@ const VERT_MAIN = /* glsl */ `
   #endif
   pfW = modelMatrix * pfW;
   vPfWorld = pfW.xyz;
+  // a random number per prop (from its anchor): every vertex of a prop gets exactly the same one
   #ifdef PF_KIND_ATTR
   vPfKind = floor(aPop.w * 0.5 + 0.001);
-  vPfAnchor = aPop.xyz;
+  vec3 pfA = aPop.xyz;
   #else
   vPfKind = float(PF_KIND);
-  vPfAnchor = (modelMatrix * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
+  vec3 pfA = vec3(modelMatrix[3].x, 0.0, modelMatrix[3].z); // not y: floating islands bob
   #endif
+  vPfHash = fract(sin(dot(pfA, vec3(12.9898, 78.233, 37.719))) * 43758.5453);
   #ifdef PF_GRASS_ATTR
   vPfGrass = aGrass;
   #endif
@@ -75,14 +87,13 @@ const FRAG_PARS = /* glsl */ `
 uniform vec4 uSeason;
 varying vec3 vPfWorld;
 varying float vPfKind;
-varying vec3 vPfAnchor;
+varying float vPfHash;
 #ifdef PF_GRASS_ATTR
 varying float vPfGrass;
 #endif
 #ifdef PF_TIP
 varying float vPfTip;
 #endif
-float pfHash(vec3 p) { return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }
 float pfWobble(vec3 p) { return 0.5 + 0.25 * sin(p.x * 1.7 + sin(p.z * 1.3 + p.y)) + 0.25 * sin(p.z * 1.9 + sin(p.y * 2.1 + p.x * 0.7)); }
 vec3 pfAutumn(float i) {
   return i < 1.0 ? ${lin(0xd9482b)} : i < 2.0 ? ${lin(0xf08a24)} : i < 3.0 ? ${lin(0xf4c43a)} : ${lin(0xb5562a)};
@@ -96,7 +107,7 @@ if (dot(uSeason, uSeason) > 0.0) {
   vec3 c = diffuseColor.rgb;
   float lum = dot(c, vec3(0.299, 0.587, 0.114));
   float up = normalize((vec4(normal, 0.0) * viewMatrix).xyz).y;
-  float h = pfHash(floor(vPfAnchor * 2.0 + 0.5));
+  float h = clamp(vPfHash, 0.0, 0.9999);
   float n = pfWobble(vPfWorld * 1.15);
   float green = clamp((c.g - max(c.r, c.b)) * 7.0, 0.0, 1.0);
   float water = clamp((c.b - max(c.r, c.g) * 1.08) * 9.0, 0.0, 1.0);
@@ -112,11 +123,12 @@ if (dot(uSeason, uSeason) > 0.0) {
   if (uSeason.x > 0.0 && (leafy || ground || k > 1.5 && k < 2.5)) {
     float g = leafy ? 1.0 : grass;
     c = mix(c, c * vec3(0.82, 1.14, 0.62) + vec3(0.015, 0.05, 0.0), uSeason.x * g);
-    if (leafy && h < 0.55) {
-      // little clusters of blossom dotted over the canopy
-      vec3 bp = vPfWorld * 11.0 + h * 17.0;
-      float bloom = smoothstep(0.72, 0.8, pfWobble(bp) * 0.55 + pfWobble(bp * 1.9 + 3.1) * 0.45);
-      c = mix(c, h < 0.3 ? ${lin(0xffb8d2)} : ${lin(0xfff2f6)}, uSeason.x * bloom * 0.95);
+    if (leafy) {
+      // soft clusters of blossom over the canopy: pink on some trees, white on others, more or less of it
+      vec3 bp = vPfWorld * 4.2 + h * 17.0;
+      float lo = 0.56 + fract(h * 7.31) * 0.14;
+      float bloom = smoothstep(lo, lo + 0.1, pfWobble(bp) * 0.6 + pfWobble(bp * 2.3 + 3.1) * 0.4);
+      c = mix(c, h < 0.45 ? ${lin(0xffb8d2)} : ${lin(0xfff0f5)}, uSeason.x * bloom * 0.95);
     }
   }
   // autumn: a colour per tree, blended across the canopy; warmer grass
@@ -126,31 +138,33 @@ if (dot(uSeason, uSeason) > 0.0) {
       vec3 a = mix(pfAutumn(i), pfAutumn(mod(i + 1.0, 4.0)), smoothstep(0.35, 0.75, n));
       c = mix(c, a * clamp(lum / 0.3, 0.55, 1.25), uSeason.z);
     } else if (ground || k > 7.5) {
-      c = mix(c, c * vec3(1.32, 1.02, 0.6) + vec3(0.02, 0.008, 0.0), uSeason.z * grass * (k > 7.5 ? 0.9 : 0.65));
+      c = mix(c, c * vec3(1.42, 1.0, 0.52) + vec3(0.025, 0.01, 0.0), uSeason.z * grass * (k > 7.5 ? 0.95 : 0.8));
     }
   }
   #ifdef PF_SAND
-  // summer: sand around the dais
+  // summer: a sandy beach around the dais, damp and darker at its edge
   if (uSeason.y > 0.0) {
     vec2 q = vec2(vPfWorld.x, vPfWorld.z / 0.82);
     float th = atan(q.y, q.x);
-    float edge = 3.25 + 0.22 * sin(th * 3.0 + 1.3) + 0.13 * sin(th * 7.0 + 0.4);
-    float sand = smoothstep(edge + 0.16, edge - 0.16, length(q)) * smoothstep(-0.25, -0.05, vPfWorld.y);
-    vec3 sc = mix(${lin(0xf1d6a0)}, ${lin(0xf8e4b6)}, n);
+    float d = length(q) - (${SAND.r.toFixed(2)} + ${SAND.a.toFixed(2)} * sin(th * 3.0 + 1.3) + ${SAND.b.toFixed(2)} * sin(th * 7.0 + 0.4));
+    float sand = smoothstep(0.12, -0.12, d) * smoothstep(-0.25, -0.05, vPfWorld.y);
+    vec3 sc = mix(${lin(0xf0cf8e)}, ${lin(0xf8e3b2)}, smoothstep(0.3, 0.7, pfWobble(vPfWorld * 3.1)));
+    sc = mix(sc, ${lin(0xdcb578)}, smoothstep(-0.55, -0.05, d) * 0.6);
     c = mix(c, sc, uSeason.y * sand);
   }
   #endif
   // winter: snow on whatever faces up, a frosty cast on the rest, ice on water
-  if (uSeason.w > 0.0 && k < 5.5 || uSeason.w > 0.0 && k > 6.5) {
-    float lo = leafy || (k > 1.5 && k < 2.5) || (k > 4.5 && k < 5.5) ? 0.12 : ground ? 0.18 : 0.5;
+  if (uSeason.w > 0.0 && (k < 5.5 || k > 6.5)) {
+    float lo = leafy || (k > 1.5 && k < 2.5) || (k > 4.5 && k < 5.5) ? 0.12 : ground ? -0.75 : 0.5;
     float snow = smoothstep(lo, lo + 0.3, up + (n - 0.5) * 0.3);
+    if (k > 8.5) snow *= smoothstep(0.4, 0.62, pfWobble(vPfWorld * 2.6) * 0.7 + pfWobble(vPfWorld * 7.0) * 0.3);
     #ifdef PF_TIP
     snow = smoothstep(0.04, 0.3, vPfTip) * 0.85;
     #endif
     if (k > 3.5 && k < 4.5) { c = mix(c, ${lin(0xb7dcea)}, uSeason.w * 0.65); snow = 0.0; }
     if (ground) snow *= 1.0 - water;
     c = mix(c, vec3(lum) * vec3(0.9, 0.97, 1.1), uSeason.w * 0.28);
-    c = mix(c, ${lin(0xf2f6fc)} * (0.93 + 0.07 * n), uSeason.w * snow);
+    c = mix(c, ${lin(0xe6ecf6)} * (0.93 + 0.07 * n), uSeason.w * snow);
     roughnessFactor = mix(roughnessFactor, 0.95, uSeason.w * snow);
   }
   diffuseColor.rgb = c;

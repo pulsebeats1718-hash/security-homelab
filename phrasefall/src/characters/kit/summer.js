@@ -3,20 +3,29 @@
  *
  *   import { addSummerGear, removeSummerGear, setSummerGear } from './kit/summer.js';
  *
- *   const gear = addSummerGear(rig, def); // after createCharacter(); returns { remove() }
- *   gear.remove();                        // or removeSummerGear(rig)
- *   setSummerGear(rig, def, on);          // convenience toggle (idempotent)
+ *   const { rig, def } = createCharacter(id);
+ *   const gear = addSummerGear(rig, def);   // → { glasses, ring, remove() }; also kept on rig.props.summer
+ *   gear.remove();                          // same as removeSummerGear(rig): restores the rig exactly
+ *   setSummerGear(rig, def, on);            // idempotent toggle; returns the handle or null
+ *
+ * Call it on a built rig (after createCharacter / captureRest), any time — also mid-animation.
+ * Fitting is a one-off of a few milliseconds; nothing is allocated per frame.
  *
  * Everything is measured from the rig itself, so it fits every body shape:
- *   - the lenses sit over the face rig's own eyes (position, size, orientation) and are pushed
- *     just far enough forward to clear snouts, beaks and fringes (raycast against the head);
- *   - the temples run back to the sides of the head ellipsoid;
- *   - the ring is sized to the body's real outline at waist height (raycast against the torso,
- *     so coats, skirts, bellies and odd bodies are all included) and hugs it.
- * The gear rides on the head / torso joints, so it follows every animation. A small ticker keeps
- * resting arms on top of the ring instead of sinking into it, lifts the character off the ground
- * when a KO would push the ring into it, and hides the gear while the character is shown as a
- * locked silhouette.
+ *   - glasses: one lens over each of the face rig's own eyes (position, size, orientation), sized
+ *     to the eye; where a snout, beak, hat brim or fringe would poke through a lens, the lens first
+ *     shrinks and slides away from it, then is pushed out just far enough (rays cast at the head).
+ *     Temples run back to the sides of the head. A character that already wears glasses
+ *     (rig.props.glasses, e.g. the owl) gets its own lenses tinted instead of a second pair.
+ *   - ring: sized to the body's real outline at waist height (rays cast at the torso and everything
+ *     on it, so coats, skirts, robes, bellies and odd bodies are all included; a tail or prop that
+ *     sticks out is ignored) and hugs it. Its colour is picked to stand out from the body.
+ * The gear rides on the head / torso joints, so it follows every animation. One ticker:
+ *   - rests the arms on top of the ring instead of letting them sink into it,
+ *   - tips the front of the ring up when a leg swings forward (kicks, marching),
+ *   - lifts the character so the ring never sinks into the ground (KO),
+ *   - hides the gear while the character is shown as a locked silhouette.
+ * Materials go through the rig's fx, so damage flashes work on the gear too.
  *
  * A model can tune the fit with an optional `summer` field on its definition (all optional):
  *   summer: {
@@ -26,17 +35,17 @@
  *       y, lift,                   // move the lenses up / further out (metres)
  *       forward,                   // 0 = lenses follow the eyes' wrap, 1 = flat to the front (default 0.2)
  *       nudge,                     // how far a lens may simply be pushed out before it shrinks instead (0.03)
- *       temples: false,            // no arms back to the ears (helmets, hoods …)
  *       maxLift,                   // how far the lenses may be pushed out to clear the face (default 0.07)
+ *       temples: false,            // no arms back to the ears
  *     },
  *     ring: false | {
- *       y,                         // height of the ring in its parent's space (default: waist)
+ *       y,                         // height of the ring in its parent's space (default: the waist)
  *       z,                         // nudge forwards / backwards
  *       scale,                     // radius multiplier on the measured fit
  *       tube,                      // tube radius (default ~0.1)
  *       tilt,                      // lean (radians, + = front edge down)
  *       parent: 'torso' | 'head',  // what it is worn on (the ghost's body hangs from its head joint)
- *       arms: false,               // let the arms do as they please (no resting on the ring)
+ *       arms: false,               // leave the arms alone (no resting on the ring)
  *     },
  *   }
  */
@@ -143,6 +152,194 @@ function collect(root, exclude) {
   return out;
 }
 
+// ── fast ray casting ─────────────────────────────────────────────────────
+// Fitting the gear takes a few thousand rays. Nearly every kit mesh is a scaled sphere / dome, a
+// surface of revolution, a torus, a rounded box or a capsule, so those are intersected exactly
+// (a quadratic per surface, or a short sphere trace) instead of with thousands of triangle tests;
+// anything else (cylinders, cones, stars …) falls back to three's triangle raycast.
+
+const EPS = 1e-6;
+
+/** Ray (local origin o, local direction d scaled so t is in world units) against a unit-ish sphere / dome. */
+function hitSphere(it, o, d, best) {
+  const p = it.p;
+  const R = p.radius ?? 1;
+  const a = d.dot(d);
+  const b = 2 * o.dot(d);
+  const c = o.dot(o) - R * R;
+  const disc = b * b - 4 * a * c;
+  if (disc < 0) return best;
+  const sq = Math.sqrt(disc);
+  const full = (p.thetaStart ?? 0) <= 1e-4 && (p.thetaLength ?? Math.PI) >= Math.PI - 1e-4;
+  const ok = (t) => {
+    if (t <= EPS || t >= best) return false;
+    if (full) return true;
+    const th = Math.acos(clamp((o.y + t * d.y) / R, -1, 1));
+    return th >= p.thetaStart - 1e-4 && th <= p.thetaStart + p.thetaLength + 1e-4;
+  };
+  const t1 = (-b - sq) / (2 * a);
+  const t2 = (-b + sq) / (2 * a);
+  // entering the sphere = its outside (front faces); leaving it = the inside (back faces)
+  if (it.side !== THREE.BackSide && ok(t1)) return t1;
+  if (it.side !== THREE.FrontSide && ok(t2)) return t2;
+  return best;
+}
+
+/** Ray against a lathe (surface of revolution about local Y): one cone frustum per profile segment. */
+function hitLathe(it, o, d, best) {
+  const pts = it.p.points;
+  for (let i = 1; i < pts.length; i++) {
+    const r0 = pts[i - 1].x;
+    const y0 = pts[i - 1].y;
+    const r1 = pts[i].x;
+    const dy = pts[i].y - y0;
+    if (Math.abs(dy) < 1e-9) {
+      // a flat annulus
+      if (Math.abs(d.y) < 1e-12) continue;
+      const t = (y0 - o.y) / d.y;
+      if (t <= EPS || t >= best) continue;
+      const rr = Math.hypot(o.x + t * d.x, o.z + t * d.z);
+      if (rr >= Math.min(r0, r1) && rr <= Math.max(r0, r1)) best = t;
+      continue;
+    }
+    const k = (r1 - r0) / dy;
+    const a0 = r0 + (o.y - y0) * k; // the frustum's radius at the ray origin's height …
+    const a1 = d.y * k; //                … and how it changes along the ray
+    const A = d.x * d.x + d.z * d.z - a1 * a1;
+    const B = 2 * (o.x * d.x + o.z * d.z - a0 * a1);
+    const C = o.x * o.x + o.z * o.z - a0 * a0;
+    let tA;
+    let tB;
+    if (Math.abs(A) < 1e-12) {
+      if (Math.abs(B) < 1e-12) continue;
+      tA = tB = -C / B;
+    } else {
+      const disc = B * B - 4 * A * C;
+      if (disc < 0) continue;
+      const sq = Math.sqrt(disc);
+      tA = (-B - sq) / (2 * A);
+      tB = (-B + sq) / (2 * A);
+    }
+    for (const t of [tA, tB]) {
+      if (t <= EPS || t >= best) continue;
+      const u = (o.y + t * d.y - y0) / dy;
+      if (u < 0 || u > 1 || a0 + a1 * t < 0) continue;
+      best = t;
+    }
+  }
+  return best;
+}
+
+/**
+ * Exact signed distance functions (local space) for the other common kit shapes; they are
+ * sphere-traced, which takes a few dozen cheap steps instead of hundreds of triangle tests.
+ */
+function sdTorus(R, r, arc) {
+  const ex = R * Math.cos(arc);
+  const ey = R * Math.sin(arc);
+  const partial = arc < TAU - 1e-4;
+  return (x, y, z) => {
+    if (partial) {
+      let th = Math.atan2(y, x);
+      if (th < 0) th += TAU;
+      if (th > arc) return Math.min(Math.hypot(x - R, y, z), Math.hypot(x - ex, y - ey, z)) - r;
+    }
+    return Math.hypot(Math.hypot(x, y) - R, z) - r;
+  };
+}
+function sdRoundedBox(hx, hy, hz, rad) {
+  return (x, y, z) => {
+    const qx = Math.abs(x) - hx + rad;
+    const qy = Math.abs(y) - hy + rad;
+    const qz = Math.abs(z) - hz + rad;
+    const ox = Math.max(qx, 0);
+    const oy = Math.max(qy, 0);
+    const oz = Math.max(qz, 0);
+    return Math.sqrt(ox * ox + oy * oy + oz * oz) + Math.min(Math.max(qx, qy, qz), 0) - rad;
+  };
+}
+function sdCapsule(r, h) {
+  const hh = h / 2;
+  return (x, y, z) => Math.hypot(x, y - clamp(y, -hh, hh), z) - r;
+}
+
+/** Sphere-trace a ray (local origin o, direction d with t in world units) against an SDF bounded by a sphere. */
+function hitSdf(it, o, d, best) {
+  const a = d.dot(d);
+  const b = 2 * o.dot(d);
+  const c = o.dot(o) - it.bound * it.bound;
+  const disc = b * b - 4 * a * c;
+  if (disc < 0) return best;
+  const sq = Math.sqrt(disc);
+  let t = Math.max(EPS, (-b - sq) / (2 * a));
+  const end = Math.min(best, (-b + sq) / (2 * a));
+  const len = Math.sqrt(a);
+  for (let i = 0; i < 48 && t < end; i++) {
+    const dist = it.sdf(o.x + t * d.x, o.y + t * d.y, o.z + t * d.z);
+    if (dist < 2e-4) return t;
+    t += dist / len;
+  }
+  return best;
+}
+
+class Caster {
+  constructor(meshes) {
+    // meshes squashed to nothing (an effect scaled to 0 for a moment) cannot be hit, and their
+    // matrices cannot be inverted
+    this.items = meshes.filter((m) => Math.abs(m.matrixWorld.determinant()) > 1e-15).map((m) => {
+      const g = m.geometry;
+      const p = g.parameters ?? {};
+      let kind = 0;
+      let sdf = null;
+      let bound = 0;
+      if (g.type === 'SphereGeometry' && (p.phiLength ?? TAU) >= TAU - 1e-4) kind = 1;
+      else if (g.type === 'LatheGeometry' && (p.phiLength ?? TAU) >= TAU - 1e-4) kind = 2;
+      else if (g.type === 'TorusGeometry' && (p.thetaLength ?? TAU) >= TAU - 1e-4 && !(p.thetaStart > 0)) {
+        kind = 3;
+        sdf = sdTorus(p.radius, p.tube, p.arc ?? TAU);
+        bound = p.radius + p.tube + 1e-3;
+      } else if (g.type === 'RoundedBoxGeometry' && p.width) {
+        kind = 3;
+        const rad = Math.min(p.radius ?? 0, p.width / 2, p.height / 2, p.depth / 2);
+        sdf = sdRoundedBox(p.width / 2, p.height / 2, p.depth / 2, rad);
+        bound = Math.hypot(p.width, p.height, p.depth) / 2 + 1e-3;
+      } else if (g.type === 'CapsuleGeometry' && p.radius) {
+        kind = 3;
+        sdf = sdCapsule(p.radius, p.height ?? p.length ?? 0);
+        bound = (p.height ?? p.length ?? 0) / 2 + p.radius + 1e-3;
+      }
+      return { m, kind, p, sdf, bound, side: m.material?.side ?? THREE.FrontSide, inv: new THREE.Matrix4().copy(m.matrixWorld).invert() };
+    });
+    this.rc = new THREE.Raycaster();
+    this.o = new THREE.Vector3();
+    this.d = new THREE.Vector3();
+    this.hits = [];
+  }
+
+  /** Distance along a world-space ray (unit direction) to the first surface, or Infinity. */
+  first(origin, dir, far = Infinity) {
+    let best = far;
+    const { o, d, rc, hits } = this;
+    rc.set(origin, dir);
+    rc.far = far;
+    for (const it of this.items) {
+      if (it.kind) {
+        o.copy(origin).applyMatrix4(it.inv);
+        d.copy(origin).add(dir).applyMatrix4(it.inv).sub(o);
+        if (!(d.lengthSq() > 1e-18)) continue;
+        const t = it.kind === 1 ? hitSphere(it, o, d, best) : it.kind === 2 ? hitLathe(it, o, d, best) : hitSdf(it, o, d, best);
+        if (t < best) best = t; // (NaN-safe)
+      } else {
+        rc.far = best;
+        hits.length = 0;
+        it.m.raycast(rc, hits);
+        for (const h of hits) if (h.distance < best) best = h.distance;
+      }
+    }
+    return best;
+  }
+}
+
 // ── sunglasses ───────────────────────────────────────────────────────────
 
 /** Half-extents of an eye's open shape in its root's frame (x across, y up, z = how far it stands out). */
@@ -220,15 +417,15 @@ function buildGlasses(rig, cfg, color, mats) {
   for (const b of face.brows) exclude.add(b.root);
   if (face.mouth) exclude.add(face.mouth.root);
   const head = rig.head;
-  const blockers = collect(parent === head || !head ? parent : head, exclude);
+  const caster = new Caster(collect(parent === head || !head ? parent : head, exclude));
 
   const R = rig.headRadii ?? [0.57, 0.52, 0.53];
   const Rmean = (R[0] + R[1] + R[2]) / 3;
   const forward = cfg.forward ?? 0.2;
   const maxLift = cfg.maxLift ?? 0.07;
-  const ray = new THREE.Raycaster();
   const wo = new THREE.Vector3();
   const wd = new THREE.Vector3();
+  const wh = new THREE.Vector3();
 
   const lenses = face.eyes.map((eye) => {
     const ext = eyeExtent(eye);
@@ -262,12 +459,11 @@ function buildGlasses(rig, cfg, color, mats) {
       const from = p.clone().addScaledVector(L.nz, 0.6);
       parent.localToWorld(wo.copy(from));
       parent.localToWorld(wd.copy(p)).sub(wo).normalize();
-      ray.set(wo, wd);
-      ray.far = 1.4;
-      const hit = ray.intersectObjects(blockers, false)[0];
-      if (!hit) continue;
-      const depth = parent.worldToLocal(hit.point.clone()).sub(p).dot(L.nz) + 0.012; // > 0: pokes through
-      if (depth <= 0) continue;
+      const t = caster.first(wo, wd, 1.4);
+      if (!(t < 1.4)) continue;
+      parent.worldToLocal(wh.copy(wo).addScaledVector(wd, t));
+      const depth = wh.sub(p).dot(L.nz) + 0.012; // > 0: the face pokes through the lens here
+      if (!(depth > 0)) continue;
       need = Math.max(need, depth);
       if (v < -0.2) below = Math.max(below, depth);
       if (v > 0.2) above = Math.max(above, depth);
@@ -342,9 +538,10 @@ function buildGlasses(rig, cfg, color, mats) {
 function measureWaist(parent, exclude, y, band) {
   const targets = collect(parent, exclude);
   if (!targets.length) return null;
-  const ray = new THREE.Raycaster();
+  const caster = new Caster(targets);
   const o = new THREE.Vector3();
   const d = new THREE.Vector3();
+  const hp = new THREE.Vector3();
   const pts = [];
   const N = 24;
   for (let i = 0; i < N; i++) {
@@ -355,11 +552,9 @@ function measureWaist(parent, exclude, y, band) {
     for (const h of [y - band, y, y + band]) {
       parent.localToWorld(o.set(dx * 3, h, dz * 3));
       parent.localToWorld(d.set(0, h, 0)).sub(o).normalize();
-      ray.set(o, d);
-      ray.far = 3.2;
-      const hit = ray.intersectObjects(targets, false)[0];
-      if (!hit) continue;
-      const p = parent.worldToLocal(hit.point.clone());
+      const t = caster.first(o, d, 3.2);
+      if (!(t < 3.2)) continue;
+      const p = parent.worldToLocal(hp.copy(o).addScaledVector(d, t));
       const rr = Math.hypot(p.x, p.z);
       if (!best || rr > best.rr) best = { x: p.x, z: p.z, rr };
     }
@@ -447,10 +642,15 @@ function makeTicker(rig, glasses, ring, cfgRing, ownGlasses) {
     for (const [side, s] of [['L', 1], ['R', -1]]) {
       const arm = rig[`arm${side}`];
       if (!arm) continue;
-      const hand = rig.m[`hand${side}`];
-      const handR = hand?.visible !== false && hand?.scale ? Math.max(hand.scale.x, 0.06) : 0.08;
-      const armMesh = rig.m[`arm${side}`];
-      const armR = armMesh?.geometry?.parameters?.radius ?? 0.1;
+      // thickness of the arm / hand across (kit balls are scaled unit spheres, so use the real extent)
+      const halfX = (mesh, fallback) => {
+        if (!mesh?.geometry || mesh.visible === false) return fallback;
+        const g = mesh.geometry;
+        if (!g.boundingBox) g.computeBoundingBox();
+        return ((g.boundingBox.max.x - g.boundingBox.min.x) / 2) * Math.abs(mesh.scale.x);
+      };
+      const handR = clamp(halfX(rig.m[`hand${side}`], 0.08), 0.05, 0.16);
+      const armR = clamp(halfX(rig.m[`arm${side}`], 0.1), 0.04, 0.16);
       arms.push({ arm, s, L: rig.metrics.armLen ?? 0.44, handR, armR });
     }
   }
@@ -459,6 +659,9 @@ function makeTicker(rig, glasses, ring, cfgRing, ownGlasses) {
   const p = new THREE.Vector3();
   const rootInv = new THREE.Matrix4();
   const SAMPLES = [0.5, 0.75, 1];
+  // a leg swinging forward (kicks, high-knee marching) nudges the front of the ring up
+  const legs = ring ? ['legL', 'legR'].filter((n) => rig.joints[n]).map((n) => rig.joints[n]) : [];
+  const base = ring ? { y: ring.frame.position.y, z: ring.frame.position.z, tilt: ring.frame.rotation.x } : null;
 
   const hits = (a) => {
     a.arm.updateMatrix();
@@ -487,6 +690,16 @@ function makeTicker(rig, glasses, ring, cfgRing, ownGlasses) {
     if (!ring) return;
     ring.frame.visible = show;
 
+    if (legs.length) {
+      let swing = 0;
+      for (const j of legs) swing = Math.max(swing, j.rx - j.obj.rotation.x);
+      const k = Math.min(1, Math.max(0, (swing - 0.35) / 1.15));
+      const th = -0.3 * k * k * (3 - 2 * k); // front edge up, pivoting on the back edge
+      ring.frame.rotation.x = base.tilt + th;
+      ring.frame.position.y = base.y - ring.B * Math.sin(th);
+      ring.frame.position.z = base.z - ring.B * (1 - Math.cos(th));
+    }
+
     // arms rest on the ring rather than sinking into it
     if (arms.length) {
       ring.frame.updateWorldMatrix(true, false);
@@ -497,18 +710,25 @@ function makeTicker(rig, glasses, ring, cfgRing, ownGlasses) {
       }
     }
 
-    // never let the ring sink into the ground (it would on a KO topple)
+    // never let the ring sink into the ground (it would on a KO topple). Samples the tube's surface,
+    // so it also scales with the character (the appear clip grows it from nothing).
     ring.frame.updateWorldMatrix(true, false);
     rig.root.updateWorldMatrix(true, false);
     rootInv.copy(rig.root.matrixWorld).invert();
+    m.multiplyMatrices(rootInv, ring.frame.matrixWorld);
     let low = Infinity;
     for (let i = 0; i < 16; i++) {
       const a = (i / 16) * TAU;
-      p.set(Math.sin(a) * ring.A, 0, Math.cos(a) * ring.B).applyMatrix4(ring.frame.matrixWorld).applyMatrix4(rootInv);
-      low = Math.min(low, p.y);
+      const sa = Math.sin(a);
+      const ca = Math.cos(a);
+      for (let j = 0; j < 6; j++) {
+        const b = (j / 6) * TAU;
+        const out = ring.r * Math.cos(b);
+        p.set(sa * (ring.A + out), ring.r * Math.sin(b), ca * (ring.B + (out * ring.B) / ring.A)).applyMatrix4(m);
+        if (p.y < low) low = p.y;
+      }
     }
-    const sink = ring.r - low;
-    if (sink > 0) rig.pivot.position.y += sink;
+    if (low < 0) rig.pivot.position.y -= low;
   };
 }
 
