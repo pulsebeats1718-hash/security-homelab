@@ -6,6 +6,10 @@
  *   Wrong or too slow: lose one of three lives. No lives left: game over.
  *   Every eight correct answers the stage, vocabulary and time of day move on.
  *
+ * Two modes: 'classic' (above, endless) and 'daily' — a fixed run of 20 cards
+ * that is the same for everyone each UTC day (see daily.js), with a small
+ * speed bonus and no stage-ups; the time of day moves on as the run progresses.
+ *
  * This module owns state and timing only. It talks to the interface through
  * events and to the 3D world through the stage / environment / effects objects.
  */
@@ -14,7 +18,11 @@ import { STAGES, PACE, SCORING, streakBonus } from '../data/stages.js';
 import { BY_STAGE } from '../data/expressions/index.js';
 import { ExpressionCard } from './card.js';
 import { shots } from './shots.js';
+import { buildDaily, dailySegment, speedBonus, utcDateId } from './daily.js';
 import { clamp, shuffle, smoothstep } from '../core/utils.js';
+
+/** Classic games deal expressions that are due for spaced-repetition review this much more often. */
+const DUE_WEIGHT = 1.8;
 
 const _v = new THREE.Vector3();
 const _w = new THREE.Vector3();
@@ -30,6 +38,8 @@ export class Game {
     this.card = new ExpressionCard(stage.scene);
     this.ch = null;
     this.state = 'idle'; // idle | intro | playing | resolving | stageup | over
+    this.mode = 'classic'; // classic | daily
+    this.daily = null; // the daily run: { dateId, n, cards, index, ranked, started, settled }
     this.paused = false;
     this.timers = [];
     this.layout = { panelH: 240, hudH: 84 };
@@ -52,6 +62,8 @@ export class Game {
     this.used = new Set();
     this.deck = [];
     this.question = null;
+    this.qTime = 0; // seconds the current card has been answerable (pauses excluded)
+    this.marks = ''; // daily: one character per card — c right, w wrong
     this.fallTime = 10;
     this.tickT = 0;
     this.trailT = 0;
@@ -64,6 +76,11 @@ export class Game {
   }
   get active() {
     return this.state !== 'idle' && this.state !== 'over';
+  }
+  /** What the interface needs to know about a daily run (null in classic games). */
+  get dailyInfo() {
+    const d = this.daily;
+    return d && { dateId: d.dateId, n: d.n, total: d.cards.length, index: d.index, ranked: d.ranked };
   }
 
   setCharacter(ch) {
@@ -92,8 +109,16 @@ export class Game {
   }
 
   // ── run lifecycle ───────────────────────────────────────────────────────
-  start() {
+  /** Start a run. `opts.mode`: 'classic' (default) or 'daily'. Needs the expression database loaded. */
+  start(opts = {}) {
+    this._settleDaily();
     this.reset();
+    this.mode = opts.mode === 'daily' ? 'daily' : 'classic';
+    this.daily = null;
+    if (this.mode === 'daily') {
+      const run = buildDaily(utcDateId());
+      this.daily = { ...run, index: 0, ranked: !this.save.dailyRecord(run.dateId), started: false, settled: false };
+    }
     this.paused = false;
     this.card.hide();
     this.fx.setDizzy(false);
@@ -107,7 +132,7 @@ export class Game {
     this.audio.music?.set('game', 1);
     this.applyShot(1.0);
     this._set('intro');
-    this.events.emit('game:intro', { stage: this.stageDef, lives: this.lives });
+    this.events.emit('game:intro', { stage: this.stageDef, lives: this.lives, mode: this.mode, daily: this.dailyInfo });
     this.audio.play('start');
     this.after(0.55, () => {
       this.audio.play('ready');
@@ -134,8 +159,9 @@ export class Game {
     this.events.emit('game:pause', false);
   }
 
-  /** Leave the run without recording it. */
+  /** Leave the run without recording it (a ranked daily run still counts what was scored). */
   quit() {
+    this._settleDaily();
     this.timers.length = 0;
     this.paused = false;
     this.card.hide();
@@ -154,13 +180,15 @@ export class Game {
   // ── questions ───────────────────────────────────────────────────────────
   _refillDeck() {
     const save = this.save;
+    const now = Date.now();
     let weigh = (e) => {
       const s = save.stat(e.id);
       if (!s || !s.seen) return 2;
-      if (s.practise) return 3;
-      if (save.needsWork(e.id)) return 2.6;
-      if (save.isMastered(e.id)) return 0.6;
-      return 1.2;
+      const due = save.isDue(e.id, now) ? DUE_WEIGHT : 1;
+      if (s.practise) return 3 * due;
+      if (save.needsWork(e.id)) return 2.6 * due;
+      if (save.isMastered(e.id)) return 0.6 * due;
+      return 1.2 * due;
     };
     // harder expressions (level 2, then 3) join the mix as the player discovers more of the stage
     const stageList = BY_STAGE[this.stageIndex];
@@ -186,17 +214,45 @@ export class Game {
 
   nextCard() {
     if (this.state === 'over' || this.state === 'idle') return;
-    if (!this.deck.length) this._refillDeck();
-    const expr = this.deck.pop();
-    this.used.add(expr.id);
+    const d = this.daily;
+    let expr;
+    let options;
+    if (d) {
+      const card = d.cards[d.index];
+      if (!card) return this._finish('complete');
+      ({ expr, options } = card);
+      // the sky moves on through the day as the run progresses
+      const seg = dailySegment(d.index, d.cards.length);
+      if (seg !== this.stageIndex) {
+        this.stageIndex = seg;
+        this.env.setTheme(this.stageDef.theme, 2.8);
+        this.audio.music?.set('game', this.stageDef.n);
+      }
+      d.index++;
+      // the ranked attempt is used up as soon as its first card is on screen
+      if (d.ranked && !d.started) {
+        d.started = true;
+        this._saveDaily(false);
+      }
+    } else {
+      if (!this.deck.length) this._refillDeck();
+      expr = this.deck.pop();
+      this.used.add(expr.id);
+      options = shuffle([{ text: expr.meaning, correct: true }, ...expr.distractors.map((text) => ({ text, correct: false }))]);
+    }
     if (!this.seen.includes(expr.id)) this.seen.push(expr.id);
-    const options = shuffle([{ text: expr.meaning, correct: true }, ...expr.distractors.map((text) => ({ text, correct: false }))]);
     this.question = { expr, options, correctIndex: options.findIndex((o) => o.correct), number: this.answered + 1 };
 
     const st = this.stageDef;
-    const pace = PACE[this.save.settings.pace] ?? PACE.standard;
-    this.fallTime = Math.max(st.floor, st.fall - st.step * this.correctInStage) * pace.factor;
+    if (d) {
+      // fixed pace for everyone: each card falls at the starting speed of its own stage
+      this.fallTime = (STAGES[expr.stage - 1] ?? st).fall * PACE.standard.factor;
+    } else {
+      const pace = PACE[this.save.settings.pace] ?? PACE.standard;
+      this.fallTime = Math.max(st.floor, st.fall - st.step * this.correctInStage) * pace.factor;
+    }
     this.tickT = 0;
+    this.qTime = 0;
 
     const m = (this.metrics = shots.play(this.stage, this.layout.panelH, this.layout.hudH));
     const headTop = (this.ch?.rig.metrics.height ?? 2) + 0.05;
@@ -209,7 +265,7 @@ export class Game {
     this.fx.line(this.card.pos, this.card.halfWidth, { count: 16, color: 0xffffff, color2: this.env.v.accent, speed: 2.5, size: 0.4, life: 0.5, gravity: 0 });
     this.audio.play('spawn');
     this._set('playing');
-    this.events.emit('game:question', { ...this.question, stage: st, stageIndex: this.stageIndex, fallTime: this.fallTime });
+    this.events.emit('game:question', { ...this.question, stage: st, stageIndex: this.stageIndex, fallTime: this.fallTime, mode: this.mode, daily: this.dailyInfo });
   }
 
   /** Player picks option `index`. */
@@ -232,15 +288,20 @@ export class Game {
     this.streak++;
     this.bestStreak = Math.max(this.bestStreak, this.streak);
     const bonus = streakBonus(this.streak);
-    const gained = SCORING.correct + bonus;
+    const speed = this.daily ? speedBonus(this.qTime) : 0;
+    const gained = SCORING.correct + bonus + speed;
     this.score += gained;
     this.save.recordAnswer(q.expr.id, true);
+    if (this.daily) {
+      this.marks += 'c';
+      this._saveDaily(false);
+    }
     this.events.emit('game:answered', { choice: index, correct: true, correctIndex: q.correctIndex });
 
     const a = this.ch.animator;
     a.worry = 0;
     const clip = this.ch.def.attack === 'kick' ? 'kick' : 'attack';
-    this.pendingBurst = { gained, bonus };
+    this.pendingBurst = { gained, bonus, speed };
     a.play(clip, { speed: 1.25 });
     // safety net in case the release event is missed
     this.after(0.5, () => this._release());
@@ -285,7 +346,7 @@ export class Game {
     this.stage.shake(3, 0.16);
 
     const screen = this.stage.toScreen(pos);
-    this.events.emit('game:score', { score: this.score, gained: SCORING.correct, bonus: pb.bonus, streak: this.streak, x: screen.x, y: screen.y });
+    this.events.emit('game:score', { score: this.score, gained: SCORING.correct, bonus: pb.bonus, speed: pb.speed, streak: this.streak, x: screen.x, y: screen.y });
     this.env.island.setStreak(this.streak);
     this.env.island.pulseRing(pb.bonus ? 1 : 0.45);
     this.ch.animator.play('cheer', { speed: 1.1 });
@@ -298,8 +359,8 @@ export class Game {
       this.ch.animator.flash(0xffe9a8, 0.6);
     }
 
-    if (this.correctInStage >= this.stageDef.goal && this.stageIndex < STAGES.length - 1) this.after(0.75, () => this._stageUp());
-    else this.after(0.62, () => this.nextCard());
+    if (!this.daily && this.correctInStage >= this.stageDef.goal && this.stageIndex < STAGES.length - 1) this.after(0.75, () => this._stageUp());
+    else this.after(0.62, () => this._advance());
   }
 
   // ── wrong / too slow ────────────────────────────────────────────────────
@@ -311,6 +372,10 @@ export class Game {
     this.lives--;
     this.save.recordAnswer(q.expr.id, false);
     if (!this.wrong.includes(q.expr.id)) this.wrong.push(q.expr.id);
+    if (this.daily) {
+      this.marks += 'w';
+      this._saveDaily(false);
+    }
     this.events.emit('game:answered', { choice: index, correct: false, correctIndex: q.correctIndex, timeout: index == null });
     this.env.island.setStreak(0);
     if (index != null) {
@@ -353,7 +418,13 @@ export class Game {
     a.play('hit');
     this.fx.setDizzy(true);
     this.after(1.25, () => this.fx.setDizzy(false));
-    this.after(1.9, () => this.nextCard());
+    this.after(1.9, () => this._advance());
+  }
+
+  /** Next card — or, at the end of a daily run, the finish. */
+  _advance() {
+    if (this.daily && this.daily.index >= this.daily.cards.length) this._finish('complete');
+    else this.nextCard();
   }
 
   // ── stage up ────────────────────────────────────────────────────────────
@@ -376,15 +447,34 @@ export class Game {
 
   // ── game over ───────────────────────────────────────────────────────────
   _gameOver() {
+    this._finish('ko');
+  }
+
+  /** End of a run: 'ko' (out of lives) or 'complete' (the last card of a daily run). */
+  _finish(reason) {
     this._set('over');
     this.timers.length = 0;
     const a = this.ch.animator;
-    a.play('ko');
-    this.fx.setDizzy(true);
+    const ko = reason === 'ko';
+    if (ko) {
+      a.play('ko');
+      this.fx.setDizzy(true);
+      this.env.setDim(1);
+    } else {
+      a.play('cheer', { speed: 0.85 });
+      this.audio.play('stage');
+      this.ch.rig.root.getWorldPosition(_v);
+      this.fx.confetti(_v.setY(1.4), { count: 70, spread: 4 });
+    }
     this.audio.music?.muffle(true);
-    this.env.setDim(1);
-    const record = this.save.finishGame({ score: this.score, bestStreak: this.bestStreak, stage: this.stageIndex + 1 });
+    const record = this.save.finishGame({ score: this.score, bestStreak: this.bestStreak, stage: this.stageIndex + 1, mode: this.mode });
+    const d = this.daily;
+    if (d) this._saveDaily(true);
     const results = {
+      mode: this.mode,
+      reason,
+      // daily: run info, this run's marks and the day's ranked attempt (this run, or an earlier one if this was practice)
+      daily: d && { ...this.dailyInfo, marks: this.marks, rankedRecord: this.save.dailyRecord(d.dateId) },
       score: this.score,
       best: this.save.data.best.score,
       newBest: record.newBest && this.score > 0,
@@ -400,11 +490,52 @@ export class Game {
     };
     this.results = results;
     this.events.emit('game:ending', results);
+    this._submit();
     this.after(0.9, () => {
-      this.audio.play('gameOver');
+      if (ko) this.audio.play('gameOver');
       this.stage.setShot(shots.over(this.stage), 1.5);
     });
     this.after(2.1, () => this.events.emit('game:over', results));
+  }
+
+  // ── daily challenge bookkeeping ─────────────────────────────────────────
+  /** Store the ranked attempt (practice runs are not stored). */
+  _saveDaily(done) {
+    const d = this.daily;
+    if (!d?.ranked || d.settled) return null;
+    if (done) d.settled = true;
+    return this.save.saveDaily(d.dateId, { n: d.n, score: this.score, correct: this.correct, answered: this.answered, total: d.cards.length, bestStreak: this.bestStreak, marks: this.marks, done });
+  }
+
+  /** Leaving a ranked daily run part-way still uses up the day's attempt: record what was scored. */
+  _settleDaily() {
+    const d = this.daily;
+    if (!d?.ranked || !d.started || d.settled) return;
+    this._saveDaily(true);
+    this._submit();
+  }
+
+  /**
+   * A ranked daily run cut short by a closed tab is still marked unfinished in
+   * the save: count it as finished (and submit today's) once the player is back.
+   */
+  settleInterruptedDaily() {
+    if (this.daily && this.active) return;
+    const today = utcDateId();
+    for (const [dateId, rec] of Object.entries(this.save.data.daily)) {
+      if (rec.done) continue;
+      this.save.saveDaily(dateId, { done: true });
+      if (dateId === today) this.events.emit('game:submit', { mode: 'daily', dateId, score: rec.score, stage: dailySegment(Math.max(0, rec.answered - 1), rec.total || 20) + 1, correct: rec.correct, answered: rec.answered, bestStreak: rec.bestStreak, character: this.save.data.character });
+    }
+  }
+
+  /** Hand the result to whoever records scores (results screen → app.online). Practice runs are not submitted. */
+  _submit() {
+    const d = this.daily;
+    if (d && !d.ranked) return;
+    const result = { mode: this.mode, score: this.score, stage: this.stageIndex + 1, correct: this.correct, answered: this.answered, bestStreak: this.bestStreak, character: this.save.data.character };
+    if (d) result.dateId = d.dateId;
+    this.events.emit('game:submit', result);
   }
 
   // ── frame ───────────────────────────────────────────────────────────────
@@ -427,6 +558,7 @@ export class Game {
 
     const card = this.card;
     const res = card.update(dt, this.fallTime);
+    if (this.state === 'playing') this.qTime += dt;
 
     if (this.state === 'playing' && ch) {
       const t = card.t;

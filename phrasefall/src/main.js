@@ -24,6 +24,7 @@ import { createFlashcards } from './ui/screens/flashcards.js';
 import { createCollection } from './ui/screens/collection.js';
 import { createRecords } from './ui/screens/records.js';
 import { createSettings } from './ui/screens/settings.js';
+import { loadExpressions, expressionsReady } from './data/expressions/index.js';
 
 const params = new URLSearchParams(location.search);
 const bootEl = document.getElementById('boot');
@@ -32,6 +33,8 @@ const progress = (p) => bar && (bar.style.width = `${Math.round(p * 100)}%`);
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function boot() {
+  // the expression files (one chunk each) download while the world is built; screens that need them wait
+  loadExpressions().catch((err) => console.warn('Phrasefall: expressions did not load yet:', err));
   const save = new Save();
   const events = new Events();
   const audio = new AudioEngine(save.settings);
@@ -90,14 +93,16 @@ async function boot() {
     audio.play('select');
     ui.go('menu');
   };
-  app.startGame = () => {
+  /** opts.mode: 'classic' (default) or 'daily'. Before the expressions have loaded, the menu waits and retries. */
+  app.startGame = (opts = {}) => {
     audio.unlock();
+    if (!expressionsReady()) return events.emit('data:wait', () => app.startGame(opts));
     hero.waves = false;
     hero.face();
     hero.spin = 0;
     hero.set(save.data.character, { effect: false, clip: null });
     ui.go('play');
-    game.start();
+    game.start(opts);
   };
   app.toMenu = () => {
     game.quit();
