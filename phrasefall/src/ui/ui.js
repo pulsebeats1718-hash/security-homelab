@@ -1,8 +1,16 @@
 /**
  * UI — screen manager plus the overlays every screen shares
  * (score popups, damage vignette, scene shade).
+ *
+ * Back button: while an inner screen is open, one browser-history entry stands
+ * for it, so Android's Back button (and the browser's) steps back inside the
+ * game — exactly like Escape — instead of closing the installed app. On the
+ * menu, Back leaves the app as usual.
  */
 import { h, icon, retrigger } from './dom.js';
+
+/** Screens where Back should leave the app (no history entry of their own). */
+const BASE = new Set(['menu', 'splash']);
 
 export class UI {
   constructor(app) {
@@ -15,6 +23,8 @@ export class UI {
     this.vignette = h('div.vignette');
     this.toasts = h('div.notes', { role: 'status', 'aria-live': 'polite' });
     this.root.append(this.shade);
+    this.popGuard = 0;
+    window.addEventListener('popstate', () => this._onBack());
 
     // one tap sound for every button unless it opts out
     this.root.addEventListener('click', (e) => {
@@ -67,8 +77,37 @@ export class UI {
     this.root.dataset.screen = name;
     screen.el.classList.add('is-on');
     screen.show?.(params, prev?.name);
+    this._syncHistory();
     this.shade.classList.toggle('is-on', !!screen.shade);
     this.app.events.emit('ui:screen', name);
+  }
+
+  /** Keep one history entry while an inner screen is open (see the note at the top). */
+  _syncHistory() {
+    try {
+      const inner = !!this.current && !BASE.has(this.current.name);
+      const marked = history.state?.phrasefall === true;
+      if (inner && !marked) history.pushState({ phrasefall: true }, '');
+      else if (!inner && marked) {
+        this.popGuard++; // the popstate this causes is ours, not the player's
+        history.back();
+      }
+    } catch {
+      /* no history (some embedded frames): Back simply behaves as before */
+    }
+  }
+
+  /** The player pressed Back: the open screen handles it like Escape. */
+  _onBack() {
+    if (this.popGuard > 0) {
+      this.popGuard--;
+      this._syncHistory(); // a screen opened while our own step back was under way
+      return;
+    }
+    const cur = this.current;
+    if (!cur || BASE.has(cur.name)) return;
+    cur.screen.key?.({ key: 'Escape', preventDefault() {}, stopPropagation() {} });
+    this._syncHistory(); // still inside (a paused game, a closed overlay): ready for the next Back
   }
 
   /** Floating text at a screen position (score gains). */

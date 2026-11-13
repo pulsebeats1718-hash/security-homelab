@@ -10,7 +10,8 @@ Firebase SDK is left out of the bundle. `npm run build:single` (the private one-
 never includes online features, even when a config is present.
 
 You need a Google account, Node 18 or newer, and about 30 minutes. Steps 1–9 get the game live
-at `https://<project-id>.web.app`; step 10 moves it to your own domain.
+at `https://<project-id>.web.app`; step 10 moves it to your own domain. To install the game on an
+Android phone once it is live (or to publish a guest-only copy quickly), see [ANDROID.md](ANDROID.md).
 
 ---
 
@@ -112,7 +113,8 @@ The game is now live at `https://<project-id>.web.app`. `firebase.json` controls
 - the site is served from `dist/`
 - every path falls back to `index.html`
 - files in `/assets/` are cached for a year; their names change whenever their contents do
-- `index.html` and `sw.js` use `no-cache`, so a new deploy reaches players on their next visit
+- `index.html`, `sw.js` and `manifest.webmanifest` use `no-cache`, so a new deploy reaches
+  players, and installed copies of the app, on their next visit
 
 To update the game later, run `npm run build && firebase deploy --only hosting`. Run step 7 again
 only when `firestore.rules` or `firestore.indexes.json` changes.
@@ -203,25 +205,26 @@ daily challenge, and opens two leaderboards. That comes to about 150 reads and 8
 - a few reads and writes per game for the board and the cloud save
 - a rank count costs 1 read per 1,000 players above you, at most 10, and is reused for 5 minutes
 
-A first visit downloads about 1.3 MB (compressed). Later visits use the browser's cached copy.
+A first visit downloads about 1.6 MB (compressed), including the copy the service worker keeps for
+offline play. Later visits load the game from that copy and only check the page for updates.
 
 | Daily players | Firestore reads / writes a day | Firestore | Hosting (25 % first visits) | **Roughly**          |
 | ------------- | ------------------------------ | --------- | --------------------------- | -------------------- |
-| 1,000         | 150,000 / 8,000                | ~$1/month | ~0.35 GB/day, within free   | **$0–5 a month**     |
-| 10,000        | 1.5 million / 80,000           | ~$15      | ~3.4 GB/day, ~$15           | **$30–40 a month**   |
-| 100,000       | 15 million / 800,000           | ~$150     | ~34 GB/day, ~$150           | **$300–400 a month** |
+| 1,000         | 150,000 / 8,000                | ~$1/month | ~0.4 GB/day, under $1       | **$0–5 a month**     |
+| 10,000        | 1.5 million / 80,000           | ~$15      | ~4 GB/day, ~$16             | **$30–40 a month**   |
+| 100,000       | 15 million / 800,000           | ~$150     | ~40 GB/day, ~$180           | **$300–400 a month** |
 
 - **On the free Spark plan**, the allowance covers about 300 signed-in players a day, or about
-  250 first-time visitors a day for hosting. When a quota runs out, that service stops until
+  220 first-time visitors a day for hosting. When a quota runs out, that service stops until
   the quota resets.
 - **Before launch**, switch to **Blaze**: **Usage and billing → Modify plan**. Then set a
   **budget alert** in the Google Cloud console under **Billing → Budgets & alerts**. A budget
   alert warns you; it does not stop spending.
-- **At 100,000 players a day**, opening boards is the biggest cost. The next step is a Cloud
-  Function that copies each board's top 50 into a single document once a minute, so opening a
-  board costs 1 read instead of about 50. That cuts Firestore costs by roughly two-thirds.
-  Hosting transfer scales with first visits, and a service worker or a CDN in front of the site
-  reduces it.
+- **At 100,000 players a day**, first-visit downloads and opening boards are the biggest costs.
+  For boards, the next step is a Cloud Function that copies each board's top 50 into a single
+  document once a minute, so opening a board costs 1 read instead of about 50. That cuts Firestore costs by roughly two-thirds.
+  Hosting transfer scales with first visits: returning players load the game from the copy the
+  service worker saved on their device.
 
 ## Cheating, and what the rules can and can't do
 

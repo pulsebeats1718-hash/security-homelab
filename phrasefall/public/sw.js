@@ -26,8 +26,12 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     (async () => {
       const cache = await caches.open(CACHE);
-      // the page and the build itself must all arrive, or this version does not install
-      await cache.addAll([SHELL, ...BUILD.files].map((url) => new Request(url, { cache: 'reload' })));
+      // The page and the build itself must all arrive, or this version does not install.
+      // The page is always fetched fresh. Files in assets/ have hashed names and never change,
+      // so the copies the page has just downloaded (the browser's HTTP cache) are used instead of
+      // downloading them a second time.
+      const fresh = (url) => !url.startsWith('assets/');
+      await cache.addAll([SHELL, ...BUILD.files].map((url) => new Request(url, { cache: fresh(url) ? 'reload' : 'default' })));
       await Promise.all(EXTRAS.map((url) => cache.add(new Request(url, { cache: 'reload' })).catch(() => {})));
       await self.skipWaiting();
     })()

@@ -45,7 +45,9 @@ four options before they land.
   the date, mixed across the stages, mostly level 1–2), a small speed bonus, one
   ranked attempt a day (replays are practice) and a shareable emoji result.
 - **Installable and offline** – the production build is a PWA (manifest, icons,
-  service worker); after the first visit it plays offline.
+  install screenshots, service worker); after the first visit it plays offline. On Android it
+  installs from Chrome and opens full screen, and the phone's Back button closes screens and
+  pauses games. How to publish it and install it: [ANDROID.md](ANDROID.md).
 - **Online, optional** – sign in with Google to keep progress in the cloud across
   devices and join live leaderboards (today's daily challenge, this week, all time).
   Guests play straight away, and their progress comes along when they sign in.
