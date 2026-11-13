@@ -15,7 +15,7 @@ export default [
   },
   {
     id: 'look-up',
-    text: 'look up',
+    text: 'look up (a word)',
     type: 'phrasal',
     level: 1,
     meaning: 'search for facts in a book or online',
@@ -28,7 +28,7 @@ export default [
   },
   {
     id: 'pick-up',
-    text: 'pick up',
+    text: 'pick up (a parcel)',
     type: 'phrasal',
     level: 1,
     meaning: 'collect someone or something',
@@ -41,7 +41,7 @@ export default [
   },
   {
     id: 'set-up',
-    text: 'set up',
+    text: 'set up (a charity)',
     type: 'phrasal',
     level: 1,
     meaning: 'start a business or organisation',
@@ -54,7 +54,7 @@ export default [
   },
   {
     id: 'take-up',
-    text: 'take up',
+    text: 'take up (a hobby)',
     type: 'phrasal',
     level: 1,
     meaning: 'start doing a new hobby or activity',
@@ -67,7 +67,7 @@ export default [
   },
   {
     id: 'break-up',
-    text: 'break up',
+    text: 'break up (a couple)',
     type: 'phrasal',
     level: 1,
     meaning: 'end a romantic relationship',
@@ -106,7 +106,7 @@ export default [
   },
   {
     id: 'keep-up-with',
-    text: 'keep up with',
+    text: 'keep up with (the class)',
     type: 'phrasal',
     level: 1,
     meaning: 'not fall behind others',
@@ -145,7 +145,7 @@ export default [
   },
   {
     id: 'sign-up',
-    text: 'sign up',
+    text: 'sign up (for a class)',
     type: 'phrasal',
     level: 1,
     meaning: 'put your name down for something',
@@ -158,7 +158,7 @@ export default [
   },
   {
     id: 'split-up',
-    text: 'split up',
+    text: 'split up (the class)',
     type: 'phrasal',
     level: 1,
     meaning: 'divide into smaller groups',
@@ -210,7 +210,7 @@ export default [
   },
   {
     id: 'wash-up',
-    text: 'wash up',
+    text: 'wash up (after dinner)',
     type: 'phrasal',
     level: 2,
     meaning: 'clean the dishes after a meal',
@@ -288,7 +288,7 @@ export default [
   },
   {
     id: 'mess-up',
-    text: 'mess up',
+    text: 'mess up (an exam)',
     type: 'phrasal',
     level: 1,
     meaning: 'spoil something by doing it badly',
@@ -327,7 +327,7 @@ export default [
   },
   {
     id: 'wind-up',
-    text: 'wind up',
+    text: 'wind up (a friend)',
     type: 'phrasal',
     level: 3,
     meaning: 'tease someone to annoy them',
@@ -340,7 +340,7 @@ export default [
   },
   {
     id: 'play-up',
-    text: 'play up',
+    text: 'play up (the kids)',
     type: 'phrasal',
     level: 3,
     meaning: 'behave badly or work badly',
@@ -353,7 +353,7 @@ export default [
   },
   {
     id: 'clear-up',
-    text: 'clear up',
+    text: 'clear up (the kitchen)',
     type: 'phrasal',
     level: 1,
     meaning: 'make a messy place tidy',
@@ -366,7 +366,7 @@ export default [
   },
   {
     id: 'back-up',
-    text: 'back up',
+    text: 'back up (your files)',
     type: 'phrasal',
     level: 1,
     meaning: 'make a spare copy of computer files',
@@ -379,7 +379,7 @@ export default [
   },
   {
     id: 'hold-up',
-    text: 'hold up',
+    text: 'hold up (a train)',
     type: 'phrasal',
     level: 1,
     meaning: 'delay someone or something',
@@ -405,7 +405,7 @@ export default [
   },
   {
     id: 'sum-up',
-    text: 'sum up',
+    text: 'sum up (a talk)',
     type: 'phrasal',
     level: 2,
     meaning: 'give the main points briefly',
@@ -457,7 +457,7 @@ export default [
   },
   {
     id: 'get-up',
-    text: 'get up',
+    text: 'get up (at seven)',
     type: 'phrasal',
     level: 1,
     meaning: 'leave your bed in the morning',
@@ -483,7 +483,7 @@ export default [
   },
   {
     id: 'show-up',
-    text: 'show up',
+    text: 'show up (at a party)',
     type: 'phrasal',
     level: 1,
     meaning: 'arrive at a place you are expected',
@@ -496,7 +496,7 @@ export default [
   },
   {
     id: 'pull-up',
-    text: 'pull up',
+    text: 'pull up (at the kerb)',
     type: 'phrasal',
     level: 2,
     meaning: 'stop a car or other vehicle',
@@ -535,7 +535,7 @@ export default [
   },
   {
     id: 'warm-up',
-    text: 'warm up',
+    text: 'warm up (before a run)',
     type: 'phrasal',
     level: 1,
     meaning: 'prepare your body for exercise',
@@ -548,7 +548,7 @@ export default [
   },
   {
     id: 'cut-up',
-    text: 'cut up',
+    text: 'cut up (food)',
     type: 'phrasal',
     level: 2,
     meaning: 'slice something into small pieces',
@@ -561,7 +561,7 @@ export default [
   },
   {
     id: 'fill-up',
-    text: 'fill up',
+    text: 'fill up (the tank)',
     type: 'phrasal',
     level: 2,
     meaning: 'make something full',
@@ -587,7 +587,7 @@ export default [
   },
   {
     id: 'add-up',
-    text: 'add up',
+    text: 'add up (the bill)',
     type: 'phrasal',
     level: 2,
     meaning: 'combine to give a total',
@@ -652,7 +652,7 @@ export default [
   },
   {
     id: 'speak-up',
-    text: 'speak up',
+    text: 'speak up (on the phone)',
     type: 'phrasal',
     level: 1,
     meaning: 'talk more loudly so people can hear',
@@ -665,7 +665,7 @@ export default [
   },
   {
     id: 'open-up',
-    text: 'open up',
+    text: 'open up (to a friend)',
     type: 'phrasal',
     level: 2,
     meaning: 'talk about your feelings',
@@ -678,7 +678,7 @@ export default [
   },
   {
     id: 'lock-up',
-    text: 'lock up',
+    text: 'lock up (the shop)',
     type: 'phrasal',
     level: 2,
     meaning: 'secure a building before leaving',
@@ -691,7 +691,7 @@ export default [
   },
   {
     id: 'tear-up',
-    text: 'tear up',
+    text: 'tear up (a letter)',
     type: 'phrasal',
     level: 2,
     meaning: 'rip into pieces',
@@ -704,7 +704,7 @@ export default [
   },
   {
     id: 'blow-up',
-    text: 'blow up',
+    text: 'blow up (a balloon)',
     type: 'phrasal',
     level: 1,
     meaning: 'explode, or fill with air',
@@ -769,7 +769,7 @@ export default [
   },
   {
     id: 'do-up',
-    text: 'do up',
+    text: 'do up (your coat)',
     type: 'phrasal',
     level: 2,
     meaning: 'fasten clothes or shoes',
@@ -795,7 +795,7 @@ export default [
   },
   {
     id: 'eat-up',
-    text: 'eat up',
+    text: 'eat up (your greens)',
     type: 'phrasal',
     level: 2,
     meaning: 'finish all your food',
@@ -860,7 +860,7 @@ export default [
   },
   {
     id: 'hang-up',
-    text: 'hang up',
+    text: 'hang up (the phone)',
     type: 'phrasal',
     level: 1,
     meaning: 'end a phone call',
@@ -912,7 +912,7 @@ export default [
   },
   {
     id: 'make-up',
-    text: 'make up',
+    text: 'make up (an excuse)',
     type: 'phrasal',
     level: 1,
     meaning: 'invent a story or excuse',
@@ -990,7 +990,7 @@ export default [
   },
   {
     id: 'put-someone-up',
-    text: 'put someone up',
+    text: 'put someone up (for the night)',
     type: 'phrasal',
     level: 2,
     meaning: 'let someone stay at your home',
@@ -1003,7 +1003,7 @@ export default [
   },
   {
     id: 'roll-up',
-    text: 'roll up',
+    text: 'roll up (at a party)',
     type: 'phrasal',
     level: 3,
     meaning: 'arrive casually or late',
@@ -1016,7 +1016,7 @@ export default [
   },
   {
     id: 'round-up',
-    text: 'round up',
+    text: 'round up (the sheep)',
     type: 'phrasal',
     level: 3,
     meaning: 'gather people or animals',
@@ -1120,7 +1120,7 @@ export default [
   },
   {
     id: 'stir-up',
-    text: 'stir up',
+    text: 'stir up (a crowd)',
     type: 'phrasal',
     level: 2,
     meaning: 'cause trouble on purpose',
@@ -1172,7 +1172,7 @@ export default [
   },
   {
     id: 'top-up',
-    text: 'top up',
+    text: 'top up (a drink)',
     type: 'phrasal',
     level: 1,
     meaning: 'refill something partly empty',
@@ -1198,7 +1198,7 @@ export default [
   },
   {
     id: 'wrap-up',
-    text: 'wrap up',
+    text: 'wrap up (a meeting)',
     type: 'phrasal',
     level: 1,
     meaning: 'finish or bring to an end',
@@ -1237,7 +1237,7 @@ export default [
   },
   {
     id: 'cover-up',
-    text: 'cover up',
+    text: 'cover up (a scandal)',
     type: 'phrasal',
     level: 2,
     meaning: 'hide a mistake or crime',
@@ -1250,7 +1250,7 @@ export default [
   },
   {
     id: 'crack-up',
-    text: 'crack up',
+    text: 'crack up (at a joke)',
     type: 'phrasal',
     level: 2,
     meaning: 'burst out laughing',
@@ -1276,7 +1276,7 @@ export default [
   },
   {
     id: 'pack-up',
-    text: 'pack up',
+    text: 'pack up (for the day)',
     type: 'phrasal',
     level: 2,
     meaning: 'put your things away and leave',
@@ -1302,7 +1302,7 @@ export default [
   },
   {
     id: 'shoot-up',
-    text: 'shoot up',
+    text: 'shoot up (prices)',
     type: 'phrasal',
     level: 2,
     meaning: 'rise very quickly',
@@ -1315,7 +1315,7 @@ export default [
   },
   {
     id: 'sit-up',
-    text: 'sit up',
+    text: 'sit up (in bed)',
     type: 'phrasal',
     level: 2,
     meaning: 'rise to a sitting position',
@@ -1354,7 +1354,7 @@ export default [
   },
   {
     id: 'dry-up',
-    text: 'dry up',
+    text: 'dry up (a river)',
     type: 'phrasal',
     level: 3,
     meaning: 'stop flowing or run out',

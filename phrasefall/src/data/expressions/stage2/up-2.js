@@ -28,7 +28,7 @@ export default [
   },
   {
     id: 'brighten-up',
-    text: 'brighten up',
+    text: 'brighten up (a room)',
     type: 'phrasal',
     level: 1,
     meaning: 'make a place or mood more cheerful',
@@ -54,7 +54,7 @@ export default [
   },
   {
     id: 'call-up',
-    text: 'call up',
+    text: 'call up (a friend)',
     type: 'phrasal',
     level: 1,
     meaning: 'telephone someone',
@@ -67,7 +67,7 @@ export default [
   },
   {
     id: 'come-up',
-    text: 'come up',
+    text: 'come up (a problem)',
     type: 'phrasal',
     level: 1,
     meaning: 'happen without being planned',
@@ -158,7 +158,7 @@ export default [
   },
   {
     id: 'line-up',
-    text: 'line up',
+    text: 'line up (at the door)',
     type: 'phrasal',
     level: 1,
     meaning: 'stand in a row, one by one',
@@ -197,7 +197,7 @@ export default [
   },
   {
     id: 'mop-up',
-    text: 'mop up',
+    text: 'mop up (the kitchen)',
     type: 'phrasal',
     level: 1,
     meaning: 'wipe away spilt liquid',
@@ -249,7 +249,7 @@ export default [
   },
   {
     id: 'soak-up',
-    text: 'soak up',
+    text: 'soak up (the sun)',
     type: 'phrasal',
     level: 1,
     meaning: 'enjoy sun or atmosphere fully',
@@ -275,7 +275,7 @@ export default [
   },
   {
     id: 'start-up',
-    text: 'start up',
+    text: 'start up (a bakery)',
     type: 'phrasal',
     level: 1,
     meaning: 'create and begin a new business',
@@ -288,7 +288,7 @@ export default [
   },
   {
     id: 'step-up',
-    text: 'step up',
+    text: 'step up (security)',
     type: 'phrasal',
     level: 1,
     meaning: 'increase effort or action',
@@ -314,7 +314,7 @@ export default [
   },
   {
     id: 'tie-up',
-    text: 'tie up',
+    text: 'tie up (a parcel)',
     type: 'phrasal',
     level: 1,
     meaning: 'fasten with rope or string',
@@ -444,7 +444,7 @@ export default [
   },
   {
     id: 'ease-up',
-    text: 'ease up',
+    text: 'ease up (the pain)',
     type: 'phrasal',
     level: 1,
     meaning: 'become less intense',
@@ -509,7 +509,7 @@ export default [
   },
   {
     id: 'fire-up',
-    text: 'fire up',
+    text: 'fire up (the grill)',
     type: 'phrasal',
     level: 2,
     meaning: 'start a machine or grill',

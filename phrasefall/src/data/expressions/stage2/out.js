@@ -15,7 +15,7 @@ export default [
   },
   {
     id: 'point-out',
-    text: 'point out',
+    text: 'point out (a mistake)',
     type: 'phrasal',
     level: 1,
     meaning: 'draw attention to a fact',
@@ -41,7 +41,7 @@ export default [
   },
   {
     id: 'turn-out',
-    text: 'turn out',
+    text: 'turn out (a surprise)',
     type: 'phrasal',
     level: 1,
     meaning: 'end up being a certain way',
@@ -54,7 +54,7 @@ export default [
   },
   {
     id: 'check-out',
-    text: 'check out',
+    text: 'check out (a new shop)',
     type: 'phrasal',
     level: 1,
     meaning: 'look at something interesting',
@@ -67,7 +67,7 @@ export default [
   },
   {
     id: 'hang-out',
-    text: 'hang out',
+    text: 'hang out (at the park)',
     type: 'phrasal',
     level: 1,
     meaning: 'spend free time with friends',
@@ -106,7 +106,7 @@ export default [
   },
   {
     id: 'rule-out',
-    text: 'rule out',
+    text: 'rule out (a theory)',
     type: 'phrasal',
     level: 1,
     meaning: 'decide something is impossible',
@@ -119,7 +119,7 @@ export default [
   },
   {
     id: 'stand-out',
-    text: 'stand out',
+    text: 'stand out (a bright coat)',
     type: 'phrasal',
     level: 1,
     meaning: 'be easy to notice',
@@ -132,7 +132,7 @@ export default [
   },
   {
     id: 'back-out',
-    text: 'back out',
+    text: 'back out (of a deal)',
     type: 'phrasal',
     level: 2,
     meaning: 'not do what you agreed to',
@@ -210,7 +210,7 @@ export default [
   },
   {
     id: 'hand-out',
-    text: 'hand out',
+    text: 'hand out (worksheets)',
     type: 'phrasal',
     level: 1,
     meaning: 'give something to many people',
@@ -223,7 +223,7 @@ export default [
   },
   {
     id: 'iron-out',
-    text: 'iron out',
+    text: 'iron out (a glitch)',
     type: 'phrasal',
     level: 2,
     meaning: 'solve small problems',
@@ -236,7 +236,7 @@ export default [
   },
   {
     id: 'lash-out',
-    text: 'lash out',
+    text: 'lash out (at a person)',
     type: 'phrasal',
     level: 3,
     meaning: 'suddenly attack someone',
@@ -249,7 +249,7 @@ export default [
   },
   {
     id: 'miss-out',
-    text: 'miss out',
+    text: 'miss out (on a party)',
     type: 'phrasal',
     level: 1,
     meaning: 'lose a chance to enjoy something',
@@ -405,7 +405,7 @@ export default [
   },
   {
     id: 'wear-out',
-    text: 'wear out',
+    text: 'wear out (shoes)',
     type: 'phrasal',
     level: 1,
     meaning: 'become useless from heavy use',
@@ -418,7 +418,7 @@ export default [
   },
   {
     id: 'wipe-out',
-    text: 'wipe out',
+    text: 'wipe out (a species)',
     type: 'phrasal',
     level: 2,
     meaning: 'destroy or remove completely',
@@ -457,7 +457,7 @@ export default [
   },
   {
     id: 'break-out',
-    text: 'break out',
+    text: 'break out (a war)',
     type: 'phrasal',
     level: 1,
     meaning: 'start suddenly',
@@ -470,7 +470,7 @@ export default [
   },
   {
     id: 'come-out',
-    text: 'come out',
+    text: 'come out (a film)',
     type: 'phrasal',
     level: 1,
     meaning: 'be released or published',
@@ -483,7 +483,7 @@ export default [
   },
   {
     id: 'give-out',
-    text: 'give out',
+    text: 'give out (leaflets)',
     type: 'phrasal',
     level: 1,
     meaning: 'distribute things to people',
@@ -496,7 +496,7 @@ export default [
   },
   {
     id: 'go-out',
-    text: 'go out',
+    text: 'go out (tonight)',
     type: 'phrasal',
     level: 1,
     meaning: 'leave home to have fun',
@@ -509,7 +509,7 @@ export default [
   },
   {
     id: 'look-out',
-    text: 'look out',
+    text: 'look out (a car)',
     type: 'phrasal',
     level: 1,
     meaning: 'be careful because of danger',
@@ -522,7 +522,7 @@ export default [
   },
   {
     id: 'make-out',
-    text: 'make out',
+    text: 'make out (a shape)',
     type: 'phrasal',
     level: 2,
     meaning: 'manage to see or hear',
@@ -548,7 +548,7 @@ export default [
   },
   {
     id: 'pull-out',
-    text: 'pull out',
+    text: 'pull out (a race)',
     type: 'phrasal',
     level: 2,
     meaning: 'withdraw from something',
@@ -561,7 +561,7 @@ export default [
   },
   {
     id: 'put-out',
-    text: 'put out',
+    text: 'put out (a fire)',
     type: 'phrasal',
     level: 1,
     meaning: 'stop a fire from burning',
@@ -574,7 +574,7 @@ export default [
   },
   {
     id: 'set-out',
-    text: 'set out',
+    text: 'set out (on a trip)',
     type: 'phrasal',
     level: 1,
     meaning: 'begin a journey',
@@ -587,7 +587,7 @@ export default [
   },
   {
     id: 'take-out',
-    text: 'take out',
+    text: 'take out (a coin)',
     type: 'phrasal',
     level: 1,
     meaning: 'remove something from a place',
@@ -600,7 +600,7 @@ export default [
   },
   {
     id: 'throw-out',
-    text: 'throw out',
+    text: 'throw out (old clothes)',
     type: 'phrasal',
     level: 1,
     meaning: 'get rid of something',
@@ -613,7 +613,7 @@ export default [
   },
   {
     id: 'bring-out',
-    text: 'bring out',
+    text: 'bring out (a book)',
     type: 'phrasal',
     level: 2,
     meaning: 'release a new product',
@@ -626,7 +626,7 @@ export default [
   },
   {
     id: 'burn-out',
-    text: 'burn out',
+    text: 'burn out (a teacher)',
     type: 'phrasal',
     level: 2,
     meaning: 'get exhausted from work',
@@ -639,7 +639,7 @@ export default [
   },
   {
     id: 'call-out',
-    text: 'call out',
+    text: 'call out (a name)',
     type: 'phrasal',
     level: 2,
     meaning: 'shout to attract attention',
@@ -665,7 +665,7 @@ export default [
   },
   {
     id: 'cut-out',
-    text: 'cut out',
+    text: 'cut out (a picture)',
     type: 'phrasal',
     level: 2,
     meaning: 'remove something with scissors',
@@ -678,7 +678,7 @@ export default [
   },
   {
     id: 'dish-out',
-    text: 'dish out',
+    text: 'dish out (criticism)',
     type: 'phrasal',
     level: 3,
     meaning: 'give out lots of something',
@@ -691,7 +691,7 @@ export default [
   },
   {
     id: 'fill-out',
-    text: 'fill out',
+    text: 'fill out (a form)',
     type: 'phrasal',
     level: 1,
     meaning: 'complete a form with details',
@@ -704,7 +704,7 @@ export default [
   },
   {
     id: 'hold-out',
-    text: 'hold out',
+    text: 'hold out (in a siege)',
     type: 'phrasal',
     level: 3,
     meaning: 'keep going despite difficulty',
@@ -730,7 +730,7 @@ export default [
   },
   {
     id: 'knock-out',
-    text: 'knock out',
+    text: 'knock out (a boxer)',
     type: 'phrasal',
     level: 2,
     meaning: 'make someone unconscious',
@@ -743,7 +743,7 @@ export default [
   },
   {
     id: 'lay-out',
-    text: 'lay out',
+    text: 'lay out (the tools)',
     type: 'phrasal',
     level: 3,
     meaning: 'arrange things clearly',
@@ -756,7 +756,7 @@ export default [
   },
   {
     id: 'let-out',
-    text: 'let out',
+    text: 'let out (a bird)',
     type: 'phrasal',
     level: 2,
     meaning: 'set something free',
@@ -808,7 +808,7 @@ export default [
   },
   {
     id: 'pick-out',
-    text: 'pick out',
+    text: 'pick out (a gift)',
     type: 'phrasal',
     level: 1,
     meaning: 'choose something from a group',
@@ -834,7 +834,7 @@ export default [
   },
   {
     id: 'reach-out',
-    text: 'reach out',
+    text: 'reach out (to a friend)',
     type: 'phrasal',
     level: 3,
     meaning: 'make contact with someone',
@@ -847,7 +847,7 @@ export default [
   },
   {
     id: 'roll-out',
-    text: 'roll out',
+    text: 'roll out (a service)',
     type: 'phrasal',
     level: 3,
     meaning: 'introduce something gradually',
@@ -860,7 +860,7 @@ export default [
   },
   {
     id: 'sell-out',
-    text: 'sell out',
+    text: 'sell out (a concert)',
     type: 'phrasal',
     level: 1,
     meaning: 'be completely bought by customers',
@@ -873,7 +873,7 @@ export default [
   },
   {
     id: 'send-out',
-    text: 'send out',
+    text: 'send out (invitations)',
     type: 'phrasal',
     level: 2,
     meaning: 'post or email to many people',
@@ -886,7 +886,7 @@ export default [
   },
   {
     id: 'shut-out',
-    text: 'shut out',
+    text: 'shut out (a rival)',
     type: 'phrasal',
     level: 3,
     meaning: 'keep someone away on purpose',
@@ -912,7 +912,7 @@ export default [
   },
   {
     id: 'spread-out',
-    text: 'spread out',
+    text: 'spread out (a crowd)',
     type: 'phrasal',
     level: 2,
     meaning: 'move apart over a wider area',
@@ -1029,7 +1029,7 @@ export default [
   },
   {
     id: 'bail-out',
-    text: 'bail out',
+    text: 'bail out (a company)',
     type: 'phrasal',
     level: 3,
     meaning: 'rescue someone from trouble',

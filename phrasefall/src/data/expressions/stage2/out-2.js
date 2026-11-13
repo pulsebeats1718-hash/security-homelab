@@ -2,7 +2,7 @@
 export default [
   {
     id: 'get-out',
-    text: 'get out',
+    text: 'get out (of a car)',
     type: 'phrasal',
     level: 1,
     meaning: 'leave a place or a vehicle',
@@ -15,7 +15,7 @@ export default [
   },
   {
     id: 'keep-out',
-    text: 'keep out',
+    text: 'keep out (a sign)',
     type: 'phrasal',
     level: 1,
     meaning: 'not go into a place',
@@ -80,7 +80,7 @@ export default [
   },
   {
     id: 'stretch-out',
-    text: 'stretch out',
+    text: 'stretch out (on a sofa)',
     type: 'phrasal',
     level: 1,
     meaning: 'lie back at full length',
@@ -93,7 +93,7 @@ export default [
   },
   {
     id: 'dig-out',
-    text: 'dig out',
+    text: 'dig out (old photos)',
     type: 'phrasal',
     level: 1,
     meaning: 'find something stored away',
@@ -210,7 +210,7 @@ export default [
   },
   {
     id: 'black-out',
-    text: 'black out',
+    text: 'black out (in the heat)',
     type: 'phrasal',
     level: 1,
     meaning: 'faint without warning',
@@ -223,7 +223,7 @@ export default [
   },
   {
     id: 'blow-out',
-    text: 'blow out',
+    text: 'blow out (a candle)',
     type: 'phrasal',
     level: 1,
     meaning: 'put out a flame with breath',
@@ -288,7 +288,7 @@ export default [
   },
   {
     id: 'pour-out',
-    text: 'pour out',
+    text: 'pour out (the tea)',
     type: 'phrasal',
     level: 1,
     meaning: 'let liquid run into a cup',
@@ -301,7 +301,7 @@ export default [
   },
   {
     id: 'push-out',
-    text: 'push out',
+    text: 'push out (a manager)',
     type: 'phrasal',
     level: 1,
     meaning: 'force someone to leave a role',
@@ -392,7 +392,7 @@ export default [
   },
   {
     id: 'pop-out',
-    text: 'pop out',
+    text: 'pop out (to a shop)',
     type: 'phrasal',
     level: 1,
     meaning: 'go out for a short time',
@@ -483,7 +483,7 @@ export default [
   },
   {
     id: 'count-out',
-    text: 'count out',
+    text: 'count out (a volunteer)',
     type: 'phrasal',
     level: 2,
     meaning: 'not include someone',
@@ -1250,7 +1250,7 @@ export default [
   },
   {
     id: 'wash-out',
-    text: 'wash out',
+    text: 'wash out (a stain)',
     type: 'phrasal',
     level: 3,
     meaning: 'clean a stain away',

@@ -483,7 +483,7 @@ export default [
   },
   {
     id: 'bring-on',
-    text: 'bring on',
+    text: 'bring on (a headache)',
     type: 'phrasal',
     level: 3,
     meaning: 'cause an illness or problem',
@@ -574,7 +574,7 @@ export default [
   },
   {
     id: 'cut-in',
-    text: 'cut in',
+    text: 'cut in (a speaker)',
     type: 'phrasal',
     level: 1,
     meaning: 'interrupt while someone is speaking',

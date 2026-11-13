@@ -2,7 +2,7 @@
 export default [
   {
     id: 'go-on',
-    text: 'go on',
+    text: 'go on (a long time)',
     type: 'phrasal',
     level: 1,
     meaning: 'keep happening or doing something',
@@ -15,7 +15,7 @@ export default [
   },
   {
     id: 'hold-on',
-    text: 'hold on',
+    text: 'hold on (the phone)',
     type: 'phrasal',
     level: 1,
     meaning: 'wait for a short time',
@@ -28,7 +28,7 @@ export default [
   },
   {
     id: 'turn-on',
-    text: 'turn on',
+    text: 'turn on (the light)',
     type: 'phrasal',
     level: 1,
     meaning: 'make a machine or light start working',
@@ -41,7 +41,7 @@ export default [
   },
   {
     id: 'put-on',
-    text: 'put on',
+    text: 'put on (a coat)',
     type: 'phrasal',
     level: 1,
     meaning: 'dress yourself in clothes or shoes',
@@ -80,7 +80,7 @@ export default [
   },
   {
     id: 'move-on',
-    text: 'move on',
+    text: 'move on (in life)',
     type: 'phrasal',
     level: 1,
     meaning: 'leave one thing and start the next',
@@ -93,7 +93,7 @@ export default [
   },
   {
     id: 'take-on',
-    text: 'take on',
+    text: 'take on (a challenge)',
     type: 'phrasal',
     level: 1,
     meaning: 'accept work or a responsibility',
@@ -106,7 +106,7 @@ export default [
   },
   {
     id: 'pass-on',
-    text: 'pass on',
+    text: 'pass on (a message)',
     type: 'phrasal',
     level: 1,
     meaning: 'give a message to another person',
@@ -119,7 +119,7 @@ export default [
   },
   {
     id: 'catch-on',
-    text: 'catch on',
+    text: 'catch on (a trend)',
     type: 'phrasal',
     level: 2,
     meaning: 'become popular or fashionable',
@@ -171,7 +171,7 @@ export default [
   },
   {
     id: 'live-on',
-    text: 'live on',
+    text: 'live on (a low wage)',
     type: 'phrasal',
     level: 2,
     meaning: 'survive with a certain amount of money',
@@ -418,7 +418,7 @@ export default [
   },
   {
     id: 'check-in',
-    text: 'check in',
+    text: 'check in (a hotel)',
     type: 'phrasal',
     level: 1,
     meaning: 'arrive and register at a hotel',
@@ -431,7 +431,7 @@ export default [
   },
   {
     id: 'fill-in',
-    text: 'fill in',
+    text: 'fill in (a form)',
     type: 'phrasal',
     level: 1,
     meaning: 'complete a form with your details',
@@ -444,7 +444,7 @@ export default [
   },
   {
     id: 'hand-in',
-    text: 'hand in',
+    text: 'hand in (homework)',
     type: 'phrasal',
     level: 1,
     meaning: 'give finished work to a teacher',
@@ -457,7 +457,7 @@ export default [
   },
   {
     id: 'give-in',
-    text: 'give in',
+    text: 'give in (to pressure)',
     type: 'phrasal',
     level: 1,
     meaning: 'finally agree after refusing',
@@ -483,7 +483,7 @@ export default [
   },
   {
     id: 'fit-in',
-    text: 'fit in',
+    text: 'fit in (at school)',
     type: 'phrasal',
     level: 1,
     meaning: 'feel accepted as part of a group',
@@ -509,7 +509,7 @@ export default [
   },
   {
     id: 'let-in',
-    text: 'let in',
+    text: 'let in (a visitor)',
     type: 'phrasal',
     level: 1,
     meaning: 'allow someone to come inside',
@@ -574,7 +574,7 @@ export default [
   },
   {
     id: 'tuck-in',
-    text: 'tuck in',
+    text: 'tuck in (dinner)',
     type: 'phrasal',
     level: 3,
     meaning: 'start eating hungrily',
@@ -665,7 +665,7 @@ export default [
   },
   {
     id: 'call-in',
-    text: 'call in',
+    text: 'call in (at a shop)',
     type: 'phrasal',
     level: 2,
     meaning: 'make a short visit',
@@ -678,7 +678,7 @@ export default [
   },
   {
     id: 'take-in',
-    text: 'take in',
+    text: 'take in (the news)',
     type: 'phrasal',
     level: 2,
     meaning: 'understand new information',
@@ -691,7 +691,7 @@ export default [
   },
   {
     id: 'turn-in',
-    text: 'turn in',
+    text: 'turn in (late)',
     type: 'phrasal',
     level: 2,
     meaning: 'go to bed',
@@ -704,7 +704,7 @@ export default [
   },
   {
     id: 'bring-in',
-    text: 'bring in',
+    text: 'bring in (a law)',
     type: 'phrasal',
     level: 2,
     meaning: 'start using a new law or system',
@@ -795,7 +795,7 @@ export default [
   },
   {
     id: 'break-into',
-    text: 'break into',
+    text: 'break into (a house)',
     type: 'phrasal',
     level: 2,
     meaning: 'enter a place by force',
@@ -808,7 +808,7 @@ export default [
   },
   {
     id: 'bump-into',
-    text: 'bump into',
+    text: 'bump into (a friend)',
     type: 'phrasal',
     level: 2,
     meaning: 'meet someone by chance',
@@ -860,7 +860,7 @@ export default [
   },
   {
     id: 'turn-into',
-    text: 'turn into',
+    text: 'turn into (a frog)',
     type: 'phrasal',
     level: 1,
     meaning: 'change and become something different',
@@ -886,7 +886,7 @@ export default [
   },
   {
     id: 'get-into',
-    text: 'get into',
+    text: 'get into (a hobby)',
     type: 'phrasal',
     level: 1,
     meaning: 'become keen on something',

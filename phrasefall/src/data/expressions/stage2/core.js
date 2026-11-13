@@ -2,7 +2,7 @@
 export default [
   {
     id: 'give-up',
-    text: 'give up',
+    text: 'give up (a puzzle)',
     type: 'phrasal',
     level: 1,
     meaning: 'stop trying to do something',
@@ -41,7 +41,7 @@ export default [
   },
   {
     id: 'carry-on',
-    text: 'carry on',
+    text: 'carry on (regardless)',
     type: 'phrasal',
     level: 1,
     meaning: 'continue doing something',
@@ -80,7 +80,7 @@ export default [
   },
   {
     id: 'put-off',
-    text: 'put off',
+    text: 'put off (a meeting)',
     type: 'phrasal',
     level: 1,
     meaning: 'delay something until a later time',
@@ -93,7 +93,7 @@ export default [
   },
   {
     id: 'turn-down',
-    text: 'turn down',
+    text: 'turn down (a job)',
     type: 'phrasal',
     level: 1,
     meaning: 'refuse an offer or a request',
@@ -106,7 +106,7 @@ export default [
   },
   {
     id: 'set-off',
-    text: 'set off',
+    text: 'set off (on a trip)',
     type: 'phrasal',
     level: 1,
     meaning: 'leave at the start of a journey',
@@ -132,7 +132,7 @@ export default [
   },
   {
     id: 'turn-up',
-    text: 'turn up',
+    text: 'turn up (for a meeting)',
     type: 'phrasal',
     level: 1,
     meaning: 'arrive at a place or an event',
@@ -171,7 +171,7 @@ export default [
   },
   {
     id: 'get-on-with',
-    text: 'get on with',
+    text: 'get on with (a colleague)',
     type: 'phrasal',
     level: 1,
     meaning: 'have a good relationship with someone',
@@ -184,7 +184,7 @@ export default [
   },
   {
     id: 'bring-up',
-    text: 'bring up',
+    text: 'bring up (a child)',
     type: 'phrasal',
     level: 1,
     meaning: 'care for a child until they are an adult',
@@ -197,7 +197,7 @@ export default [
   },
   {
     id: 'call-off',
-    text: 'call off',
+    text: 'call off (the match)',
     type: 'phrasal',
     level: 1,
     meaning: 'cancel an event that was planned',
@@ -236,7 +236,7 @@ export default [
   },
   {
     id: 'catch-up',
-    text: 'catch up',
+    text: 'catch up (in a race)',
     type: 'phrasal',
     level: 1,
     meaning: 'reach someone who is ahead of you',
@@ -249,7 +249,7 @@ export default [
   },
   {
     id: 'let-down',
-    text: 'let down',
+    text: 'let down (a friend)',
     type: 'phrasal',
     level: 1,
     meaning: 'disappoint someone who trusted you',
@@ -262,7 +262,7 @@ export default [
   },
   {
     id: 'show-off',
-    text: 'show off',
+    text: 'show off (to friends)',
     type: 'phrasal',
     level: 1,
     meaning: 'try hard to make people admire you',
@@ -288,7 +288,7 @@ export default [
   },
   {
     id: 'go-off',
-    text: 'go off',
+    text: 'go off (milk)',
     type: 'phrasal',
     level: 1,
     meaning: 'stop being fresh enough to eat',
@@ -314,7 +314,7 @@ export default [
   },
   {
     id: 'run-into',
-    text: 'run into',
+    text: 'run into (an old friend)',
     type: 'phrasal',
     level: 1,
     meaning: 'meet someone you know by chance',
