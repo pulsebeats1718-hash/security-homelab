@@ -177,7 +177,7 @@ export default {
         const f = k.at(k.group(), s * 0.012, -0.36 + Math.abs(z) * 0.4, z, rx, 0, -s * 0.08);
         f.add(k.at(k.ball(deep, 0.048, 0.12, 0.052), 0, -0.04, 0));
         const tip = flame(0.075, 0.2 - Math.abs(z) * 0.5, 0.6);
-        tip.rotation.x = Math.PI;
+        tip.rotation.z = Math.PI;
         tip.position.y = -0.1;
         f.add(tip);
         arm.add(f);
