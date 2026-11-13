@@ -25,9 +25,8 @@ const ERRORS = {
 export function createLeaderboard(app) {
   const { ui, online } = app;
   let tab = null;
-  let stop = null; // live board subscription
-  let board = null; // last state from online.watchBoard
-  let watching = null; // `${tab}:${uid}:${day}` the subscription is for
+  // live boards, one per tab, kept while the screen is open so switching tabs costs no re-reads
+  const subs = new Map(); // tab → { key, stop, state }
   let ticker = 0;
 
   const tabs = h('div.tabs.lb__tabs', { role: 'tablist' });
@@ -124,6 +123,7 @@ export function createLeaderboard(app) {
       );
       return;
     }
+    const board = subs.get(tab)?.state;
     if (!board || board.status === 'loading') {
       body.append(h('div.lb__loading', h('span.spinner'), 'Loading the leaderboard…'));
       return;
@@ -143,28 +143,29 @@ export function createLeaderboard(app) {
     body.append(h('div.lb__rows', board.rows.map((r) => row(r))));
     const me = board.me;
     if (me && !me.inTop) {
-      pin.append(row({ rank: me.rank, name: online.user.name, character: app.save.data.character, score: me.score, me: true }, true));
+      pin.append(row({ rank: me.rank, name: online.user.name, character: me.character ?? app.save.data.character, score: me.score, me: true }, true));
     } else if (!me) {
       pin.append(h('div.lb__invite', h('span', tab === 'today' ? 'Play today’s challenge to join this board.' : 'Finish a classic game to join this board.'), tab === 'today' ? playDaily() : play()));
     }
   }
 
   // ── live data ───────────────────────────────────────────────────────────
-  function unwatch() {
-    stop?.();
-    stop = null;
-    watching = null;
+  function unwatchAll() {
+    for (const sub of subs.values()) sub.stop();
+    subs.clear();
   }
   function watch(force = false) {
-    const key = tab !== 'me' && online?.user ? `${tab}:${online.user.uid}:${tab === 'today' ? dayId() : weekId()}` : null;
-    if (!force && key === watching) return;
-    unwatch();
-    board = null;
-    if (!key) return;
-    watching = key;
-    stop = online.watchBoard(tab, (state) => {
-      board = state;
-      if (ui.name === 'leaderboard') render();
+    if (tab === 'me' || !online?.user) return;
+    const key = `${online.user.uid}:${tab === 'today' ? dayId() : tab === 'week' ? weekId() : 'all'}`;
+    const old = subs.get(tab);
+    if (old && old.key === key && !force) return;
+    old?.stop();
+    const which = tab;
+    const sub = { key, state: null, stop: () => {} };
+    subs.set(which, sub);
+    sub.stop = online.watchBoard(which, (state) => {
+      sub.state = state;
+      if (ui.name === 'leaderboard' && tab === which) render();
     });
   }
 
@@ -177,6 +178,7 @@ export function createLeaderboard(app) {
   }
 
   online?.on('user', () => {
+    unwatchAll();
     if (ui.name !== 'leaderboard') return;
     watch();
     render();
@@ -199,7 +201,7 @@ export function createLeaderboard(app) {
     },
     hide() {
       clearInterval(ticker);
-      unwatch(); // no live reads while nobody is looking
+      unwatchAll(); // no live reads while nobody is looking
     },
     key(e) {
       if (e.key === 'Escape') ui.go('menu');

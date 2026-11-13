@@ -24,8 +24,9 @@
  *   checkName(name)      → { ok, name, reason? } (no network)
  *   watchBoard(kind, fn) → unsubscribe; kind 'today'|'week'|'all'; fn({ status, rows, me, boardId, error })
  *   deleteData()         → deletes the cloud save, profile and scores, then signs out
+ *   resetCloud()         → after save.reset(): overwrite the cloud save with the fresh one
  */
-import { ONLINE, FIREBASE_CONFIG, EMULATOR_HOST } from './config.js';
+import { ONLINE, FIREBASE_CONFIG, EMULATOR_HOST, loadService } from './config.js';
 import { checkName } from './names.js';
 
 const HINT_KEY = 'phrasefall.online.user.v1';
@@ -71,7 +72,7 @@ export function createOnline(app) {
     /** Load Firebase (once). Called at the end of boot; safe to call again. */
     start() {
       if (!ONLINE) return Promise.resolve(null);
-      loading ??= import('./service.js')
+      loading ??= loadService()
         .then((m) => (impl = m.createService(online, app, { config: FIREBASE_CONFIG, emulatorHost: EMULATOR_HOST, hintKey: HINT_KEY })))
         .catch((err) => {
           console.warn('Phrasefall online features failed to load:', err);
@@ -89,6 +90,8 @@ export function createOnline(app) {
     submitScore: (result) => call('submitScore', result),
     setName: (name) => call('setName', name, { ok: false, reason: 'Online features are not available.' }),
     deleteData: () => call('deleteData'),
+    /** After Settings → Reset progress: make the cloud copy match the fresh save. */
+    resetCloud: () => call('resetCloud'),
     syncNow: () => call('syncNow'),
     watchBoard(kind, fn) {
       if (!ONLINE) return () => {};

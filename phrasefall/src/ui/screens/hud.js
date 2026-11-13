@@ -56,7 +56,7 @@ export function createHud(app) {
   const pause = h(
     'div.modal',
     h(
-      'div.panel',
+      'div.panel.hud__pause',
       h('h2', 'Paused'),
       rankedNote,
       h('button.btn.btn--gold', { onclick: () => game.resume() }, icon('play'), 'Resume'),

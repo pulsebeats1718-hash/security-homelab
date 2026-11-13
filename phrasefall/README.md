@@ -15,6 +15,15 @@ four options before they land.
 - **Learning built in** – every expression you meet becomes a flashcard (meaning,
   example, synonyms, register and context, common mistake). *My Collection* tracks
   what you have mastered, got wrong, flagged to practise or marked as a favourite.
+- **Spaced repetition** – each expression sits in a Leitner box (0–5): a right
+  answer moves it up, a wrong one back to 0, and it is due again after 0, 1, 3, 7,
+  16 or 35 days. Flashcards open on *Due today* ("Not yet" / "I knew it"), and
+  classic games deal due expressions more often.
+- **Daily challenge** – the same 20 cards for everyone each UTC day (seeded from
+  the date, mixed across the stages, mostly level 1–2), a small speed bonus, one
+  ranked attempt a day (replays are practice) and a shareable emoji result.
+- **Installable and offline** – the production build is a PWA (manifest, icons,
+  service worker); after the first visit it plays offline.
 - **1,685 British English expressions** – 210 everyday expressions, 485 phrasal
   verbs, 480 idioms, 260 set phrases and 250 advanced idioms and collocations –
   each with three plausible wrong answers, an example, synonyms, register, context
@@ -59,7 +68,7 @@ src/
     models/               one file per character (auto-discovered)
     thumbnails.js         portrait renderer for the collection strip
   world/                  sky, lighting themes, island, clouds, particle effects
-  game/                   rules (game.js), the falling card, camera framing, the live hero
+  game/                   rules (game.js), the daily challenge (daily.js), the falling card, camera framing, the live hero
   audio/                  synthesised sound effects and generative music
   ui/                     screens (menu, characters, HUD, results, flashcards, collection …)
   styles/main.css         the interface look
@@ -74,7 +83,9 @@ they talk through a small event bus (`game:question`, `game:answered`,
 ### Add expressions
 
 Every file in `src/data/expressions/stageN/` is loaded automatically and belongs
-to stage N. Append objects to a file, or drop a new file into a stage folder, then
+to stage N (each file becomes its own chunk, downloaded in parallel while the 3D
+world starts; screens that need the data wait for `whenExpressionsReady()`).
+Append objects to a file, or drop a new file into a stage folder, then
 validate. Schema, style rules, levels and which file owns which kind of
 expression: `dev/EXPRESSION_GUIDE.md`.
 

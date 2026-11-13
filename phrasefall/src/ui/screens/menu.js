@@ -76,6 +76,8 @@ export function createMenu(app) {
   }
   function showStatus(text, spinner = false, error = false) {
     clear(status).append(spinner ? h('span.spinner') : icon('alert'), h('span', text));
+    // a failed module download is not fetched again in the same page: a reload retries it
+    if (error) status.append(h('button.chip.menu__reload', { onclick: () => location.reload() }, icon('refresh'), 'Reload'));
     status.classList.toggle('is-error', error);
     status.hidden = false;
   }
@@ -95,7 +97,7 @@ export function createMenu(app) {
       () => {
         pending = null;
         setLoading(false);
-        if (ui.name === 'menu') showStatus('The expressions could not be loaded. Check your connection and try again.', false, true);
+        if (ui.name === 'menu') showStatus('The expressions could not be loaded. Check your connection.', false, true);
       }
     );
   });

@@ -1,0 +1,110 @@
+rules_version = '2';
+
+// Phrasefall — Cloud Firestore security rules (deploy: see DEPLOY.md).
+//
+//   profiles/{uid}               public nickname        read: anyone        write: the owner
+//   saves/{uid}                  cloud save             read/write: the owner only
+//   boards/{board}/scores/{uid}  leaderboard entries    read: signed in     write: the owner
+//       daily-YYYY-MM-DD   the first ranked attempt of a UTC day: created once, never changed
+//       week-YYYY-Www      best classic game of an ISO week: may only go up
+//       all                best classic game ever: may only go up
+//
+// The game runs in the player's browser, so these rules can only keep scores within believable
+// bounds; they cannot prove that a game was really played. See "Cheating" in DEPLOY.md.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    // 3–16 letters (any alphabet), digits and inner spaces; same as src/online/names.js
+    function validName(name) {
+      return name is string
+        && name.matches('^[\\p{L}\\p{N}][\\p{L}\\p{M}\\p{N} ]{1,14}[\\p{L}\\p{M}\\p{N}]$');
+    }
+
+    // ── public nicknames ──────────────────────────────────────────────────
+    match /profiles/{uid} {
+      allow read: if true;
+      allow create, update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(['name', 'at'])
+        && validName(request.resource.data.name)
+        && request.resource.data.at == request.time;
+      allow delete: if isOwner(uid);
+    }
+
+    // ── cloud saves (format: src/online/pack.js) ──────────────────────────
+    match /saves/{uid} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+        && request.resource.data.keys().hasOnly(['v', 'data', 'rows', 't', 'e', 'at'])
+        && request.resource.data.keys().hasAll(['v', 'data', 'rows', 't', 'at'])
+        && request.resource.data.v is int && request.resource.data.v >= 1
+        && request.resource.data.data is string && request.resource.data.data.size() <= 200000
+        && request.resource.data.rows is string && request.resource.data.rows.size() <= 700000
+        && request.resource.data.t is int
+        && (!('e' in request.resource.data) || request.resource.data.e is int)
+        && request.resource.data.at == request.time;
+    }
+
+    // ── leaderboards ──────────────────────────────────────────────────────
+    function isDaily(board) {
+      return board.matches('^daily-[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+    }
+
+    // A daily board takes entries from its UTC day until midday the next day (a game that runs
+    // past midnight, a score sent after a dropped connection), with two hours' grace for fast clocks.
+    function dailyOpen(board) {
+      let p = board.split('-');
+      let day = timestamp.date(int(p[1]), int(p[2]), int(p[3]));
+      return request.time >= day - duration.value(2, 'h')
+        && request.time < day + duration.value(36, 'h');
+    }
+
+    function validBoard(board) {
+      return board == 'all'
+        || board.matches('^week-[0-9]{4}-W[0-9]{2}$')
+        || (isDaily(board) && dailyOpen(board));
+    }
+
+    // Bounds from the game: 100 points a right answer plus streak bonuses (src/data/stages.js),
+    // five stages, three lives. Keep in step with MAX in src/online/service.js.
+    function validScore(d, uid) {
+      return d.keys().hasOnly(['name', 'character', 'score', 'stage', 'correct', 'answered', 'uid', 'at'])
+        && d.keys().hasAll(['name', 'character', 'score', 'stage', 'correct', 'answered', 'uid', 'at'])
+        && validName(d.name)
+        && d.character is string && d.character.matches('^[a-z0-9-]{1,24}$')
+        && d.score is int && d.score >= 0 && d.score <= 200000
+        && d.stage is int && d.stage >= 1 && d.stage <= 5
+        && d.correct is int && d.answered is int
+        && d.correct >= 0 && d.correct <= d.answered && d.answered <= 500
+        && d.uid == uid
+        && d.at == request.time;
+    }
+
+    match /boards/{board}/scores/{uid} {
+      allow read: if signedIn();
+      allow create: if isOwner(uid) && validBoard(board) && validScore(request.resource.data, uid);
+      // weekly and all-time boards keep each player's best game: an update must raise the score
+      allow update: if isOwner(uid) && !isDaily(board) && validBoard(board)
+        && validScore(request.resource.data, uid)
+        && request.resource.data.score > resource.data.score;
+      // any board: follow a nickname change, nothing else
+      allow update: if isOwner(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name'])
+        && validName(request.resource.data.name);
+      // "Delete my data"
+      allow delete: if isOwner(uid);
+    }
+
+    // "Delete my data" finds a player's entries on every board with a collection-group query
+    match /{path=**}/scores/{uid} {
+      allow read: if signedIn();
+    }
+  }
+}

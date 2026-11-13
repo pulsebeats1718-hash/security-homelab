@@ -24,6 +24,9 @@ import { createFlashcards } from './ui/screens/flashcards.js';
 import { createCollection } from './ui/screens/collection.js';
 import { createRecords } from './ui/screens/records.js';
 import { createSettings } from './ui/screens/settings.js';
+import { createLeaderboard } from './ui/screens/leaderboard.js';
+import { createAccount } from './ui/account.js';
+import { createOnline } from './online/index.js';
 import { loadExpressions, expressionsReady } from './data/expressions/index.js';
 
 const params = new URLSearchParams(location.search);
@@ -60,6 +63,7 @@ async function boot() {
   const hero = new Hero({ stage, fx, env, game });
   const app = { stage, env, fx, game, hero, audio, save, events, thumbs: new Map(), screens: {} };
   const ui = (app.ui = new UI(app));
+  app.online = createOnline(app); // Google sign-in, cloud save, leaderboards — inert unless Firebase is configured
   window.__pf = app; // handy for testing from the console
   progress(0.3);
 
@@ -122,8 +126,10 @@ async function boot() {
   s.flashcards = ui.add('flashcards', createFlashcards(app));
   s.collection = ui.add('collection', createCollection(app));
   s.records = ui.add('records', createRecords(app));
+  s.leaderboard = ui.add('leaderboard', createLeaderboard(app));
   s.settings = ui.add('settings', createSettings(app));
   ui.finish();
+  app.account = createAccount(app); // header chip, account sheet, nickname dialog (online builds only)
 
   // ── global input ────────────────────────────────────────────────────────
   window.addEventListener('keydown', (e) => {
@@ -147,6 +153,7 @@ async function boot() {
 
   progress(1);
   ui.go(params.get('go') === 'menu' ? 'menu' : 'splash');
+  app.online.start(); // fetches the Firebase SDK in the background when configured
 
   // character portraits render in the background and appear as they finish
   makeThumbnails(app.thumbs, { onThumb: (id) => events.emit('thumb', id), busy: () => ui.name === 'play' && game.active });

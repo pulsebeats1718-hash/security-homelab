@@ -8,7 +8,7 @@ import { formatCountdown, msToNextDaily, shareText } from '../../game/daily.js';
 const shortDate = (dateId) => new Date(`${dateId}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
 
 /** A result's identity, to match a leaderboard rank that arrives later. */
-const keyOf = (r) => `${r.mode}|${r.dateId ?? ''}|${r.score}`;
+const keyOf = (r) => `${r.mode}|${r.score}`;
 
 /** Put text on the clipboard; where that is not allowed, select it so the player can copy it themselves. */
 async function copyText(text, holder) {
@@ -83,13 +83,14 @@ export function createResults(app) {
   function showRank(key) {
     const info = ranks.get(key);
     if (!info || key !== shownKey || badge.querySelector('.results__rank')) return;
-    const where = info.board === 'week' ? ' this week' : info.daily ? ' today' : '';
-    badge.append(h('span.chip.chip--gold.results__rank', icon('podium'), `Rank #${info.rank.toLocaleString('en-GB')}${where}`));
+    const where = info.board === 'week' ? ' this week' : info.board === 'daily' || (!info.board && info.daily) ? ' today' : '';
+    badge.append(h('span.chip.chip--gold.results__rank', icon('podium'), info.text ? `Rank ${info.text}` : `Rank #${info.rank.toLocaleString('en-GB')}${where}`));
   }
+  /** `value`: a number, or app.online's rank payload { rank, board, text: '#12 today', … }. */
   function noteRank(key, value, daily) {
     const rank = typeof value === 'number' ? value : value?.rank;
     if (!Number.isFinite(rank) || rank < 1) return;
-    ranks.set(key, { rank, board: value?.board, daily });
+    ranks.set(key, { rank, board: value?.board, text: typeof value?.text === 'string' ? value.text : '', daily });
     showRank(key);
   }
   events.on('game:submit', (result) => {
@@ -124,18 +125,18 @@ export function createResults(app) {
       const url = location.protocol === 'https:' ? `${location.origin}${location.pathname}` : '';
       const text = shareText({ n: rec.n || d.n, dateId: d.dateId, marks: rec.marks, total: rec.total || d.total, score: rec.score, correct: rec.correct, bestStreak: rec.bestStreak }, url);
       const pre = h('pre.share__text', text);
-      const copyLabel = h('span', 'Copy result');
+      const copyLabel = h('span', 'Copy');
       const copyBtn = h('button.btn.share__copy', {
         'data-quiet': '1',
         onclick: async () => {
           audio.play('tap');
           const how = await copyText(text, pre);
-          clear(copyLabel).append(how === 'copied' ? 'Copied!' : 'Selected — copy it now');
+          clear(copyLabel).append(how === 'copied' ? 'Copied!' : 'Selected: copy it now');
           copyBtn.classList.toggle('is-done', how === 'copied');
-          later(2200, () => (clear(copyLabel).append('Copy result'), copyBtn.classList.remove('is-done')));
+          later(2200, () => (clear(copyLabel).append('Copy'), copyBtn.classList.remove('is-done')));
         },
       }, icon('copy'), copyLabel);
-      parts.unshift(h('div.eyebrow', d.ranked ? 'Share your result' : 'Your ranked result today'), pre, copyBtn);
+      parts.unshift(h('div.share__head', h('div.eyebrow', d.ranked ? 'Share your result' : 'Your ranked result today'), copyBtn), pre);
     }
     return h('div.share', parts);
   }
@@ -147,7 +148,7 @@ export function createResults(app) {
       timers = [];
       clearInterval(ticker);
       const daily = r.mode === 'daily' ? r.daily : null;
-      shownKey = keyOf({ mode: r.mode, dateId: daily?.dateId, score: r.score });
+      shownKey = keyOf(r);
       clear(badge);
 
       if (daily) {

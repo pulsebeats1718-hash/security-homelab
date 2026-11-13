@@ -3,3 +3,7 @@ dist/
 dist-single/
 *.log
 .DS_Store
+# local Firebase config and deploy cache (see .env.example, DEPLOY.md)
+.env.local
+.env.*.local
+.firebase/

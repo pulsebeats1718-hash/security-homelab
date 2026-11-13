@@ -39,8 +39,8 @@ function pwa() {
         .filter((f) => f !== 'index.html' && !f.endsWith('.map'))
         .sort();
       const html = bundle['index.html']?.source ?? '';
-      const version = createHash('sha256').update(files.join('\n')).update(String(html)).digest('hex').slice(0, 12);
       const src = readFileSync(sw, 'utf8');
+      const version = createHash('sha256').update(files.join('\n')).update(String(html)).update(src).digest('hex').slice(0, 12);
       writeFileSync(sw, src.replace(/const BUILD = \{[^\n]*\};/, `const BUILD = ${JSON.stringify({ version, files })};`));
     },
   };

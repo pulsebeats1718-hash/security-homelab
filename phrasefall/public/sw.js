@@ -19,6 +19,8 @@ const CACHE = PREFIX + BUILD.version;
 const SHELL = './';
 const EXTRAS = ['manifest.webmanifest', 'sw-register.js', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-192.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png'];
 const SLOW_NETWORK_MS = 4000;
+// our files only, all same-origin: a Vary header (e.g. Vary: Origin on module scripts) must not cause a miss
+const MATCH = { ignoreVary: true };
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -61,14 +63,14 @@ async function page(event, url, scope) {
     return res;
   });
   event.waitUntil(network.then(() => {}, () => {}));
-  const cached = isShell ? await cache.match(SHELL) : null;
+  const cached = isShell ? await cache.match(SHELL, MATCH) : null;
   if (!cached) return network;
   const slow = new Promise((resolve) => setTimeout(() => resolve(cached), SLOW_NETWORK_MS));
   return Promise.race([network.catch(() => cached), slow]);
 }
 
 async function cacheFirst(req) {
-  const hit = await caches.match(req);
+  const hit = await caches.match(req, MATCH);
   if (hit) return hit;
   const res = await fetch(req);
   if (res.ok) (await caches.open(CACHE)).put(req, res.clone());
@@ -81,7 +83,7 @@ async function networkFirst(req) {
     if (res.ok) (await caches.open(CACHE)).put(req, res.clone());
     return res;
   } catch (err) {
-    const hit = await caches.match(req, { ignoreSearch: true });
+    const hit = await caches.match(req, { ...MATCH, ignoreSearch: true });
     if (hit) return hit;
     throw err;
   }

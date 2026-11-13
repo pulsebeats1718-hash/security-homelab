@@ -1,0 +1,21 @@
+/** The parts of the Firestore SDK the online module uses — a separate chunk, fetched on first sign-in. */
+export {
+  initializeFirestore,
+  connectFirestoreEmulator,
+  doc,
+  collection,
+  collectionGroup,
+  query,
+  where,
+  orderBy,
+  limit,
+  getDoc,
+  getDocs,
+  setDoc,
+  updateDoc,
+  onSnapshot,
+  getCountFromServer,
+  runTransaction,
+  writeBatch,
+  serverTimestamp,
+} from 'firebase/firestore';

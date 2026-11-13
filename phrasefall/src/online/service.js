@@ -1,7 +1,7 @@
 /**
  * The Firebase side of app.online (see ./index.js for the public API). Loaded with a dynamic
- * import() only when the build has a Firebase config, so guests on an unconfigured build never
- * download any of it.
+ * import() only when the build has a Firebase config, so an unconfigured build never contains
+ * any of it; Firestore itself (./firestore.js) is fetched only once someone signs in.
  *
  *   profiles/{uid}                    { name, at }                       public nickname
  *   saves/{uid}                       { v, data, rows, t, at }           cloud save (./pack.js)
@@ -26,43 +26,27 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   signInWithRedirect,
+  signInWithCredential,
   getRedirectResult,
   onAuthStateChanged,
   signOut as authSignOut,
   deleteUser,
   connectAuthEmulator,
 } from 'firebase/auth';
-import {
-  initializeFirestore,
-  connectFirestoreEmulator,
-  doc,
-  collection,
-  collectionGroup,
-  query,
-  where,
-  orderBy,
-  limit,
-  getDoc,
-  getDocs,
-  setDoc,
-  updateDoc,
-  onSnapshot,
-  getCountFromServer,
-  runTransaction,
-  writeBatch,
-  serverTimestamp,
-} from 'firebase/firestore';
 import { mergeSaves, countersOf } from './merge.js';
 import { encodeSave, decodeSave } from './pack.js';
 import { checkName, defaultName } from './names.js';
 import { dayId, isDayId, boardId } from './dates.js';
 
-const META_KEY = 'phrasefall.cloud.v1'; // { uid, base, t }: whose save this device holds, counters at last sync, last local change
+// { uid, base, t, e }: whose save this device holds, its counters at the last sync, the time of the
+// last local change, and the account's reset epoch at the last sync
+const META_KEY = 'phrasefall.cloud.v1';
 const PENDING_KEY = 'phrasefall.scores.pending.v1'; // scores that could not be posted while offline
 const REDIRECT_KEY = 'phrasefall.auth.redirect';
 const WRITE_DELAY = 12_000; // debounce for cloud-save writes
 const RESYNC_AFTER = 10 * 60_000; // re-read the cloud save when the tab returns after this long
 const TOP = 50;
+const RANK_TTL = 5 * 60_000;
 const DAY = 86_400_000;
 // keep in step with validScore() in firestore.rules
 const MAX = { score: 200_000, stage: 5, answered: 500 };
@@ -134,20 +118,41 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
     persistence: [indexedDBLocalPersistence, browserLocalPersistence, inMemoryPersistence],
     popupRedirectResolver: browserPopupRedirectResolver,
   });
-  const db = initializeFirestore(fb, { ignoreUndefinedProperties: true });
-  if (emulatorHost) {
-    const host = emulatorHost === 'true' || emulatorHost === '1' ? '127.0.0.1' : emulatorHost;
-    connectAuthEmulator(auth, `http://${host}:9099`, { disableWarnings: true });
-    connectFirestoreEmulator(db, host, 8080);
+  const emulator = emulatorHost === 'true' || emulatorHost === '1' ? '127.0.0.1' : emulatorHost;
+  if (emulator) {
+    connectAuthEmulator(auth, `http://${emulator}:9099`, { disableWarnings: true });
+    // automated tests sign in a made-up Google user without the popup (the emulator accepts any token)
+    online.emulatorSignIn = (name = 'Test Player', email = 'player@example.com') =>
+      signInWithCredential(auth, GoogleAuthProvider.credential(JSON.stringify({ sub: email, email, email_verified: true, name })));
   }
+
+  // Firestore is only needed once someone signs in, so guests never download it
+  let F = null; // the firebase/firestore module
+  let db = null;
+  let firestoreP = null;
+  const firestore = () =>
+    (firestoreP ??= import('./firestore.js').then(
+      (mod) => {
+        if (!db) {
+          db = mod.initializeFirestore(fb, { ignoreUndefinedProperties: true });
+          if (emulator) mod.connectFirestoreEmulator(db, emulator, 8080);
+        }
+        F = mod;
+      },
+      (err) => {
+        firestoreP = null; // e.g. offline: try again next time
+        throw err;
+      }
+    ));
 
   let user = null; // the Firebase user
   let profileName = null; // nickname from profiles/{uid}
-  let meta = { uid: null, base: null, t: 0, ...store.get(META_KEY, {}) };
+  let meta = { uid: null, base: null, t: 0, e: 0, ...store.get(META_KEY, {}) };
   let dirty = false; // local changes not yet in the cloud
   let applying = false; // inside save.replaceAll(): not a player change
   let readOnly = false; // the cloud save is from a newer build: leave it alone
   let deleting = false;
+  let linked = false; // the sign-in sync has completed for the current user
   let timer = 0;
   let hiddenAt = 0;
 
@@ -157,7 +162,7 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
     online.emit('sync', online.sync);
   };
   const writeMeta = () => store.set(META_KEY, meta);
-  const scoreDoc = (board, uid = user?.uid) => doc(db, 'boards', board, 'scores', uid);
+  const scoreDoc = (board, uid = user?.uid) => F.doc(db, 'boards', board, 'scores', uid);
   const currentName = () => profileName ?? (online.hint?.uid === user?.uid ? online.hint.name : null) ?? defaultName(user?.displayName, user?.uid);
   const whenNotPlaying = () =>
     new Promise((resolve) => {
@@ -182,7 +187,10 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
   onAuthStateChanged(auth, (u) => {
     const before = user?.uid;
     user = u;
-    if (!u || u.uid !== before) profileName = null;
+    if (!u || u.uid !== before) {
+      profileName = null;
+      linked = false;
+    }
     online.ready = true;
     publish();
     if (u && u.uid !== before) afterSignIn(u);
@@ -194,18 +202,20 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
     getRedirectResult(auth).catch((err) => QUIET_AUTH.has(err?.code) || notice(authMessage(err), true));
   }
 
+  /** Profile, cloud save and pending scores for a newly signed-in user; retried when the connection returns. */
   async function afterSignIn(u) {
-    await loadProfile(u);
+    if (!profileName) await loadProfile(u);
     if (user?.uid !== u.uid) return;
-    await sync({ apply: true });
-    if (user?.uid !== u.uid) return;
+    if (!linked) linked = (await sync({ apply: true })) === true;
+    if (user?.uid !== u.uid || !linked) return;
     await carryOverDaily();
     flushPending();
   }
 
   async function loadProfile(u) {
     try {
-      const snap = await getDoc(doc(db, 'profiles', u.uid));
+      await firestore();
+      const snap = await F.getDoc(F.doc(db, 'profiles', u.uid));
       if (user?.uid !== u.uid) return;
       const name = snap.exists() ? snap.data().name : null;
       if (name && checkName(name).ok) {
@@ -231,7 +241,9 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
       await signInWithPopup(auth, provider);
     } catch (err) {
       if (err?.code === 'auth/popup-blocked') return redirect().catch((e) => notice(authMessage(e), true));
-      if (!QUIET_AUTH.has(err?.code)) notice(authMessage(err), true);
+      if (QUIET_AUTH.has(err?.code)) return;
+      console.warn('Sign-in failed:', err?.code ?? err);
+      notice(authMessage(err), true);
     }
   }
 
@@ -249,7 +261,12 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
     if (!check.ok) return check;
     const u = user;
     if (!u) return { ok: false, reason: 'Sign in first.' };
-    const write = setDoc(doc(db, 'profiles', u.uid), { name: check.name, at: serverTimestamp() });
+    try {
+      await firestore();
+    } catch {
+      return { ok: false, reason: 'You are offline. Please try again when you are connected.' };
+    }
+    const write = F.setDoc(F.doc(db, 'profiles', u.uid), { name: check.name, at: F.serverTimestamp() });
     try {
       // offline, the write waits in Firestore's queue and goes through when the connection returns
       await Promise.race([write, wait(6000)]);
@@ -260,7 +277,7 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
     profileName = check.name;
     publish();
     // follow the rename on the boards that are live now (an entry that does not exist just fails)
-    for (const b of [boardId.daily(), boardId.week(), boardId.all()]) updateDoc(scoreDoc(b, u.uid), { name: check.name }).catch(() => {});
+    for (const b of [boardId.daily(), boardId.week(), boardId.all()]) F.updateDoc(scoreDoc(b, u.uid), { name: check.name }).catch(() => {});
     return { ok: true, name: check.name };
   }
 
@@ -294,6 +311,7 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
   });
   window.addEventListener('pagehide', () => dirty && sync());
   window.addEventListener('online', () => {
+    if (user && !linked) return afterSignIn(user); // signed in while offline: finish setting up
     if (dirty) schedule(1500);
     flushPending();
   });
@@ -331,6 +349,7 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
     if (!u || readOnly || deleting) return false;
     if (!apply && !dirty) return true;
     if (apply) await whenNotPlaying();
+    await firestore();
     if (user?.uid !== u.uid) return false;
 
     // a save that belongs to a different account is not mixed into this one: the sign-in
@@ -338,7 +357,7 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
     if (meta.uid && meta.uid !== u.uid) {
       if (!apply) return false;
       applyLocal(() => save.reset());
-      meta = { uid: null, base: null, t: 0 };
+      meta = { uid: null, base: null, t: 0, e: 0 };
       writeMeta();
     }
     setSync('syncing');
@@ -347,11 +366,13 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
     const base = meta.uid === u.uid ? meta.base : null;
     const wasDirty = dirty;
     dirty = false; // changes made from here on mark it again
-    const ref = doc(db, 'saves', u.uid);
+    const ref = F.doc(db, 'saves', u.uid);
     let merged = null;
     let t = 0;
+    let epoch = 0;
+    let wasReset = false;
     try {
-      await runTransaction(db, async (tx) => {
+      await F.runTransaction(db, async (tx) => {
         const snap = await tx.get(ref);
         const old = snap.exists() ? snap.data() : null;
         let cloud = null;
@@ -364,10 +385,18 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
             throw err;
           }
         }
+        epoch = Number(old?.e) || 0;
+        // progress was reset on another device since this one last synced: take the cloud copy as is
+        wasReset = !!cloud && base !== null && epoch > (meta.e || 0);
+        if (wasReset) {
+          merged = { ...cloud, settings: local.settings };
+          t = cloudT;
+          return;
+        }
         merged = mergeSaves(local, cloud, { localNewer: localT >= cloudT, base });
         t = Math.max(localT, cloudT);
         const fields = encodeSave(merged, t);
-        if (!old || old.data !== fields.data || old.rows !== fields.rows) tx.set(ref, { ...fields, at: serverTimestamp() });
+        if (!old || old.data !== fields.data || old.rows !== fields.rows) tx.set(ref, { ...fields, e: epoch, at: F.serverTimestamp() });
       });
     } catch (err) {
       dirty ||= wasDirty;
@@ -383,12 +412,17 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
       return false;
     }
     if (user?.uid !== u.uid) return false;
+    if (wasReset && !apply) {
+      dirty = false;
+      sync({ apply: true }); // queued behind this run (awaiting it here would wait on ourselves)
+      return false;
+    }
 
     // the cloud now holds everything this device had counted
-    meta = { uid: u.uid, base: countersOf(local), t: meta.t };
+    meta = { uid: u.uid, base: countersOf(wasReset ? merged : local), t: meta.t, e: epoch };
     if (apply) {
       // anything the player did while the request was out goes on top of the merged save
-      const next = dirty ? mergeSaves(clone(save.data), merged, { localNewer: true, base: countersOf(local) }) : merged;
+      const next = dirty && !wasReset ? mergeSaves(clone(save.data), merged, { localNewer: true, base: countersOf(local) }) : merged;
       const ok = applyLocal(() => typeof save.replaceAll === 'function' && save.replaceAll(next));
       if (ok) {
         meta.base = countersOf(merged);
@@ -425,9 +459,16 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
     };
   }
 
+  // A count() costs one read per 1,000 entries it passes, so a rank deep in a big board is worth
+  // reusing for a few minutes rather than recounting after every game or tab switch.
+  const ranks = new Map(); // board → { score, rank, at }
   async function rankOn(board, score) {
-    const snap = await getCountFromServer(query(collection(db, 'boards', board, 'scores'), where('score', '>', score)));
-    return snap.data().count + 1;
+    const hit = ranks.get(board);
+    if (hit && hit.score === score && Date.now() - hit.at < RANK_TTL) return hit.rank;
+    const snap = await F.getCountFromServer(F.query(F.collection(db, 'boards', board, 'scores'), F.where('score', '>', score)));
+    const rank = snap.data().count + 1;
+    ranks.set(board, { score, rank, at: Date.now() });
+    return rank;
   }
 
   async function submitScore(r) {
@@ -445,6 +486,7 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
     };
     if (mode === 'classic' && job.entry.score <= 0) return null;
     try {
+      await firestore();
       const out = await post(job, true);
       if (out) online.emit('rank', out);
       return out;
@@ -457,19 +499,19 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
 
   /** Write one finished game to its boards; with `rank`, also work out where it placed. */
   async function post(job, rank) {
-    const data = { ...job.entry, name: currentName(), uid: job.uid, at: serverTimestamp() };
+    const data = { ...job.entry, name: currentName(), uid: job.uid, at: F.serverTimestamp() };
     if (job.mode === 'daily') {
       // the first ranked attempt of the day is the one that counts (the rules make it create-only)
       const ref = scoreDoc(job.daily, job.uid);
-      let snap = await getDoc(ref);
+      let snap = await F.getDoc(ref);
       let counted = false;
       if (!snap.exists() && !job.practice) {
         try {
-          await setDoc(ref, data);
+          await F.setDoc(ref, data);
           counted = true;
         } catch (err) {
           if (err?.code !== 'permission-denied') throw err;
-          snap = await getDoc(ref); // another tab posted first, or the day has closed
+          snap = await F.getDoc(ref); // another tab posted first, or the day has closed
         }
       }
       const score = counted ? job.entry.score : snap.exists() ? snap.data().score : null;
@@ -479,8 +521,8 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
     }
     // classic: the weekly and all-time boards keep each player's best
     const boards = [job.week, boardId.all()];
-    const snaps = await Promise.all(boards.map((b) => getDoc(scoreDoc(b, job.uid))));
-    const batch = writeBatch(db);
+    const snaps = await Promise.all(boards.map((b) => F.getDoc(scoreDoc(b, job.uid))));
+    const batch = F.writeBatch(db);
     const best = [];
     const improved = [];
     boards.forEach((b, i) => {
@@ -506,6 +548,11 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
     if (!user || flushing || !navigator.onLine) return;
     const list = store.get(PENDING_KEY, []).filter((j) => Date.now() - j.at < 7 * DAY);
     if (!list.length) return;
+    try {
+      await firestore();
+    } catch {
+      return;
+    }
     flushing = true;
     const keep = [];
     for (const job of list) {
@@ -531,6 +578,7 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
     const total = Math.max(1, rec.total || rec.answered || 1);
     const stage = Math.min(5, 1 + Math.floor((Math.max(0, (rec.answered || 1) - 1) * 5) / total));
     try {
+      await firestore();
       await post({ uid: user.uid, mode: 'daily', entry: entryOf({ ...rec, stage, character: save.data.character }), daily: boardId.daily(today), at: Date.now() }, false);
     } catch {
       /* offline or already there */
@@ -539,9 +587,22 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
 
   // ── leaderboards ────────────────────────────────────────────────────────
   function watchBoard(kind, fn) {
+    let stop = null;
+    let dead = false;
+    firestore().then(
+      () => dead || (stop = watchBoardNow(kind, fn)),
+      () => dead || fn({ status: 'error', error: 'unavailable', rows: [], me: null })
+    );
+    return () => {
+      dead = true;
+      stop?.();
+    };
+  }
+
+  function watchBoardNow(kind, fn) {
     const u = user;
     const board = kind === 'today' ? boardId.daily() : kind === 'week' ? boardId.week() : boardId.all();
-    const col = collection(db, 'boards', board, 'scores');
+    const col = F.collection(db, 'boards', board, 'scores');
     const state = { status: 'loading', boardId: board, rows: [], me: null, error: null };
     let alive = true;
     let stopTop = null;
@@ -551,13 +612,13 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
 
     async function updateMe() {
       const row = u && state.rows.find((r) => r.uid === u.uid);
-      if (row) state.me = { rank: row.rank, score: row.score, inTop: true };
+      if (row) state.me = { rank: row.rank, score: row.score, character: row.character, inTop: true };
       else if (!mine) state.me = null;
       else if (rankedFor !== mine.score) {
         rankedFor = mine.score;
         try {
           const rank = await rankOn(board, mine.score);
-          if (alive) state.me = { rank, score: mine.score, inTop: false };
+          if (alive) state.me = { rank, score: mine.score, character: mine.character, inTop: false };
         } catch {
           rankedFor = null;
         }
@@ -567,9 +628,9 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
 
     function listen(ordered) {
       stopTop?.();
-      const order = ordered ? [orderBy('score', 'desc'), orderBy('at', 'asc')] : [orderBy('score', 'desc')];
-      stopTop = onSnapshot(
-        query(col, ...order, limit(TOP)),
+      const order = ordered ? [F.orderBy('score', 'desc'), F.orderBy('at', 'asc')] : [F.orderBy('score', 'desc')];
+      stopTop = F.onSnapshot(
+        F.query(col, ...order, F.limit(TOP)),
         (snap) => {
           let rank = 0;
           let prev = null;
@@ -597,8 +658,8 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
     listen(true);
     emit();
     const stopMe = u
-      ? onSnapshot(
-          doc(col, u.uid),
+      ? F.onSnapshot(
+          F.doc(col, u.uid),
           (snap) => {
             mine = snap.exists() ? snap.data() : null;
             if (state.status === 'ready') updateMe();
@@ -613,6 +674,32 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
     };
   }
 
+  /**
+   * After Settings → Reset progress: overwrite the cloud copy with the fresh save (a merge would
+   * bring the old progress straight back) and start a new epoch, so other devices adopt the reset
+   * instead of uploading their old copy. Leaderboard entries stay; "Delete my data" removes those.
+   */
+  async function resetCloud() {
+    const u = user;
+    if (!u) return false;
+    clearTimeout(timer);
+    dirty = false;
+    const fresh = clone(save.data);
+    const now = Date.now();
+    meta = { uid: u.uid, base: countersOf(fresh), t: now, e: now };
+    writeMeta();
+    try {
+      await firestore();
+      await F.setDoc(F.doc(db, 'saves', u.uid), { ...encodeSave(fresh, now), e: now, at: F.serverTimestamp() });
+      setSync('synced');
+      return true;
+    } catch (err) {
+      console.warn('Cloud reset failed:', err?.code ?? err);
+      setSync(isOffline(err) ? 'offline' : 'error');
+      return false;
+    }
+  }
+
   // ── delete my data ──────────────────────────────────────────────────────
   async function deleteData() {
     const u = user;
@@ -620,9 +707,10 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
     deleting = true;
     clearTimeout(timer);
     try {
-      const refs = [doc(db, 'saves', u.uid), doc(db, 'profiles', u.uid)];
+      await firestore();
+      const refs = [F.doc(db, 'saves', u.uid), F.doc(db, 'profiles', u.uid)];
       try {
-        const snap = await getDocs(query(collectionGroup(db, 'scores'), where('uid', '==', u.uid)));
+        const snap = await F.getDocs(F.query(F.collectionGroup(db, 'scores'), F.where('uid', '==', u.uid)));
         refs.push(...snap.docs.map((d) => d.ref));
       } catch {
         // without the collection-group index: at least every board that is live now
@@ -630,7 +718,7 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
         for (const b of [boardId.daily(dayId(now)), boardId.daily(dayId(new Date(+now - DAY))), boardId.week(now), boardId.week(new Date(+now - 7 * DAY)), boardId.all()]) refs.push(scoreDoc(b, u.uid));
       }
       for (let i = 0; i < refs.length; i += 400) {
-        const batch = writeBatch(db);
+        const batch = F.writeBatch(db);
         for (const ref of refs.slice(i, i + 400)) batch.delete(ref);
         await batch.commit();
       }
@@ -639,7 +727,7 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
       return { ok: false, reason: isOffline(err) ? 'You are offline. Connect to the internet and try again.' : 'Something went wrong. Please try again.' };
     }
     // the progress on this device stays, as a guest save that is nobody's yet
-    meta = { uid: null, base: null, t: meta.t };
+    meta = { uid: null, base: null, t: meta.t, e: 0 };
     writeMeta();
     store.set(PENDING_KEY, store.get(PENDING_KEY, []).filter((j) => j.uid !== u.uid));
     dirty = false;
@@ -652,5 +740,5 @@ export function createService(online, app, { config, emulatorHost, hintKey }) {
     return { ok: true };
   }
 
-  return { signIn, signOut, setName, submitScore, watchBoard, deleteData, syncNow: () => sync({ apply: true }) };
+  return { signIn, signOut, setName, submitScore, watchBoard, deleteData, resetCloud, syncNow: () => sync({ apply: true }) };
 }

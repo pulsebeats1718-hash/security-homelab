@@ -1,10 +1,11 @@
 /**
  * Firebase web config, read from VITE_FIREBASE_* at build time (see .env.example).
- * Online play exists only when the four required values are present. Each value is read with
- * a literal `import.meta.env.VITE_…` so Vite can replace it at build time; without a config,
- * ONLINE is the constant `false` and the Firebase chunk is dropped from the build entirely.
+ * Online play exists only when the four required values are present, and never in the
+ * single-file preview build (`--mode single`, which would otherwise also read .env.local).
+ * Each value is read with a literal `import.meta.env.…` so Vite replaces it at build time:
+ * without a config the condition is a constant and the Firebase chunks are left out entirely.
  */
-export const ONLINE = !!(import.meta.env.VITE_FIREBASE_API_KEY && import.meta.env.VITE_FIREBASE_AUTH_DOMAIN && import.meta.env.VITE_FIREBASE_PROJECT_ID && import.meta.env.VITE_FIREBASE_APP_ID);
+export const ONLINE = !!(import.meta.env.MODE !== 'single' && import.meta.env.VITE_FIREBASE_API_KEY && import.meta.env.VITE_FIREBASE_AUTH_DOMAIN && import.meta.env.VITE_FIREBASE_PROJECT_ID && import.meta.env.VITE_FIREBASE_APP_ID);
 
 export const FIREBASE_CONFIG = ONLINE
   ? {
@@ -17,6 +18,9 @@ export const FIREBASE_CONFIG = ONLINE
       measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || undefined,
     }
   : null;
+
+/** The Firebase side, fetched on demand; null in builds without a config (nothing to fetch). */
+export const loadService = import.meta.env.MODE !== 'single' && import.meta.env.VITE_FIREBASE_API_KEY && import.meta.env.VITE_FIREBASE_AUTH_DOMAIN && import.meta.env.VITE_FIREBASE_PROJECT_ID && import.meta.env.VITE_FIREBASE_APP_ID ? () => import('./service.js') : null;
 
 /** Local development against the Firebase Emulator Suite: set to a host (e.g. 127.0.0.1). */
 export const EMULATOR_HOST = ONLINE ? import.meta.env.VITE_FIREBASE_EMULATOR_HOST || '' : '';

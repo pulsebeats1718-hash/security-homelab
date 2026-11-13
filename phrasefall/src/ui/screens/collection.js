@@ -109,7 +109,8 @@ export function createCollection(app) {
       () => ui.name === 'collection' && open(),
       () =>
         ui.name === 'collection' &&
-        clear(rows).append(h('div.empty', h('div.empty__ico', icon('alert')), h('div', h('b', 'Could not load the expressions'), 'Check your connection and try again.'), h('button.btn.btn--gold', { 'data-quiet': '1', onclick: () => waitForData() }, icon('refresh'), 'Try again')))
+        // a failed module download is not fetched again in the same page: a reload retries it
+        clear(rows).append(h('div.empty', h('div.empty__ico', icon('alert')), h('div', h('b', 'Could not load the expressions'), 'Check your connection, then reload the game.'), h('button.btn.btn--gold', { 'data-quiet': '1', onclick: () => location.reload() }, icon('refresh'), 'Reload')))
     );
   }
 

@@ -22,7 +22,7 @@ import { buildDaily, dailySegment, speedBonus, utcDateId } from './daily.js';
 import { clamp, shuffle, smoothstep } from '../core/utils.js';
 
 /** Classic games deal expressions that are due for spaced-repetition review this much more often. */
-const DUE_WEIGHT = 1.8;
+const DUE_WEIGHT = 2.2;
 
 const _v = new THREE.Vector3();
 const _w = new THREE.Vector3();
@@ -549,6 +549,7 @@ export class Game {
 
     for (let i = this.timers.length - 1; i >= 0; i--) {
       const tm = this.timers[i];
+      if (!tm) continue; // a callback that ends the run clears the list mid-loop
       tm.t -= dt;
       if (tm.t <= 0) {
         this.timers.splice(i, 1);
