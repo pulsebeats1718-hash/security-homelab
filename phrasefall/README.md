@@ -110,7 +110,7 @@ src/
   online/                 optional Google sign-in, cloud save and leaderboards (Firebase, loaded on demand)
   ui/                     screens (menu, Today, Your journey, characters, HUD, results, flashcards …), notes
   styles/main.css         the interface look
-dev/                      character and world preview pages, character authoring guide
+dev/                      character and world preview pages, character authoring guide, app icon (icon/)
 scripts/                  data validator and screenshot helpers used during development
 ```
 

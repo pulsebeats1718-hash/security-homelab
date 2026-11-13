@@ -1,0 +1,10 @@
+// Cloudflare Workers: serves the built game (dist/) as static assets at
+// https://phrasefall.<your-subdomain>.workers.dev — no Worker code needed.
+// Publish with `npm run deploy:cloudflare` (builds first). Cache rules: public/_headers.
+{
+  "name": "phrasefall",
+  "compatibility_date": "2026-11-13",
+  "assets": {
+    "directory": "./dist"
+  }
+}

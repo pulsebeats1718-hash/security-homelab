@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- App icon, layer 1 (behind the fox): a dusk sky lit by the falling golden speech bubble. -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0" stop-color="#130e36"/>
+      <stop offset="0.45" stop-color="#2a1b69"/>
+      <stop offset="0.75" stop-color="#55298a"/>
+      <stop offset="1" stop-color="#a8408e"/>
+    </linearGradient>
+    <radialGradient id="horizon" cx="0.42" cy="1.08" r="0.72">
+      <stop offset="0" stop-color="#ff9f8c" stop-opacity="0.8"/>
+      <stop offset="0.45" stop-color="#e2569e" stop-opacity="0.3"/>
+      <stop offset="1" stop-color="#e2569e" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="0.66" cy="0.31" r="0.42">
+      <stop offset="0" stop-color="#ffd76e" stop-opacity="0.5"/>
+      <stop offset="0.4" stop-color="#ff9ad0" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#ff9ad0" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#sky)"/>
+  <rect width="1024" height="1024" fill="url(#horizon)"/>
+  <rect width="1024" height="1024" fill="url(#glow)"/>
+  <g fill="#fff6e3">
+    <circle cx="96" cy="150" r="5" opacity="0.9"/>
+    <circle cx="214" cy="92" r="3.5" opacity="0.7"/>
+    <circle cx="300" cy="210" r="4" opacity="0.8"/>
+    <circle cx="150" cy="300" r="3" opacity="0.6"/>
+    <circle cx="402" cy="120" r="3" opacity="0.6"/>
+    <circle cx="80" cy="430" r="3.5" opacity="0.55"/>
+    <circle cx="232" cy="410" r="2.5" opacity="0.5"/>
+    <circle cx="930" cy="560" r="4" opacity="0.7"/>
+    <circle cx="870" cy="700" r="3" opacity="0.5"/>
+    <circle cx="560" cy="90" r="3" opacity="0.6"/>
+    <circle cx="960" cy="380" r="2.5" opacity="0.5"/>
+  </g>
+</svg>

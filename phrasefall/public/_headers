@@ -1,6 +1,11 @@
-# Cache rules for Netlify and Cloudflare Pages (Firebase Hosting uses firebase.json instead).
-# The page, the manifest and the service worker are always re-checked, so a new deploy reaches
-# installed copies of the app; files in /assets/ have hashed names, so they can be cached for good.
+# Response headers for Cloudflare Workers, Cloudflare Pages and Netlify
+# (Firebase Hosting uses firebase.json instead). The page, the manifest and the service worker
+# are always re-checked, so a new deploy reaches installed copies of the app; files in /assets/
+# have hashed names, so they can be cached for good.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Cross-Origin-Opener-Policy: same-origin-allow-popups
 /
   Cache-Control: no-cache
 /index.html

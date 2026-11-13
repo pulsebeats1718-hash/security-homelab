@@ -10,16 +10,8 @@ import { resolve } from 'node:path';
  *  - dist/sw.js gets this build's file list and a version (a hash of the hashed file
  *    names), so a new deploy installs a new service worker with a fresh cache.
  *
- * Icons live in public/icons/, rendered from icon.svg with ImageMagick (needs rsvg-convert):
- *   cd public/icons
- *   sed 's/width="512" height="512"/width="1024" height="1024"/' icon.svg > /tmp/big.svg
- *   sed 's/width="512" height="512" viewBox="0 0 512 512"/width="1024" height="1024" viewBox="26 26 460 460"/' icon.svg > /tmp/zoom.svg
- *   convert -background none /tmp/big.svg -resize 512x512 -strip icon-maskable-512.png
- *   convert -background none /tmp/big.svg -resize 192x192 -strip icon-maskable-192.png
- *   convert -background '#17123f' /tmp/big.svg -flatten -alpha off -resize 180x180 -strip apple-touch-icon.png
- *   convert -background none /tmp/zoom.svg -alpha set \( -size 1024x1024 xc:none -fill white \
- *     -draw "roundrectangle 0,0,1023,1023,226,226" \) -compose DstIn -composite -resize 512x512 -strip PNG32:icon-512.png
- *   convert icon-512.png -resize 192x192 PNG32:icon-192.png
+ * Icons live in public/icons/. They are made by dev/icon/make-icons.sh (Maple the fox, rendered by
+ * the game's own engine, under a falling speech bubble); see dev/icon/README.md.
  */
 function pwa() {
   return {

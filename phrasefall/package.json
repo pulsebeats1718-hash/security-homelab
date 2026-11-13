@@ -9,6 +9,8 @@
     "build": "vite build",
     "build:single": "vite build --mode single",
     "preview": "vite preview",
+    "deploy:cloudflare": "npm run build && npx --yes wrangler@4 deploy",
+    "deploy:cloudflare:embed": "npm run build && node scripts/cloudflare-embed.mjs",
     "check:data": "node scripts/check-expressions.mjs"
   },
   "dependencies": {

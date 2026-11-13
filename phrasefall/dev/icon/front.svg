@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- App icon, layer 3 (in front of the fox): the golden speech bubble falling like a shooting star. -->
+  <defs>
+    <linearGradient id="frame" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe489"/>
+      <stop offset="1" stop-color="#ffb11f"/>
+    </linearGradient>
+    <filter id="blur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="26"/></filter>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="10"/></filter>
+    <path id="sparkle" d="M0,-1 C0.08,-0.3 0.3,-0.08 1,0 C0.3,0.08 0.08,0.3 0,1 C-0.08,0.3 -0.3,0.08 -1,0 C-0.3,-0.08 -0.08,-0.3 0,-1 Z"/>
+    <g id="q6">
+      <circle cx="0" cy="0" r="21"/>
+      <path d="M-17,-4 C-19,-34 -2,-52 22,-58" fill="none" stroke-width="14" stroke-linecap="round"/>
+    </g>
+    <!-- the speech bubble, centred on 0,0: glow, the card's thickness, gold frame, cream face, “ -->
+    <g id="bubble">
+      <rect x="-160" y="-118" width="320" height="236" rx="70" fill="#ffc83d" opacity="0.7" filter="url(#blur)"/>
+      <g fill="#c97a0e" stroke="#c97a0e" stroke-width="18" stroke-linejoin="round">
+        <rect x="-141" y="-85" width="282" height="198" rx="55"/>
+        <path d="M -96,96 L -150,176 L -24,116 Z"/>
+      </g>
+      <rect x="-150" y="-108" width="300" height="216" rx="64" fill="url(#frame)"/>
+      <path d="M -96,82 L -150,162 L -24,102 Z" fill="#ffb623" stroke="#ffb623" stroke-width="18" stroke-linejoin="round"/>
+      <rect x="-126" y="-84" width="252" height="168" rx="44" fill="#fff6e3"/>
+      <path d="M -86,74 L -118,122 L -42,86 Z" fill="#fff6e3" stroke="#fff6e3" stroke-width="10" stroke-linejoin="round"/>
+      <g fill="#2b1d66" stroke="#2b1d66" transform="translate(-14 22)">
+        <use href="#q6" x="-34"/>
+        <use href="#q6" x="40"/>
+      </g>
+      <path d="M -118,-70 C -96,-96 -40,-100 10,-98" fill="none" stroke="#ffffff" stroke-opacity="0.7" stroke-width="12" stroke-linecap="round"/>
+    </g>
+    <linearGradient id="t0" gradientUnits="userSpaceOnUse" x1="510" y1="243" x2="758" y2="-49"><stop offset="0" stop-color="#ff7fc1" stop-opacity="0.9"/><stop offset="1" stop-color="#ff7fc1" stop-opacity="0"/></linearGradient>
+    <linearGradient id="t1" gradientUnits="userSpaceOnUse" x1="580" y1="290" x2="860" y2="-125"><stop offset="0" stop-color="#ffd25e" stop-opacity="0.95"/><stop offset="1" stop-color="#ffd25e" stop-opacity="0"/></linearGradient>
+    <linearGradient id="t2" gradientUnits="userSpaceOnUse" x1="650" y1="337" x2="833" y2="-10"><stop offset="0" stop-color="#5cc8ff" stop-opacity="0.9"/><stop offset="1" stop-color="#5cc8ff" stop-opacity="0"/></linearGradient>
+    <linearGradient id="g0" gradientUnits="userSpaceOnUse" x1="580" y1="290" x2="832" y2="-83"><stop offset="0" stop-color="#ffc83d" stop-opacity="0.35"/><stop offset="1" stop-color="#ffc83d" stop-opacity="0"/></linearGradient>
+  </defs>
+  <g filter="url(#soft)"><path d="M 497.1,234.1 Q 649.4,65.4 831.6,-83.1 Q 732.3,121.4 662.9,345.9 Z" fill="url(#g0)"/></g>
+  <path d="M 483.8,225.1 Q 605.8,78.2 757.7,-48.5 Q 632.4,96.1 536.9,260.9 Z" fill="url(#t0)"/>
+  <path d="M 543.5,265.4 Q 686.6,60.4 859.6,-124.5 Q 723.1,85.0 616.5,314.6 Z" fill="url(#t1)"/>
+  <path d="M 623.1,319.1 Q 713.1,144.6 832.9,-9.8 Q 739.6,162.4 676.2,354.9 Z" fill="url(#t2)"/>
+  <use href="#bubble" transform="translate(582 280) rotate(-12) scale(0.97)"/>
+  <g fill="#fff6e3">
+    <use href="#sparkle" transform="translate(872 560) scale(32)"/>
+    <use href="#sparkle" transform="translate(330 214) scale(20)"/>
+    <use href="#sparkle" transform="translate(806 372) scale(14)" fill="#ffe489"/>
+    <use href="#sparkle" transform="translate(180 420) scale(12)"/>
+  </g>
+</svg>
