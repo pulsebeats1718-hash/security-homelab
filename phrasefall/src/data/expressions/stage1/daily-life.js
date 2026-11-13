@@ -1461,7 +1461,7 @@ export default [
     text: 'three times a day',
     type: 'everyday',
     level: 2,
-    meaning: 'on three separate occasions every day',
+    meaning: 'at morning, afternoon and evening, every day',
     distractors: ['once only, as late in the day as you can', 'on the third day of every single month', 'after exactly three hours of good rest'],
     example: 'Take one capsule three times a day, after meals.',
     synonyms: ['three times daily'],
