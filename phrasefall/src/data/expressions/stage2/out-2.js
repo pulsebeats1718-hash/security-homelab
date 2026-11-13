@@ -15,7 +15,7 @@ export default [
   },
   {
     id: 'keep-out',
-    text: 'keep out (a sign)',
+    text: 'keep out (a private room)',
     type: 'phrasal',
     level: 1,
     meaning: 'not go into a place',
@@ -395,7 +395,7 @@ export default [
     text: 'pop out (to a shop)',
     type: 'phrasal',
     level: 1,
-    meaning: 'go out for a short time',
+    meaning: 'leave for a short errand',
     distractors: ['come home after a long trip', 'stay out overnight', 'visit a friend for a week'],
     example: "I'm just popping out to get some milk.",
     synonyms: ['nip out', 'step out'],
