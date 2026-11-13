@@ -85,7 +85,7 @@ export default [
     level: 1,
     meaning: 'not punish someone who has done wrong',
     distractors: ['give a pupil some extra homework tonight', "forget someone's name by mistake", 'ask someone to pay for damage'],
-    example: 'The police let him off with a warning.',
+    example: 'The teacher let the pupil off with a warning.',
     synonyms: ['spare', 'excuse'],
     register: 'Neutral',
     context: 'Common with a warning, a fine or a light punishment: "let off with a caution".',
