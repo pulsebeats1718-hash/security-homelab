@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- Phrasefall app icon. Full-bleed square with everything inside the maskable safe zone
+       (a centred circle of radius 204); PNGs are rendered from this file, rendered to PNG with ImageMagick: see the comment in vite.config.js. -->
+  <defs>
+    <radialGradient id="sky" cx="256" cy="110" r="430" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3b3088"/>
+      <stop offset="1" stop-color="#17123f"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#sky)"/>
+  <g transform="rotate(-9 256 214)">
+    <rect x="106" y="160" width="300" height="122" rx="42" fill="#c27a08"/>
+    <rect x="106" y="146" width="300" height="122" rx="42" fill="#ffc83d"/>
+    <rect x="128" y="166" width="256" height="82" rx="28" fill="#fff6e3"/>
+    <rect x="160" y="190" width="192" height="15" rx="7.5" fill="#17123f"/>
+    <rect x="190" y="216" width="132" height="12" rx="6" fill="#8f7bff"/>
+  </g>
+  <path transform="translate(335 84) scale(3)" d="M12 2l2.3 6.7L21 11l-6.7 2.3L12 20l-2.3-6.7L3 11l6.7-2.3z" fill="#fff6e3"/>
+  <path transform="translate(104 104) scale(1.6)" d="M12 2l2.3 6.7L21 11l-6.7 2.3L12 20l-2.3-6.7L3 11l6.7-2.3z" fill="#ffc83d"/>
+  <circle cx="178" cy="346" r="19" fill="#ffc83d"/>
+  <circle cx="256" cy="380" r="14" fill="#fff6e3"/>
+  <circle cx="336" cy="340" r="19" fill="#5cc8ff"/>
+</svg>
