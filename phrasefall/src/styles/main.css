@@ -409,10 +409,23 @@ svg.ico.fill {
   padding-left: 6px;
   text-shadow: 0 2px 8px rgba(23, 18, 63, 0.8);
 }
-.menu__settings {
+/* header, top right: the account chip (online module) sits next to the settings button */
+.menu__top {
   position: absolute;
   top: calc(var(--st) + 18px);
   right: var(--sr);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.menu__account {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.menu__account:empty {
+  display: none;
 }
 .menu__nav {
   grid-column: 1;
@@ -451,6 +464,7 @@ svg.ico.fill {
   box-shadow: inset 0 -2px 0 var(--cream-3), inset 0 2px 0 rgba(255, 255, 255, 0.5), 0 3px 8px rgba(10, 6, 44, 0.38);
 }
 .tile__ico {
+  position: relative;
   grid-row: span 2;
   display: grid;
   place-items: center;
@@ -471,6 +485,133 @@ svg.ico.fill {
   font-size: 0.76rem;
   font-weight: 800;
   color: rgba(23, 18, 63, 0.6);
+}
+/* count bubble on a tile icon (flashcards due today) */
+.tile__badge {
+  position: absolute;
+  top: -8px;
+  right: -10px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 99px;
+  font: 700 0.74rem/22px var(--display);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: #fff;
+  background: var(--coral);
+  box-shadow: 0 0 0 2.5px var(--cream);
+}
+
+/* daily challenge: a wide secondary button under Play */
+.daily {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 64px;
+  padding: 9px 12px 14px 12px;
+  border-radius: 18px;
+  text-align: left;
+  color: var(--ink);
+  background: var(--cream);
+  box-shadow: inset 0 -6px 0 var(--cream-3), inset 0 2px 0 rgba(255, 255, 255, 0.7), 0 8px 18px rgba(10, 6, 44, 0.38);
+  transition: transform 0.09s ease, box-shadow 0.09s ease, filter 0.15s;
+}
+.daily:hover {
+  filter: brightness(1.05);
+}
+.daily:active {
+  transform: translateY(3px);
+  box-shadow: inset 0 -2px 0 var(--cream-3), inset 0 2px 0 rgba(255, 255, 255, 0.5), 0 3px 8px rgba(10, 6, 44, 0.38);
+}
+.daily__ico {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  font-size: 1.2rem;
+  color: var(--cream);
+  background: var(--sky);
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.18);
+}
+.daily__text {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.daily__title {
+  font: 600 1.08rem/1.05 var(--display);
+}
+.daily__sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: rgba(23, 18, 63, 0.6);
+}
+.daily__tag {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+}
+.daily__new {
+  padding: 6px 10px 7px;
+  border-radius: 99px;
+  font: 700 0.72rem/1 var(--display);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--gold);
+  box-shadow: inset 0 -2px 0 var(--gold-2);
+}
+.daily__score {
+  font: 700 1.2rem/1 var(--display);
+  font-variant-numeric: tabular-nums;
+  color: var(--mint-2);
+}
+.daily__score-label {
+  font: 600 0.62rem/1 var(--display);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(23, 18, 63, 0.5);
+}
+.btn.is-loading,
+.daily.is-loading {
+  filter: saturate(0.6) brightness(0.92);
+  cursor: progress;
+}
+.menu__status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  font: 600 0.86rem/1.25 var(--display);
+  color: var(--cream);
+  background: var(--ink-soft);
+}
+.menu__status.is-error {
+  color: #ffe1e4;
+  background: rgba(150, 26, 52, 0.86);
+}
+.spinner {
+  flex: none;
+  width: 1.1em;
+  height: 1.1em;
+  border-radius: 50%;
+  border: 3px solid currentColor;
+  border-right-color: transparent;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 .menu__foot {
   grid-column: 1;
@@ -561,6 +702,25 @@ svg.ico.fill {
   .menu__hero-name {
     font-size: 1.2rem;
   }
+  .menu.has-account .menu__logo {
+    padding-top: 58px;
+  }
+  .menu__nav {
+    gap: 10px;
+  }
+  .daily {
+    min-height: 58px;
+    padding: 8px 10px 13px;
+    gap: 10px;
+  }
+  .daily__ico {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+  }
+  .daily__title {
+    font-size: 1rem;
+  }
 }
 @media (max-height: 520px) and (orientation: landscape) {
   .menu {
@@ -568,6 +728,31 @@ svg.ico.fill {
     gap: 8px;
     padding-top: calc(var(--st) + 10px);
     padding-bottom: calc(var(--sb) + 10px);
+  }
+  .menu__nav {
+    gap: 8px;
+  }
+  .daily {
+    min-height: 46px;
+    padding: 6px 10px 11px;
+    gap: 10px;
+    border-radius: 16px;
+  }
+  .daily__ico {
+    width: 32px;
+    height: 32px;
+    border-radius: 11px;
+    font-size: 1rem;
+  }
+  .daily__title {
+    font-size: 0.92rem;
+  }
+  .daily__sub,
+  .daily__score-label {
+    display: none;
+  }
+  .daily__score {
+    font-size: 1rem;
   }
   .menu__logo {
     --wm: 2.3rem;

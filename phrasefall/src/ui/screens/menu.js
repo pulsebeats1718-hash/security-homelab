@@ -68,9 +68,9 @@ export function createMenu(app) {
     app.startGame(which === 'daily' ? { mode: 'daily' } : {});
   }
   function setLoading(on) {
-    const btn = pressed === 'daily' ? dailyBtn : playBtn;
-    btn.classList.toggle('is-loading', on);
-    if (pressed === 'play') clear(playLabel).append(on ? 'Loading…' : 'Play');
+    playBtn.classList.toggle('is-loading', on && pressed === 'play');
+    dailyBtn.classList.toggle('is-loading', on && pressed === 'daily');
+    clear(playLabel).append(on && pressed === 'play' ? 'Loading…' : 'Play');
     if (on) showStatus('Loading the expressions…', true);
     else status.hidden = true;
   }
@@ -79,19 +79,22 @@ export function createMenu(app) {
     status.classList.toggle('is-error', error);
     status.hidden = false;
   }
-  // app.startGame asks us to wait (it passes the call to repeat once the data is in)
+  // app.startGame asks the menu to wait, passing the call to repeat once the data is in
   events.on('data:wait', (resume) => {
+    const waiting = !!pending;
     pending = resume;
     if (ui.name === 'menu') setLoading(true);
+    if (waiting) return;
     whenExpressionsReady().then(
       () => {
-        setLoading(false);
-        if (pending === resume && ui.name === 'menu') resume();
+        const go = pending;
         pending = null;
+        setLoading(false);
+        if (go && ui.name === 'menu') go();
       },
       () => {
-        setLoading(false);
         pending = null;
+        setLoading(false);
         if (ui.name === 'menu') showStatus('The expressions could not be loaded. Check your connection and try again.', false, true);
       }
     );
@@ -144,7 +147,7 @@ export function createMenu(app) {
     accountSlot,
     show() {
       app.game.settleInterruptedDaily?.();
-      if (!pending) setLoading(false);
+      setLoading(false);
       refresh();
       clearInterval(ticker);
       ticker = setInterval(refreshDaily, 20000); // the countdown, and a new challenge at midnight UTC
@@ -160,6 +163,8 @@ export function createMenu(app) {
     },
     hide() {
       clearInterval(ticker);
+      pending = null; // leaving the menu cancels a game waiting for the data
+      setLoading(false);
       app.hero.waves = false;
     },
     relayout() {

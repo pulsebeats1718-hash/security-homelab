@@ -15,6 +15,8 @@ const PATTERN = /^[\p{L}\p{N}][\p{L}\p{M}\p{N} ]*[\p{L}\p{M}\p{N}]$/u;
 const STEMS = ['fuck', 'shit', 'cunt', 'bitch', 'pussy', 'porn', 'whore', 'slut', 'wank', 'nigg', 'faggot', 'retard', 'hitler', 'rapist', 'tranny', 'asshole', 'dickhead', 'cocksuck', 'motherf', 'bollock', 'penis', 'vagina', 'dildo', 'jizz', 'nazis', 'phrasefall'];
 // Whole words only, because as fragments they sit inside real names (Hancock, Titus, Nazir…).
 const WORDS = ['dick', 'cock', 'arse', 'ass', 'tit', 'tits', 'fag', 'spic', 'chink', 'paki', 'kike', 'rape', 'nazi', 'twat', 'cum', 'sex', 'anal', 'admin', 'mod', 'moderator', 'official', 'staff', 'support'];
+// Real places and surnames that contain a stem (the Scunthorpe problem), removed before matching.
+const ALLOW = /scunthorpe|penistone|cockburn|hitchcock|dickens|bitcho/g;
 const LEET = { 0: 'o', 1: 'i', 3: 'e', 4: 'a', 5: 's', 7: 't', 8: 'b', 9: 'g' };
 
 const unleet = (s) => s.toLowerCase().replace(/[01345789]/g, (c) => LEET[c]);
@@ -30,7 +32,8 @@ export function cleanName(raw) {
 export function isBlocked(name) {
   const plain = unleet(cleanName(name));
   const squashed = plain.replace(/ /g, '');
-  if (STEMS.some((s) => squashed.includes(s))) return true;
+  const safe = squashed.replace(ALLOW, '');
+  if (STEMS.some((s) => safe.includes(s))) return true;
   const words = plain.split(' ');
   return WORDS.some((w) => words.includes(w) || squashed === w);
 }
