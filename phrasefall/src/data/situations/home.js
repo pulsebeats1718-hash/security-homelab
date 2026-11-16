@@ -130,7 +130,7 @@ export default [
         options: [
           { id: 'have-a-bash', right: true, line: 'Ooh, yes please. I’ll have a bash!', note: '“Have a bash” is a breezy British way to say you’ll give something a try.' },
           { id: 'chicken-out', note: '“Chicken out” means decide not to do something because you’re scared. That’s a no!' },
-          { id: 'rather-you-than-me', note: '“Rather you than me” means you’re glad you don’t have to do it. That’s a no, too.' },
+          { id: 'rather-you-than-me', note: '“Rather you than me” means you’re glad you don’t have to do it. Here, it means no thanks!' },
         ],
       },
       { say: 'Hold the rod like this, and cast. Wow, you’ve caught one already! How?' },
@@ -175,7 +175,7 @@ export default [
       {
         ask: 'Say you should make it a really big celebration.',
         options: [
-          { id: 'push-the-boat-out', right: true, line: 'It’s her birthday! Let’s push the boat out and invite everyone.', note: '“Push the boat out” means spend generously to celebrate: just right for a big party.' },
+          { id: 'push-the-boat-out', right: true, line: 'It’s his birthday! Let’s push the boat out and invite everyone.', note: '“Push the boat out” means spend generously to celebrate: just right for a big party.' },
           { id: 'rock-the-boat', note: '“Rock the boat” means cause trouble when things are calm. Not very party-like!' },
           { id: 'miss-the-boat', note: '“Miss the boat” means be too late to take a chance. It says nothing about a big party.' },
         ],
@@ -205,7 +205,7 @@ export default [
         ask: 'Praise Clover’s gardening skills.',
         options: [
           { id: 'have-green-fingers', right: true, line: 'They’re enormous! You really have green fingers.', note: '“Have green fingers” means be good at growing plants: the perfect praise for Clover.' },
-          { id: 'green-with-envy', note: '“Green with envy” means very jealous. It’s about feelings, not gardening.' },
+          { id: 'as-green-as-grass', note: '“As green as grass” means new and without experience. Clover is no beginner!' },
           { id: 'give-the-green-light', note: '“Give the green light” means officially allow something to start. It isn’t a compliment.' },
         ],
       },
