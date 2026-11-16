@@ -109,6 +109,17 @@ for (const f of files) {
       if (!Array.isArray(l.options) || l.options.length !== 3) return err(`${li}: needs exactly three options`);
       const right = l.options.filter((o) => o?.right === true);
       if (right.length !== 1) err(`${li}: needs exactly one right option`);
+      // the buttons show each expression's text, sense hint included: two must never look alike,
+      // and the right one's hint must not give the answer away
+      const mains = l.options.map((o) => exprs.get(o?.id)).filter(Boolean).map((e) => mainText(e.text).toLowerCase());
+      if (new Set(mains).size !== mains.length) err(`${li}: two options show the same words (“${mains.join('” / “')}”); only a hint in brackets would tell them apart`);
+      const rightExpr = exprs.get(right[0]?.id);
+      const hint = rightExpr?.text.match(/\(([^()]+)\)\s*$/)?.[1];
+      if (hint && l.ask) {
+        const askLow = l.ask.toLowerCase();
+        const give = hint.toLowerCase().split(/\s+/).filter((w) => w.length > 3 && askLow.includes(w));
+        if (give.length) err(`${li}: the right option's hint “(${hint})” repeats the prompt (“${give.join(', ')}”), which gives the answer away`);
+      }
       for (const o of l.options) {
         const e = exprs.get(o?.id);
         if (!e) {

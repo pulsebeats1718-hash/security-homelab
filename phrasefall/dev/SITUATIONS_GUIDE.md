@@ -50,6 +50,10 @@ node scripts/check-situations.mjs --find "the ice"  # find expression ids to use
 - **One option clearly fits; the other two clearly don't**: a different meaning, the wrong
   situation, or the wrong register. Never a near-synonym that would also be fine here.
   Wrong options must still be real, well-known expressions, so the player learns from them too.
+- **The buttons show each expression's full text, sense hint included** ("put on (sun cream)").
+  So no two options may show the same words (two "put on"s told apart only by their hints), and
+  the right option's hint must not repeat the prompt and give the answer away. The validator
+  checks both.
 - **Notes**: for the right option, why it fits (≤ 120); for each wrong one, what it actually
   means and why it doesn't fit here. Put expressions in curly quotes: “break the ice”.
 - Prefer level 1–2 expressions in level 1 situations; level 3 situations can use harder ones.
