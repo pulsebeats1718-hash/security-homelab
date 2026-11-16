@@ -2,6 +2,8 @@ import { h, icon, clear, retrigger, phrase } from '../dom.js';
 import { shots } from '../../game/shots.js';
 import { getExpression, TYPE_LABELS, expressionsReady, whenExpressionsReady } from '../../data/expressions/index.js';
 import { SR_INTERVALS } from '../../core/storage.js';
+import { speak as say } from '../../audio/speech.js';
+import { mainText } from '../../game/twists.js';
 
 const FILTERS = [
   { id: 'due', label: 'Due today' },
@@ -12,23 +14,8 @@ const FILTERS = [
   { id: 'mastered', label: 'Mastered', test: (s, id, save) => save.isMastered(id) },
 ];
 
-/** Speak an expression with a British voice where the browser offers one. */
-function speak(text) {
-  try {
-    const synth = window.speechSynthesis;
-    if (!synth) return;
-    synth.cancel();
-    // say the phrase, not its sense hint: "pick up (a language)" → "pick up"
-    const u = new SpeechSynthesisUtterance(String(text).replace(/\s*\([^()]+\)$/, ''));
-    u.lang = 'en-GB';
-    const voice = synth.getVoices().find((v) => v.lang === 'en-GB') ?? synth.getVoices().find((v) => v.lang?.startsWith('en'));
-    if (voice) u.voice = voice;
-    u.rate = 0.92;
-    synth.speak(u);
-  } catch {
-    /* speech is a bonus; ignore where unsupported */
-  }
-}
+/** Speak an expression with a British voice where the device has one: the phrase, not its sense hint. */
+const speak = (text) => say(mainText(text));
 
 /** "tomorrow", "in 3 days" for a Leitner box. */
 const whenAgain = (box) => {
