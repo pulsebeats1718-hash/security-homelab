@@ -8,8 +8,8 @@ import { ring } from './today.js';
 import { getPlace } from '../../data/places.js';
 
 /**
- * Main menu: today's strip (level, streak, daily goal, quests), Play, the daily
- * challenge and four tiles. The header keeps a slot next to the settings button
+ * Main menu: today's strip (level, streak, daily goal, quests), Play (with Relax
+ * and Challenge a friend beside it), the daily challenge and four tiles. The header keeps a slot next to the settings button
  * (`accountSlot`, `.menu__account`) for the account chip.
  */
 export function createMenu(app) {
@@ -28,6 +28,10 @@ export function createMenu(app) {
   // ── play + daily challenge ──────────────────────────────────────────────
   const playLabel = h('span', 'Play');
   const playBtn = h('button.btn.btn--gold.btn--xl.menu__play', { 'data-quiet': '1', onclick: () => start('play') }, icon('play'), playLabel);
+  // two more ways to play, beside Play so the menu stays the same height
+  const relaxBtn = h('button.mode-btn.mode-btn--relax', { 'data-quiet': '1', title: 'Relax: no lives, no rush', onclick: () => start('relax') }, h('span.mode-btn__ico', icon('leaf')), h('span.mode-btn__label', 'Relax'));
+  const duelBtn = h('button.mode-btn.mode-btn--duel', { 'data-quiet': '1', title: 'Challenge a friend', onclick: () => (audio.play('select'), ui.go('duel', { from: 'menu', challenge: null })) }, h('span.mode-btn__ico', icon('friends')), h('span.mode-btn__label', 'Challenge'));
+  const playRow = h('div.menu__playrow', playBtn, relaxBtn, duelBtn);
   const dailyTitle = h('span.daily__title');
   const dailySub = h('span.daily__sub');
   const dailyTag = h('span.daily__tag');
@@ -66,7 +70,7 @@ export function createMenu(app) {
       status,
       notice,
       strip,
-      playBtn,
+      playRow,
       dailyBtn,
       h(
         'div.menu__grid',
@@ -87,11 +91,12 @@ export function createMenu(app) {
   let pending = null;
   function start(which) {
     pressed = which;
-    app.startGame(which === 'daily' ? { mode: 'daily' } : {});
+    app.startGame(which === 'daily' ? { mode: 'daily' } : which === 'relax' ? { mode: 'relax' } : {});
   }
   function setLoading(on) {
     playBtn.classList.toggle('is-loading', on && pressed === 'play');
     dailyBtn.classList.toggle('is-loading', on && pressed === 'daily');
+    relaxBtn.classList.toggle('is-loading', on && pressed === 'relax');
     clear(playLabel).append(on && pressed === 'play' ? 'Loading…' : 'Play');
     if (on) showStatus('Loading the expressions…', true);
     else status.hidden = true;

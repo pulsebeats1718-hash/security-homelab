@@ -7,6 +7,8 @@ import { levelInfo } from '../../data/levels.js';
 import { ROSTER } from '../../data/roster.js';
 import { GOAL } from '../../game/progress.js';
 import { ring } from './today.js';
+import { RETRY_MAX } from '../../game/game.js';
+import { encodeDuel, duelLink, duelShareText, duelOutcome, rememberDuel, savedDuelName } from '../../game/duel.js';
 
 /** "Fri 13 Nov" for a 'YYYY-MM-DD' (UTC) id. */
 const shortDate = (dateId) => new Date(`${dateId}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
@@ -35,6 +37,22 @@ async function copyText(text, holder) {
     /* selection is the last resort */
   }
   return 'selected';
+}
+
+/** The game's own address, for links (empty when it is not served over HTTP(S), e.g. a file). */
+const gameUrl = () => (/^https?:$/.test(location.protocol) ? `${location.origin}${location.pathname}` : '');
+
+/** Share with the system sheet where there is one (phones); otherwise copy. Returns 'shared' | 'cancelled' | 'copied' | 'selected'. */
+async function shareOrCopy({ title, text, url }, holder) {
+  if (navigator.share && window.isSecureContext) {
+    try {
+      await navigator.share({ title, text, url });
+      return 'shared';
+    } catch (err) {
+      if (err?.name === 'AbortError') return 'cancelled';
+    }
+  }
+  return copyText(url ? `${text}\n${url}` : text, holder);
 }
 
 /**
@@ -67,12 +85,16 @@ export function createResults(app) {
 
   const stat = (num, label) => h('div.stat', h('div.stat__num', num), h('div.stat__label', label));
   // portraits render in the background and may arrive after the results appear
-  const pendingThumbs = new Map();
+  const pendingThumbs = new Map(); // id → Set of <img> waiting for that portrait
+  const whenThumb = (id, img) => {
+    if (!pendingThumbs.has(id)) pendingThumbs.set(id, new Set());
+    pendingThumbs.get(id).add(img);
+  };
   events.on('thumb', (id) => {
-    const img = pendingThumbs.get(id);
+    const imgs = pendingThumbs.get(id);
     const t = app.thumbs.get(id);
-    if (img && t) {
-      img.src = t.normal;
+    if (imgs && t) {
+      for (const img of imgs) img.src = t.normal;
       pendingThumbs.delete(id);
     }
   });
@@ -143,6 +165,77 @@ export function createResults(app) {
       parts.unshift(h('div.share__head', h('div.eyebrow', d.ranked ? 'Share your result' : 'Your ranked result today'), copyBtn), pre);
     }
     return h('div.share', parts);
+  }
+
+  // ── second chance: the missed expressions, straight away ────────────────
+  function secondChance(ids, { again = false } = {}) {
+    const list = ids.filter((id) => getExpression(id)).slice(0, RETRY_MAX);
+    if (!list.length) return null;
+    const n = list.length;
+    return h(
+      'div.second',
+      h('span.second__ico', icon('refresh')),
+      h(
+        'div.second__body',
+        h('b', again ? `Try ${n === 1 ? 'it' : `these ${n}`} once more` : `Second chance: fix the ${n === 1 ? 'one' : n} you missed`),
+        h('span', 'They fall again, slowly, with no lives to lose. XP for each one you put right.')
+      ),
+      h('button.btn.btn--gold.second__go', { 'data-quiet': '1', onclick: () => (audio.play('select'), app.startGame({ mode: 'retry', ids: list })) }, icon('play'), again ? 'Go' : 'Fix them')
+    );
+  }
+
+  // ── friend challenge: who won, and the link to send ─────────────────────
+  function duelCard(r) {
+    const d = r.duel;
+    const opp = d.opponent;
+    const me = { score: r.score, correct: r.correct };
+    const name = savedDuelName();
+    rememberDuel(d.seed, { score: r.score, correct: r.correct, total: d.total, bestStreak: r.streak, marks: d.marks, own: !opp });
+    const parts = [];
+    if (opp) {
+      const outcome = duelOutcome(me, opp);
+      const them = opp.name || 'Your friend';
+      const face = (id) => {
+        const img = h('img', { alt: '' });
+        const t = id && app.thumbs.get(id);
+        if (t) img.src = t.normal;
+        else if (id) whenThumb(id, img);
+        return h('div.duel__face', img);
+      };
+      const col = (label, res, char, win) => h(`div.versus__side${win ? '.is-win' : ''}`, face(char), h('div.versus__name', label), h('div.versus__score', formatScore(res.score)), h('div.versus__sub', `${res.correct}/${d.total} right`));
+      parts.push(
+        h(
+          'div.versus',
+          h('div.versus__head', outcome === 'win' ? 'You win!' : outcome === 'draw' ? 'It’s a draw!' : `${them} wins this one`),
+          h('div.versus__row', col('You', me, save.data.character, outcome === 'win'), h('div.versus__vs', 'vs'), col(them, opp, opp.character, outcome === 'lose'))
+        )
+      );
+    }
+    const payload = encodeDuel({ seed: d.seed, name, character: save.data.character, score: r.score, correct: r.correct, total: d.total, bestStreak: r.streak, marks: d.marks, reply: opp ? { name: opp.name, score: opp.score, correct: opp.correct } : null });
+    const base = gameUrl();
+    const url = base ? duelLink(base, payload) : '';
+    const text = duelShareText({ name, score: r.score, correct: r.correct, total: d.total, marks: d.marks, reply: opp ? { score: opp.score, correct: opp.correct } : null });
+    const pre = h('pre.share__text', url ? `${text}\n${url}` : text);
+    const label = h('span', opp ? `Send your result to ${opp.name || 'your friend'}` : 'Send these cards to a friend');
+    const shareBtn = h(
+      'button.btn.btn--gold.share__send',
+      {
+        'data-quiet': '1',
+        onclick: async () => {
+          audio.play('tap');
+          const how = await shareOrCopy({ title: 'Phrasefall challenge', text, url }, pre);
+          if (how === 'copied' || how === 'selected') {
+            clear(label).append(how === 'copied' ? 'Link copied: paste it to your friend' : 'Selected: copy it now');
+            later(2600, () => clear(label).append(opp ? `Send your result to ${opp.name || 'your friend'}` : 'Send these cards to a friend'));
+          }
+        },
+      },
+      icon('share'),
+      label
+    );
+    pre.classList.add('share__text--small');
+    parts.push(h('div.share', h('div.share__head', h('div.eyebrow', opp ? 'Your reply' : 'Your challenge link')), shareBtn, pre, url ? null : h('p.duel__note', 'Links work once the game is online (https).')));
+    return h('div.duel-result', parts);
   }
 
   // ── progress: what this game earned, and what is close ─────────────────
@@ -303,9 +396,11 @@ export function createResults(app) {
       timers.forEach(clearTimeout);
       timers = [];
       clearInterval(ticker);
-      const daily = r.mode === 'daily' ? r.daily : null;
+      const mode = r.mode;
+      const daily = mode === 'daily' ? r.daily : null;
       shownKey = keyOf(r);
       clear(badge);
+      el.dataset.mode = mode;
 
       if (daily) {
         const ranked = daily.rankedRecord;
@@ -315,6 +410,30 @@ export function createResults(app) {
         if (!daily.ranked) badge.append(h('span.chip', icon('repeat'), 'Practice'));
         clear(stats).append(stat(`×${r.streak}`, 'Best streak'), stat(`${r.accuracy}%`, 'Accuracy'), stat(`${r.correct}/${daily.total}`, 'Correct'));
         clear(playBtn).append(icon('play'), 'Play classic');
+        playBtn.onclick = () => app.startGame();
+      } else if (mode === 'duel') {
+        const opp = r.duel.opponent;
+        eyebrow.textContent = opp ? `Challenge from ${opp.name || 'a friend'}` : 'Challenge a friend';
+        title.textContent = r.reason === 'complete' ? 'Challenge complete' : 'Out of lives';
+        best.textContent = opp ? `${opp.name || 'Your friend'} scored ${formatScore(opp.score)}` : 'Now send the same cards to a friend';
+        clear(stats).append(stat(`×${r.streak}`, 'Best streak'), stat(`${r.accuracy}%`, 'Accuracy'), stat(`${r.correct}/${r.duel.total}`, 'Correct'));
+        clear(playBtn).append(icon('friends'), 'New challenge');
+        playBtn.onclick = () => ui.go('duel', { from: 'menu', challenge: null });
+      } else if (mode === 'relax') {
+        eyebrow.textContent = 'Relax mode';
+        title.textContent = r.answered ? 'Nice and relaxed' : 'See you soon';
+        best.textContent = r.answered ? `${r.answered} ${r.answered === 1 ? 'card' : 'cards'} · ${r.accuracy}% right` : 'No cards answered this time';
+        clear(stats).append(stat(String(r.correct), 'Right'), stat(`${r.accuracy}%`, 'Accuracy'), r.twists.shown ? stat(`${r.twists.right}/${r.twists.shown}`, 'Twists') : stat(String(r.seen.length), 'Cards'));
+        clear(playBtn).append(icon('leaf'), 'Relax again');
+        playBtn.onclick = () => app.startGame({ mode: 'relax' });
+      } else if (mode === 'retry') {
+        const t = r.retry;
+        const all = t.missed.length === 0;
+        eyebrow.textContent = 'Second chance';
+        title.textContent = all ? 'All put right!' : 'Good work';
+        best.textContent = all ? 'Every one you missed, fixed' : `${t.missed.length} still to learn: they come round again soon`;
+        clear(stats).append(stat(`${t.fixed.length}/${t.total}`, 'Put right'), stat(`${r.accuracy}%`, 'Accuracy'), stat(`×${r.streak}`, 'Best streak'));
+        clear(playBtn).append(icon('refresh'), 'Play again');
         playBtn.onclick = () => app.startGame();
       } else {
         eyebrow.textContent = `Reached stage ${r.stage.n} · ${r.stage.short}`;
@@ -327,7 +446,11 @@ export function createResults(app) {
       showRank(shownKey);
 
       score.textContent = '0';
-      later(350, () => countUp(score, r.score, { ms: Math.min(1400, 500 + r.score / 4), onTick: () => audio.play('count') }));
+      if (mode === 'retry') score.textContent = `${r.retry.fixed.length}/${r.retry.total}`;
+      else {
+        const to = mode === 'relax' ? r.correct : r.score;
+        later(350, () => countUp(score, to, { ms: Math.min(1400, 500 + to / 4), onTick: () => audio.play('count') }));
+      }
       if (r.newBest) {
         later(1500, () => {
           badge.append(h('div.ribbon', 'NEW BEST'));
@@ -338,6 +461,10 @@ export function createResults(app) {
 
       clear(body);
       if (daily) body.append(dailyCard(r));
+      if (mode === 'duel') body.append(duelCard(r));
+      // the expressions just missed, while they are fresh (a second chance offers the rest once more)
+      const offer = mode === 'retry' ? secondChance(r.retry.missed, { again: true }) : secondChance(r.wrong);
+      if (offer) body.append(offer);
       const gains = progressBlock(r);
       if (gains) body.append(gains);
       // characters unlocked by the game, and by a streak milestone reached during it
@@ -350,7 +477,7 @@ export function createResults(app) {
             const img = h('img', { alt: '' });
             const thumb = app.thumbs.get(id);
             if (thumb) img.src = thumb.normal;
-            else pendingThumbs.set(id, img);
+            else whenThumb(id, img);
             return img;
           });
           const names = defs.map((d) => d.name);
@@ -363,17 +490,17 @@ export function createResults(app) {
                   h('div.unlock__row', imgs.map((img, i) => h('span.unlock__face', { style: { '--i': i } }, img))),
                   h('div.unlock__names', `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`)
                 );
-          // after the share card on daily results, first otherwise
-          if (daily) body.firstChild.after(card);
+          // after the share / challenge card on daily and duel results, first otherwise
+          if (daily || mode === 'duel') body.firstChild.after(card);
           else body.prepend(card);
           audio.play('unlock');
         });
       }
 
-      const wrong = r.wrong.filter((id) => getExpression(id));
+      const wrong = (mode === 'retry' ? r.retry.missed : r.wrong).filter((id) => getExpression(id));
       if (wrong.length) {
         body.append(
-          h('div.eyebrow', 'Worth another look'),
+          h('div.eyebrow', mode === 'retry' ? 'Still to learn' : 'Worth another look'),
           h(
             'div.review',
             wrong.map((id) => {
@@ -400,7 +527,7 @@ export function createResults(app) {
       if (next !== 'flashcards' && next !== 'play') app.game.quit();
     },
     key(e) {
-      if (e.key === 'Enter' || e.key === ' ') app.startGame();
+      if (e.key === 'Enter' || e.key === ' ') playBtn.click();
       else if (e.key === 'Escape') app.toMenu();
     },
   };

@@ -6,6 +6,18 @@ four options before they land.
 
 - **Simple to play** – one tap per answer. Three lives. +100 per correct answer,
   bonus points at streaks of 5 and 10.
+- **Ways to play** – *Play* (classic, endless), the *daily challenge*, *Relax* (no
+  lives and no clock: slow cards, an *Example* button that holds the card while you
+  read, finish when you like), *Challenge a friend* (20 cards from a seed; the link
+  carries your score, your friend plays exactly the same cards and both results show
+  side by side, no server involved; `src/game/duel.js`) and *Second chance* (straight
+  after a game, the expressions you missed fall again, slowly, with no lives to lose;
+  one missed again comes back once more).
+- **Twist cards** (`src/game/twists.js`) – about one card in four that shows an
+  expression you have met before asks for it another way: *Flip* (the meaning falls,
+  pick the expression), *Fill the gap* (a phrasal verb's example with its particle
+  missing; the wrong options are never real phrasal verbs with that verb), *Listen*
+  (spoken, not shown) and *Build it* (tap the words in order). +50 points and +5 XP.
 - **Fever and golden cards** – ten right in a row starts *fever*: the island glows,
   the music speeds up and every answer scores double until the next miss. About
   one classic card in sixteen is *golden* and worth triple points.
@@ -74,14 +86,17 @@ npm run check:data     # validate the expression database (see below)
 Requires Node 18+. The runtime dependencies are [three.js](https://threejs.org) and,
 only in builds with a Firebase config (`.env.local`, see [DEPLOY.md](DEPLOY.md)), the
 Firebase SDK, fetched on demand; fonts (Fredoka, Nunito — both OFL) are bundled, so the
-built game works offline. `node src/online/merge.test.mjs` runs the cloud-save tests and
-`node src/game/progress.test.mjs` the level, streak and quest tests.
+built game works offline. `node src/online/merge.test.mjs` runs the cloud-save tests,
+`node src/game/progress.test.mjs` the level, streak and quest tests and
+`node src/game/twists.test.mjs` the twist-card and friend-challenge tests.
 
 ## Controls
 
 | | |
 |---|---|
 | Answer | tap / click an option, or keys `1`–`4` / `A`–`D` |
+| Build it | tap the words in order, or keys `1`–`6` |
+| Listen | *Again* button or `R` to hear it again |
 | Pause | pause button, `Esc` or `P` |
 | Characters | arrows or swipe the strip; drag the character to turn it |
 | Flashcards | tap to flip, swipe or `←` `→` to move, `Space` to flip |
@@ -104,8 +119,9 @@ src/
     models/               one file per character (auto-discovered)
     thumbnails.js         portrait renderer for the collection strip
   world/                  sky, lighting themes, island, clouds, particle effects; places/ (Home, London, New York, Sydney)
-  game/                   rules (game.js), the daily challenge (daily.js), levels/streak/quests (progress.js),
-                          the falling card, camera framing, the live hero
+  game/                   rules and modes (game.js), fixed 20-card runs (run.js) for the daily challenge
+                          (daily.js) and friend challenges (duel.js), twist cards (twists.js),
+                          levels/streak/quests (progress.js), the falling card, camera framing, the live hero
   audio/                  synthesised sound effects and generative music
   online/                 optional Google sign-in, cloud save and leaderboards (Firebase, loaded on demand)
   ui/                     screens (menu, Today, Your journey, characters, HUD, results, flashcards …), notes

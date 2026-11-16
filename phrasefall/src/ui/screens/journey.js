@@ -43,7 +43,7 @@ export function createJourney(app) {
         h('summary', 'How to earn XP'),
         h(
           'ul',
-          h('li', h('b', `${XP.right} XP`), ' each right answer (×3 for a golden card, ×2 in fever mode)'),
+          h('li', h('b', `${XP.right} XP`), ' each right answer (×3 for a golden card, ×2 in fever mode), ', h('b', `+${XP.twist}`), ' for a twist card'),
           h('li', h('b', `${XP.game} XP`), ' every game you finish'),
           h('li', h('b', `${XP.goal} XP`), ' reaching your daily goal, and ', h('b', `${XP.daily} XP`), ' for the daily challenge'),
           h('li', h('b', '40–90 XP'), ' each daily quest, plus the reward chest'),

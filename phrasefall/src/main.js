@@ -27,6 +27,9 @@ import { createSettings } from './ui/screens/settings.js';
 import { createLeaderboard } from './ui/screens/leaderboard.js';
 import { createToday } from './ui/screens/today.js';
 import { createJourney } from './ui/screens/journey.js';
+import { createDuel } from './ui/screens/duel.js';
+import { decodeDuel } from './game/duel.js';
+import { warmUpSpeech } from './audio/speech.js';
 import { createNotifier } from './ui/notify.js';
 import { Progress } from './game/progress.js';
 import { currentSeason } from './data/seasons.js';
@@ -35,6 +38,20 @@ import { createOnline } from './online/index.js';
 import { loadExpressions, expressionsReady } from './data/expressions/index.js';
 
 const params = new URLSearchParams(location.search);
+
+/** A friend's challenge link (?duel=…): read it, then tidy the address so a reload or an install starts clean. */
+function takeChallenge() {
+  const raw = params.get('duel');
+  if (!raw) return null;
+  try {
+    const url = new URL(location.href);
+    url.searchParams.delete('duel');
+    history.replaceState(history.state, '', `${url.pathname}${url.search}${url.hash}`);
+  } catch {
+    /* the address just keeps the link */
+  }
+  return decodeDuel(raw, (id) => CHARACTERS.some((c) => c.id === id));
+}
 const bootEl = document.getElementById('boot');
 const bar = document.getElementById('boot-bar');
 const progress = (p) => bar && (bar.style.width = `${Math.round(p * 100)}%`);
@@ -135,7 +152,7 @@ async function boot() {
     audio.play('select');
     ui.go('menu');
   };
-  /** opts.mode: 'classic' (default) or 'daily'. Before the expressions have loaded, the menu waits and retries. */
+  /** opts: see Game.start (mode 'classic' | 'daily' | 'duel' | 'relax' | 'retry'). Before the expressions have loaded, the menu waits and retries. */
   app.startGame = (opts = {}) => {
     audio.unlock();
     if (!expressionsReady()) return events.emit('data:wait', () => app.startGame(opts));
@@ -168,6 +185,7 @@ async function boot() {
   s.settings = ui.add('settings', createSettings(app));
   s.today = ui.add('today', createToday(app));
   s.journey = ui.add('journey', createJourney(app));
+  s.duel = ui.add('duel', createDuel(app));
   ui.finish();
   createNotifier(app); // toasts for quests, goals and level-ups
   app.account = createAccount(app); // header chip, account sheet, nickname dialog (online builds only)
@@ -193,7 +211,10 @@ async function boot() {
   document.addEventListener('gesturestart', (e) => e.preventDefault());
 
   progress(1);
-  ui.go(params.get('go') === 'menu' ? 'menu' : 'splash');
+  warmUpSpeech(); // voices load lazily; Listen cards need them
+  const challenge = takeChallenge();
+  if (challenge) ui.go('duel', { from: 'menu', challenge });
+  else ui.go(params.get('go') === 'menu' ? 'menu' : 'splash');
   app.online.start(); // fetches the Firebase SDK in the background when configured
 
   // character portraits render in the background and appear as they finish

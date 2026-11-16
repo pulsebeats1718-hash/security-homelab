@@ -396,11 +396,12 @@ export class Save {
 
   /**
    * Record a finished game. Returns { newBest, unlocked: [ids] }.
-   * Daily challenges count towards totals and streaks but not the classic best score or stage.
+   * Daily challenges, friend challenges and relax sessions count towards totals
+   * and streaks but not the classic best score or stage.
    */
   finishGame({ score, bestStreak, stage, mode = 'classic' }) {
     const d = this.data;
-    const classic = mode !== 'daily';
+    const classic = mode === 'classic';
     const newBest = classic && score > d.best.score;
     if (classic) {
       d.best.score = Math.max(d.best.score, score);

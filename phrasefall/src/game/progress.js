@@ -60,6 +60,9 @@ export const msToMidnight = (t = Date.now()) => {
 /** "Mon" for a local day id. */
 export const weekdayShort = (id) => noon(id).toLocaleDateString('en-GB', { weekday: 'short' });
 
+/** A relax session counts as a finished game (XP, quests) once this many cards have been answered. */
+export const RELAX_GAME_MIN = 10;
+
 // ── quests ────────────────────────────────────────────────────────────────
 const fmt = (n) => n.toLocaleString('en-GB');
 const KINDS = {
@@ -380,9 +383,10 @@ export class Progress {
     const day = this._day(id);
     if (p.correct) {
       day.right++;
-      this.addXp(XP.right * (p.golden ? 3 : 1) * (p.fever ? 2 : 1));
+      this.addXp(XP.right * (p.golden ? 3 : 1) * (p.fever ? 2 : 1) + (p.twist ? XP.twist : 0));
       this._bump('right', 1);
-      this._bump('streak', p.streak ?? 0, true);
+      // streaks without lives to lose (relax, second chance) don't count towards streak quests
+      if (!p.safe) this._bump('streak', p.streak ?? 0, true);
       if (p.golden) this._bump('golden', 1);
       if (p.type === 'phrasal' || p.type === 'idiom') this._bump(p.type, 1);
       if (p.mastered) day.mastered++;
@@ -397,6 +401,13 @@ export class Progress {
   _finished(r) {
     const id = localDay();
     const day = this._day(id);
+    // a second chance is a bonus round, and a relax session counts as a game once it has some substance
+    if (r.mode === 'retry' || (r.mode === 'relax' && r.answered < RELAX_GAME_MIN)) {
+      this._checkGoal(id);
+      if (this.run) this.run.done = true;
+      this.save.write();
+      return;
+    }
     day.games++;
     this.addXp(XP.game);
     this._bump('games', 1);

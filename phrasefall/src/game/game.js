@@ -6,23 +6,39 @@
  *   Wrong or too slow: lose one of three lives. No lives left: game over.
  *   Every eight correct answers the stage, vocabulary and time of day move on.
  *
- * Two modes: 'classic' (above, endless) and 'daily' — a fixed run of 20 cards
- * that is the same for everyone each UTC day (see daily.js), with a small
- * speed bonus and no stage-ups; the time of day moves on as the run progresses.
+ * Modes
+ *   classic  the rules above, endless
+ *   daily    a fixed run of 20 cards, the same for everyone each UTC day (see
+ *            daily.js), with a small speed bonus and no stage-ups; the time of
+ *            day moves on as the run progresses
+ *   duel     a friend challenge: a fixed run of 20 cards from a seed (duel.js),
+ *            played like the daily challenge, so both friends get the same cards
+ *   relax    no lives and no points: slow, steady cards; the player finishes when
+ *            they like (finishRelax). Counts right answers, XP and learning
+ *   retry    "second chance" straight after a game: the expressions just missed
+ *            fall again, slowly, with no lives to lose. One that is missed again
+ *            comes back once more at the end
  *
  * Fever: ten right answers in a row light the island up and double the points
  * of every answer after that, until the next miss. Golden cards (classic only,
  * about one card in sixteen) are worth triple points.
+ *
+ * Twist cards (classic and relax, see twists.js): about one card in four that
+ * shows an expression the player has met before asks for it another way: flip,
+ * fill the gap, listen or build it. +50 points in classic.
  *
  * This module owns state and timing only. It talks to the interface through
  * events and to the 3D world through the stage / environment / effects objects.
  */
 import * as THREE from 'three';
 import { STAGES, PACE, SCORING, streakBonus } from '../data/stages.js';
-import { BY_STAGE } from '../data/expressions/index.js';
+import { BY_STAGE, getExpression } from '../data/expressions/index.js';
 import { ExpressionCard } from './card.js';
 import { shots } from './shots.js';
 import { buildDaily, dailySegment, speedBonus, utcDateId } from './daily.js';
+import { buildDuel, cleanSeed, newDuelSeed } from './duel.js';
+import { pickTwist, phrasalIndex } from './twists.js';
+import { speechAvailable } from '../audio/speech.js';
 import { clamp, shuffle, smoothstep } from '../core/utils.js';
 
 /** Classic games deal expressions that are due for spaced-repetition review this much more often. */
@@ -31,6 +47,20 @@ const DUE_WEIGHT = 2.2;
 export const FEVER_AT = 10;
 /** Chance that a classic card is golden (triple points): never the first two cards, never two in a row. */
 export const GOLDEN_CHANCE = 0.06;
+/** Chance that a card showing an expression the player has met before is a twist card. */
+export const TWIST_CHANCE = 0.28;
+/** Points for getting a twist card right, on top of the usual points (classic). */
+export const TWIST_BONUS = 50;
+/** Twist cards take longer to read or answer: their fall time is stretched by this much. */
+const TWIST_TIME = { flip: 1.15, gap: 1.2, listen: 1.1, build: 1.45 };
+/** Seconds added to a Listen card's fall, for the speaking. */
+const LISTEN_EXTRA = 1.5;
+/** Second chance: at most this many expressions, falling this much slower than their stage. */
+export const RETRY_MAX = 10;
+const RETRY_SLOW = 1.35;
+/** Relax mode: every card falls at stage 1's starting speed, this much slower. */
+const RELAX_SLOW = 1.45;
+export const MODES = ['classic', 'daily', 'duel', 'relax', 'retry'];
 export const GOLD = 0xffb21e;
 export const FEVER_COLOR = 0xff6a2b;
 
@@ -49,13 +79,18 @@ export class Game {
     this.card = new ExpressionCard(stage.scene);
     this.ch = null;
     this.state = 'idle'; // idle | intro | playing | resolving | stageup | over
-    this.mode = 'classic'; // classic | daily
+    this.mode = 'classic'; // see MODES
     this.daily = null; // the daily run: { dateId, n, cards, index, ranked, started, settled }
+    this.fixed = null; // a duel or second-chance run: { cards, index, total, requeued }
+    this.duel = null; // { seed, opponent }
     this.paused = false;
+    this.held = false; // relax: the card waits while the player reads its example
+    this.forceTwist = null; // testing aid: 'flip' | 'gap' | 'listen' | 'build' on every eligible card
     this.timers = [];
     this.layout = { panelH: 240, hudH: 84 };
     this.metrics = null;
     this.dizzyAnchor = new THREE.Vector3();
+    this._phrasal = null;
     this.reset();
   }
 
@@ -70,11 +105,13 @@ export class Game {
     this.correct = 0;
     this.wrong = [];
     this.seen = [];
+    this.fixedIds = new Set(); // retry: expressions put right
+    this.twists = { shown: 0, right: 0 };
     this.used = new Set();
     this.deck = [];
     this.question = null;
     this.qTime = 0; // seconds the current card has been answerable (pauses excluded)
-    this.marks = ''; // daily: one character per card — c right, w wrong
+    this.marks = ''; // daily / duel: one character per card — c right, w wrong
     this.fallTime = 10;
     this.tickT = 0;
     this.trailT = 0;
@@ -83,6 +120,7 @@ export class Game {
     this.fever = false;
     this.feverT = 0;
     this.lastGolden = false;
+    this.held = false;
   }
 
   get stageDef() {
@@ -91,10 +129,19 @@ export class Game {
   get active() {
     return this.state !== 'idle' && this.state !== 'over';
   }
-  /** What the interface needs to know about a daily run (null in classic games). */
+  /** Relax and second chance: no lives to lose and no points. */
+  get safe() {
+    return this.mode === 'relax' || this.mode === 'retry';
+  }
+  /** What the interface needs to know about a daily run (null in other games). */
   get dailyInfo() {
     const d = this.daily;
     return d && { dateId: d.dateId, n: d.n, total: d.cards.length, index: d.index, ranked: d.ranked };
+  }
+  /** Progress through a duel or second-chance run (null in other games). */
+  get fixedInfo() {
+    const f = this.fixed;
+    return f && { index: f.index, total: f.cards.length, unique: f.total, fixed: this.fixedIds.size };
   }
 
   setCharacter(ch) {
@@ -123,31 +170,48 @@ export class Game {
   }
 
   // ── run lifecycle ───────────────────────────────────────────────────────
-  /** Start a run. `opts.mode`: 'classic' (default) or 'daily'. Needs the expression database loaded. */
+  /**
+   * Start a run. Needs the expression database loaded.
+   *   opts.mode      one of MODES (default 'classic')
+   *   opts.seed      duel: the challenge seed (a new one if missing)
+   *   opts.opponent  duel: the friend's result being answered, or null
+   *   opts.ids       retry: the expression ids to try again
+   */
   start(opts = {}) {
     this._settleDaily();
     this._setFever(false, true);
     this.reset();
-    this.mode = opts.mode === 'daily' ? 'daily' : 'classic';
+    this.mode = MODES.includes(opts.mode) ? opts.mode : 'classic';
     this.daily = null;
+    this.fixed = null;
+    this.duel = null;
     if (this.mode === 'daily') {
       const run = buildDaily(utcDateId());
       this.daily = { ...run, index: 0, ranked: !this.save.dailyRecord(run.dateId), started: false, settled: false };
+    } else if (this.mode === 'duel') {
+      const seed = cleanSeed(opts.seed) ?? newDuelSeed();
+      const cards = buildDuel(seed, BY_STAGE);
+      this.fixed = { cards, index: 0, total: cards.length, requeued: new Set() };
+      this.duel = { seed, opponent: opts.opponent ?? null };
+    } else if (this.mode === 'retry') {
+      const exprs = [...new Set(opts.ids ?? [])].map(getExpression).filter(Boolean).slice(0, RETRY_MAX);
+      const cards = shuffle(exprs.map((expr) => ({ expr, options: this._options(expr) })));
+      this.fixed = { cards, index: 0, total: cards.length, requeued: new Set() };
     }
     this.paused = false;
     this.card.hide();
     this.fx.setDizzy(false);
     this.env.setDim(0);
-    this.env.setTheme(this.stageDef.theme, 1.4);
+    this.env.setTheme(this.mode === 'retry' ? 'golden' : this.stageDef.theme, 1.4);
     this.env.island.setStreak(0);
     this.ch.animator.stop();
     this.ch.animator.gazeUp = 0;
     this.ch.animator.worry = 0;
     this.audio.music?.muffle(false);
-    this.audio.music?.set('game', 1);
+    this.audio.music?.set('game', this.mode === 'retry' ? 3 : 1);
     this.applyShot(1.0);
     this._set('intro');
-    this.events.emit('game:intro', { stage: this.stageDef, lives: this.lives, mode: this.mode, daily: this.dailyInfo });
+    this.events.emit('game:intro', { stage: this.stageDef, lives: this.lives, mode: this.mode, daily: this.dailyInfo, fixed: this.fixedInfo, duel: this.duel });
     this.audio.play('start');
     this.after(0.55, () => {
       this.audio.play('ready');
@@ -174,12 +238,29 @@ export class Game {
     this.events.emit('game:pause', false);
   }
 
+  /** Relax: the card stops falling while the player reads its example (and starts again on release). */
+  hold(on) {
+    this.held = !!on && this.mode === 'relax' && this.state === 'playing';
+  }
+
+  /** Relax mode has no game over: the player ends the session here and gets the results. */
+  finishRelax() {
+    if (this.mode !== 'relax' || !this.active) return;
+    this.paused = false;
+    this.audio.music?.muffle(false);
+    this.events.emit('game:pause', false);
+    this.card.hide();
+    this.pendingBurst = null;
+    this._finish('complete');
+  }
+
   /** Leave the run without recording it (a ranked daily run still counts what was scored). */
   quit() {
     this._settleDaily();
     this._setFever(false, true);
     this.timers.length = 0;
     this.paused = false;
+    this.held = false;
     this.card.hide();
     this.fx.setDizzy(false);
     this.env.setDim(0);
@@ -194,6 +275,10 @@ export class Game {
   }
 
   // ── questions ───────────────────────────────────────────────────────────
+  _options(expr) {
+    return shuffle([{ text: expr.meaning, correct: true }, ...expr.distractors.map((text) => ({ text, correct: false }))]);
+  }
+
   _refillDeck() {
     const save = this.save;
     const now = Date.now();
@@ -228,9 +313,28 @@ export class Game {
       .map((x) => x.e);
   }
 
+  /** A twist for this card, or null: classic and relax only, for expressions met before. */
+  _twistFor(expr) {
+    if (this.mode !== 'classic' && this.mode !== 'relax') return null;
+    if (this.answered < 2 && !this.forceTwist) return null;
+    if (!this.save.stat(expr.id)?.seen && !this.forceTwist) return null;
+    if (!this.forceTwist && Math.random() >= TWIST_CHANCE) return null;
+    this._phrasal ??= phrasalIndex(BY_STAGE.flat());
+    const canListen = this.forceTwist === 'listen' || (this.save.settings.sfxOn && speechAvailable());
+    const opts = { pool: BY_STAGE[expr.stage - 1] ?? BY_STAGE.flat(), known: this._phrasal, canListen };
+    if (!this.forceTwist) return pickTwist(expr, opts);
+    // testing: keep drawing until the forced kind comes up (it may not suit this expression)
+    for (let i = 0; i < 12; i++) {
+      const t = pickTwist(expr, opts);
+      if (t?.kind === this.forceTwist) return t;
+    }
+    return null;
+  }
+
   nextCard() {
     if (this.state === 'over' || this.state === 'idle') return;
     const d = this.daily;
+    const f = this.fixed;
     let expr;
     let options;
     if (d) {
@@ -238,54 +342,75 @@ export class Game {
       if (!card) return this._finish('complete');
       ({ expr, options } = card);
       // the sky moves on through the day as the run progresses
-      const seg = dailySegment(d.index, d.cards.length);
-      if (seg !== this.stageIndex) {
-        this.stageIndex = seg;
-        this.env.setTheme(this.stageDef.theme, 2.8);
-        this.audio.music?.set('game', this.stageDef.n);
-      }
+      this._daySky(d.index, d.cards.length);
       d.index++;
       // the ranked attempt is used up as soon as its first card is on screen
       if (d.ranked && !d.started) {
         d.started = true;
         this._saveDaily(false);
       }
+    } else if (f) {
+      const card = f.cards[f.index];
+      if (!card) return this._finish('complete');
+      ({ expr, options } = card);
+      if (this.mode === 'duel') this._daySky(f.index, f.cards.length);
+      f.index++;
     } else {
       if (!this.deck.length) this._refillDeck();
       expr = this.deck.pop();
       this.used.add(expr.id);
-      options = shuffle([{ text: expr.meaning, correct: true }, ...expr.distractors.map((text) => ({ text, correct: false }))]);
+      options = this._options(expr);
     }
     if (!this.seen.includes(expr.id)) this.seen.push(expr.id);
-    const golden = !d && this.answered >= 2 && !this.lastGolden && Math.random() < GOLDEN_CHANCE;
+    const twist = this._twistFor(expr);
+    if (twist) {
+      this.twists.shown++;
+      if (twist.kind === 'flip' || twist.kind === 'gap') options = twist.options;
+      else if (twist.kind === 'build') options = [];
+    }
+    const golden = this.mode === 'classic' && !twist && this.answered >= 2 && !this.lastGolden && Math.random() < GOLDEN_CHANCE;
     this.lastGolden = golden;
-    this.question = { expr, options, correctIndex: options.findIndex((o) => o.correct), number: this.answered + 1, golden };
+    this.question = { expr, options, correctIndex: options.findIndex((o) => o.correct), number: this.answered + 1, golden, twist };
 
     const st = this.stageDef;
-    if (d) {
-      // fixed pace for everyone: each card falls at the starting speed of its own stage
-      this.fallTime = (STAGES[expr.stage - 1] ?? st).fall * PACE.standard.factor;
-    } else {
-      const pace = PACE[this.save.settings.pace] ?? PACE.standard;
-      this.fallTime = Math.max(st.floor, st.fall - st.step * this.correctInStage) * pace.factor;
-    }
+    const pace = (PACE[this.save.settings.pace] ?? PACE.standard).factor;
+    const own = STAGES[expr.stage - 1] ?? st;
+    let fall;
+    if (d || this.mode === 'duel') fall = own.fall * PACE.standard.factor; // fixed pace: scores stay comparable
+    else if (this.mode === 'retry') fall = own.fall * RETRY_SLOW * pace;
+    else if (this.mode === 'relax') fall = STAGES[0].fall * RELAX_SLOW * pace;
+    else fall = Math.max(st.floor, st.fall - st.step * this.correctInStage) * pace;
+    if (twist) fall = fall * TWIST_TIME[twist.kind] + (twist.kind === 'listen' ? LISTEN_EXTRA : 0);
+    this.fallTime = fall;
     this.tickT = 0;
     this.qTime = 0;
+    this.held = false;
 
     const m = (this.metrics = shots.play(this.stage, this.layout.panelH, this.layout.hudH));
     const headTop = (this.ch?.rig.metrics.height ?? 2) + 0.05;
     const accent = golden ? GOLD : this.fever ? FEVER_COLOR : this.env.v.accent;
-    this.card.show(expr.text, {
+    const face = !twist ? expr.text : twist.kind === 'gap' ? twist.sentence : twist.kind === 'listen' ? '' : twist.prompt;
+    this.card.show(face, {
       scale: m.cardScale,
       spawnY: Math.max(m.spawnY, headTop + m.cardH * 1.4),
       impactY: headTop + m.cardH / 2 - 0.12,
       accent,
       golden,
+      kind: twist?.kind ?? null,
     });
     this.fx.line(this.card.pos, this.card.halfWidth, { count: golden ? 40 : 16, color: golden ? 0xfff1b8 : 0xffffff, color2: accent, speed: golden ? 4 : 2.5, size: golden ? 0.55 : 0.4, life: golden ? 0.8 : 0.5, gravity: 0 });
     this.audio.play(golden ? 'golden' : 'spawn');
     this._set('playing');
-    this.events.emit('game:question', { ...this.question, stage: st, stageIndex: this.stageIndex, fallTime: this.fallTime, mode: this.mode, daily: this.dailyInfo });
+    this.events.emit('game:question', { ...this.question, stage: st, stageIndex: this.stageIndex, fallTime: this.fallTime, mode: this.mode, daily: this.dailyInfo, fixed: this.fixedInfo });
+  }
+
+  /** Daily and duel runs: the sky moves through the day as the cards go by. */
+  _daySky(index, total) {
+    const seg = dailySegment(index, total);
+    if (seg === this.stageIndex) return;
+    this.stageIndex = seg;
+    this.env.setTheme(this.stageDef.theme, 2.8);
+    this.audio.music?.set('game', this.stageDef.n);
   }
 
   /** Player picks option `index`. */
@@ -297,34 +422,50 @@ export class Game {
     else this._miss(index);
   }
 
+  /** Build it: the player has put every word in place. */
+  answerBuilt() {
+    if (this.state !== 'playing' || this.paused || this.question?.twist?.kind !== 'build') return;
+    this._hit(null);
+  }
+
+  /** Build it: a word tapped out of order brings the card a little closer. */
+  nudge(amount = 0.06) {
+    if (this.state !== 'playing' || this.paused) return;
+    const c = this.card;
+    if (c.state === 'in' || c.state === 'fall') c.t = Math.min(0.97, c.t + amount);
+  }
+
   // ── correct ─────────────────────────────────────────────────────────────
   _hit(index) {
     const q = this.question;
+    const safe = this.safe;
     this._set('resolving');
+    this.held = false;
     this.card.freeze();
     this.answered++;
     this.correct++;
     this.correctInStage++;
     this.streak++;
     this.bestStreak = Math.max(this.bestStreak, this.streak);
-    const bonus = streakBonus(this.streak);
-    const speed = this.daily ? speedBonus(this.qTime) : 0;
-    // fever doubles, a golden card triples (both: ×6); streak and speed bonuses stay as they are
+    if (q.twist) this.twists.right++;
+    if (this.mode === 'retry') this.fixedIds.add(q.expr.id);
+    // relax and second chance score no points; fever doubles, a golden card triples (both: ×6)
     const fever = this.fever;
-    const base = SCORING.correct * (q.golden ? 3 : 1) * (fever ? 2 : 1);
-    const gained = base + bonus + speed;
+    const bonus = safe ? 0 : streakBonus(this.streak);
+    const speed = this.daily || this.mode === 'duel' ? speedBonus(this.qTime) : 0;
+    const twist = q.twist && !safe ? TWIST_BONUS : 0;
+    const base = safe ? 0 : SCORING.correct * (q.golden ? 3 : 1) * (fever ? 2 : 1);
+    const gained = base + bonus + speed + twist;
     this.score += gained;
     const rec = this.save.recordAnswer(q.expr.id, true);
-    if (this.daily) {
-      this.marks += 'c';
-      this._saveDaily(false);
-    }
-    this.events.emit('game:answered', { choice: index, correct: true, correctIndex: q.correctIndex, id: q.expr.id, type: q.expr.type, golden: !!q.golden, fever, streak: this.streak, fresh: rec.fresh, mastered: rec.mastered, mode: this.mode });
+    if (this.daily || this.mode === 'duel') this.marks += 'c';
+    if (this.daily) this._saveDaily(false);
+    this.events.emit('game:answered', { choice: index, correct: true, correctIndex: q.correctIndex, id: q.expr.id, type: q.expr.type, golden: !!q.golden, fever, streak: this.streak, fresh: rec.fresh, mastered: rec.mastered, mode: this.mode, twist: q.twist?.kind ?? null, safe });
 
     const a = this.ch.animator;
     a.worry = 0;
     const clip = this.ch.def.attack === 'kick' ? 'kick' : 'attack';
-    this.pendingBurst = { gained, base, bonus, speed, golden: !!q.golden, fever };
+    this.pendingBurst = { gained, base, bonus, speed, twist, golden: !!q.golden, fever, safe };
     a.play(clip, { speed: 1.25 });
     // safety net in case the release event is missed
     this.after(0.5, () => this._release());
@@ -374,7 +515,7 @@ export class Game {
     }
 
     const screen = this.stage.toScreen(pos);
-    this.events.emit('game:score', { score: this.score, gained: pb.base, bonus: pb.bonus, speed: pb.speed, golden: pb.golden, fever: pb.fever, streak: this.streak, x: screen.x, y: screen.y });
+    this.events.emit('game:score', { score: this.score, gained: pb.base, bonus: pb.bonus, speed: pb.speed, twist: pb.twist, golden: pb.golden, fever: pb.fever, safe: pb.safe, mode: this.mode, streak: this.streak, x: screen.x, y: screen.y });
     this.env.island.setStreak(this.streak);
     this.env.island.pulseRing(pb.bonus ? 1 : 0.45);
     this.ch.animator.play('cheer', { speed: 1.1 });
@@ -386,26 +527,32 @@ export class Game {
       this.fx.confetti(_v.setY(1.2), { count: pb.bonus >= SCORING.streak10 ? 70 : 40 });
       this.ch.animator.flash(0xffe9a8, 0.6);
     }
-    if (!this.fever && this.streak >= FEVER_AT) this.after(0.35, () => this.streak >= FEVER_AT && this._setFever(true));
+    if (!this.safe && !this.fever && this.streak >= FEVER_AT) this.after(0.35, () => this.streak >= FEVER_AT && this._setFever(true));
 
-    if (!this.daily && this.correctInStage >= this.stageDef.goal && this.stageIndex < STAGES.length - 1) this.after(0.75, () => this._stageUp());
+    const stages = this.mode === 'classic' || this.mode === 'relax';
+    if (stages && this.correctInStage >= this.stageDef.goal && this.stageIndex < STAGES.length - 1) this.after(0.75, () => this._stageUp());
     else this.after(0.62, () => this._advance());
   }
 
   // ── wrong / too slow ────────────────────────────────────────────────────
   _miss(index) {
     const q = this.question;
+    const f = this.fixed;
     this._set('resolving');
+    this.held = false;
     this.answered++;
     this.streak = 0;
-    this.lives--;
+    if (!this.safe) this.lives--;
     const rec = this.save.recordAnswer(q.expr.id, false);
     if (!this.wrong.includes(q.expr.id)) this.wrong.push(q.expr.id);
-    if (this.daily) {
-      this.marks += 'w';
-      this._saveDaily(false);
+    // second chance: a card missed again comes back once more at the end
+    if (this.mode === 'retry' && f && !f.requeued.has(q.expr.id)) {
+      f.requeued.add(q.expr.id);
+      f.cards.push({ expr: q.expr, options: this._options(q.expr) });
     }
-    this.events.emit('game:answered', { choice: index, correct: false, correctIndex: q.correctIndex, timeout: index == null, id: q.expr.id, type: q.expr.type, golden: !!q.golden, fever: false, streak: 0, fresh: rec.fresh, mastered: false, mode: this.mode });
+    if (this.daily || this.mode === 'duel') this.marks += 'w';
+    if (this.daily) this._saveDaily(false);
+    this.events.emit('game:answered', { choice: index, correct: false, correctIndex: q.correctIndex, timeout: index == null, id: q.expr.id, type: q.expr.type, golden: !!q.golden, fever: false, streak: 0, fresh: rec.fresh, mastered: false, mode: this.mode, twist: q.twist?.kind ?? null, safe: this.safe });
     this._setFever(false);
     this.env.island.setStreak(0);
     if (index != null) {
@@ -422,14 +569,25 @@ export class Game {
     if (card.state === 'gone') return;
     const pos = _w.copy(card.pos);
     card.hide();
+    const a = this.ch.animator;
+    a.worry = 0;
+    a.gazeUp = 0;
+    if (this.safe) {
+      // relax / second chance: a soft bump, no life lost, and time to read the right answer
+      this.fx.shatter(pos, card.halfWidth * 0.8, card.halfHeight, { count: 14, colors: [0xfff6e3, 0xffd6a0, 0xffffff], speed: 3.5, size: 0.26 * card.scale + 0.06, down: 1 });
+      this.stage.shake(4, 0.25);
+      a.flash(0xffb07a, 0.5);
+      a.play('hit');
+      this.audio.play('hit');
+      this.events.emit('game:missed', { safe: true });
+      this.after(2.1, () => this._advance());
+      return;
+    }
     this.fx.shatter(pos, card.halfWidth * 0.8, card.halfHeight, { count: 20, colors: [0xfff6e3, 0xff5068, 0xffb0b8], speed: 5, size: 0.3 * card.scale + 0.08, down: 1 });
     this.fx.burst(pos, { count: 22, color: 0xff8a98, color2: 0xffffff, speed: 5, size: 0.5, life: 0.6, gravity: 6 });
     this.ch.rig.root.getWorldPosition(_v);
     this.fx.ring(_v.setY(0.06), { color: 0xff7a8a, from: 0.5, to: 3.4, life: 0.5, flat: true, opacity: 0.8 });
     this.stage.shake(16, 0.45);
-    const a = this.ch.animator;
-    a.worry = 0;
-    a.gazeUp = 0;
     a.flash(0xff4d6a, 1);
     this.audio.play('hit');
     this.audio.play('lifeLost');
@@ -451,9 +609,10 @@ export class Game {
     this.after(1.9, () => this._advance());
   }
 
-  /** Next card — or, at the end of a daily run, the finish. */
+  /** Next card — or, at the end of a fixed run, the finish. */
   _advance() {
-    if (this.daily && this.daily.index >= this.daily.cards.length) this._finish('complete');
+    const run = this.daily ?? this.fixed;
+    if (run && run.index >= run.cards.length) this._finish('complete');
     else this.nextCard();
   }
 
@@ -471,7 +630,7 @@ export class Game {
     this.ch.rig.root.getWorldPosition(_v);
     this.fx.confetti(_v.setY(1.4), { count: 60, spread: 4 });
     this.fx.ring(_v.setY(0.08), { color: 0xffffff, from: 0.6, to: 6, life: 0.8, flat: true, opacity: 0.7 });
-    this.events.emit('game:stage', { stage: st, index: this.stageIndex });
+    this.events.emit('game:stage', { stage: st, index: this.stageIndex, mode: this.mode });
     this.after(2.5, () => this.nextCard());
   }
 
@@ -480,11 +639,12 @@ export class Game {
     this._finish('ko');
   }
 
-  /** End of a run: 'ko' (out of lives) or 'complete' (the last card of a daily run). */
+  /** End of a run: 'ko' (out of lives) or 'complete' (the last card of a fixed run, or a finished relax session). */
   _finish(reason) {
     this._set('over');
     this._setFever(false, true);
     this.timers.length = 0;
+    this.held = false;
     const a = this.ch.animator;
     const ko = reason === 'ko';
     if (ko) {
@@ -498,14 +658,22 @@ export class Game {
       this.fx.confetti(_v.setY(1.4), { count: 70, spread: 4 });
     }
     this.audio.music?.muffle(true);
-    const record = this.save.finishGame({ score: this.score, bestStreak: this.bestStreak, stage: this.stageIndex + 1, mode: this.mode });
+    // a second chance is a bonus round, not a game: it does not count towards scores or games played
+    const record = this.mode === 'retry' ? { newBest: false, unlocked: [] } : this.save.finishGame({ score: this.score, bestStreak: this.safe ? 0 : this.bestStreak, stage: this.stageIndex + 1, mode: this.mode });
     const d = this.daily;
     if (d) this._saveDaily(true);
+    const f = this.fixed;
     const results = {
       mode: this.mode,
       reason,
       // daily: run info, this run's marks and the day's ranked attempt (this run, or an earlier one if this was practice)
       daily: d && { ...this.dailyInfo, marks: this.marks, rankedRecord: this.save.dailyRecord(d.dateId) },
+      duel: this.duel && { seed: this.duel.seed, opponent: this.duel.opponent, marks: this.marks, total: f.cards.length },
+      retry:
+        this.mode === 'retry'
+          ? { total: f.total, fixed: [...this.fixedIds], missed: [...new Set(f.cards.map((c) => c.expr.id))].filter((id) => !this.fixedIds.has(id)) }
+          : null,
+      twists: { ...this.twists },
       score: this.score,
       best: this.save.data.best.score,
       newBest: record.newBest && this.score > 0,
@@ -585,10 +753,10 @@ export class Game {
     }
   }
 
-  /** Hand the result to whoever records scores (results screen → app.online). Practice runs are not submitted. */
+  /** Hand the result to whoever records scores (results screen → app.online). Only classic games and ranked daily runs go on the boards. */
   _submit() {
     const d = this.daily;
-    if (d && !d.ranked) return;
+    if (d ? !d.ranked : this.mode !== 'classic') return;
     const result = { mode: this.mode, score: this.score, stage: this.stageIndex + 1, correct: this.correct, answered: this.answered, bestStreak: this.bestStreak, character: this.save.data.character };
     if (d) result.dateId = d.dateId;
     this.events.emit('game:submit', result);
@@ -614,8 +782,9 @@ export class Game {
     }
 
     const card = this.card;
-    const res = card.update(dt, this.fallTime);
-    if (this.state === 'playing') this.qTime += dt;
+    // a held card (relax: reading the example) keeps bobbing but does not fall
+    const res = card.update(dt, this.held ? Infinity : this.fallTime);
+    if (this.state === 'playing' && !this.held) this.qTime += dt;
 
     // fever: embers rise around the character and the island glows fire-orange
     if (this.fever && ch) {
@@ -638,7 +807,7 @@ export class Game {
       a.worry = smoothstep(0.72, 0.96, t);
 
       // warning ticks speed up as the expression closes in
-      if (t > 0.66) {
+      if (t > 0.66 && !this.held) {
         this.tickT -= dt;
         if (this.tickT <= 0) {
           this.audio.play('tick', { urgent: t > 0.86 });

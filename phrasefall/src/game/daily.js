@@ -3,13 +3,10 @@
  *
  *   • 20 expressions mixed across the five stages, mostly level 1–2, in a fixed
  *     order that ramps gently from everyday expressions to advanced ones.
- *   • Everything is derived from the date: a seeded PRNG (mulberry32) picks and
- *     orders the cards and shuffles each card's four options, so every player
- *     sees exactly the same cards with the answers in the same places.
- *   • Picks are ranked by a hash of (date, expression id), not by position in
- *     the data files, so reordering or splitting files never changes a day's
- *     challenge. Adding expressions can (a new one may outrank an old pick) —
- *     players on different builds that day could then see different cards.
+ *   • Everything is derived from the date (see run.js, shared with friend
+ *     challenges): every player sees exactly the same cards with the answers
+ *     in the same places. Adding expressions can change a day's picks, so
+ *     players on different builds that day could see different cards.
  *   • Same core rules as a classic game (three lives, +100 per correct answer,
  *     streak bonuses) plus a small speed bonus — see `speedBonus`. Always played
  *     at standard pace so scores are comparable. The run ends after the last
@@ -19,24 +16,13 @@
  */
 import { BY_STAGE } from '../data/expressions/index.js';
 import { STAGES } from '../data/stages.js';
-import { mulberry32, shuffle, hash32 } from '../core/utils.js';
+import { hash32 } from '../core/utils.js';
+import { pickRun, RUN_CARDS } from './run.js';
 
-export const DAILY_CARDS = 20;
+export const DAILY_CARDS = RUN_CARDS;
 const DAY_MS = 86400000;
 /** Daily challenge #1. Only the number shown to players depends on it; the cards come from the date. */
 const EPOCH = Date.UTC(2026, 10, 13);
-
-/**
- * Cards per stage: `easy` from levels 1–2, `hard` from level 3. 17 of the 20
- * cards are level 1–2.
- */
-const PLAN = [
-  { easy: 4, hard: 0 },
-  { easy: 4, hard: 0 },
-  { easy: 3, hard: 1 },
-  { easy: 3, hard: 1 },
-  { easy: 3, hard: 1 },
-];
 
 /**
  * Speed bonus for a correct daily-challenge answer: +50 when answered within
@@ -75,52 +61,13 @@ export function formatCountdown(ms, seconds = false) {
   return hh ? `${hh}h ${String(mm).padStart(2, '0')}m` : `${mm}m ${String(ss).padStart(2, '0')}s`;
 }
 
-/** The four options for a card, in the order every player sees them that day. */
-function optionsFor(expr, seed) {
-  const opts = [{ text: expr.meaning, correct: true }, ...expr.distractors.map((text) => ({ text, correct: false }))];
-  return shuffle(opts, mulberry32(seed ^ hash32(expr.id)));
-}
-
 /**
- * Build the challenge for a UTC day. Needs the expression database loaded.
- * Returns { dateId, n, seed, cards: [{ expr, options }] }.
+ * Build the challenge for a UTC day. Needs the expression database loaded
+ * (or `byStage` passed in). Returns { dateId, n, seed, cards: [{ expr, options }] }.
  */
-export function buildDaily(dateId) {
+export function buildDaily(dateId, byStage = BY_STAGE) {
   const seed = hash32(`phrasefall:daily:${dateId}`);
-  const rng = mulberry32(seed);
-  const rank = new Map();
-  const score = (e) => {
-    if (!rank.has(e.id)) rank.set(e.id, hash32(`${dateId}|${e.id}`));
-    return rank.get(e.id);
-  };
-  const byRank = (list) => list.slice().sort((a, b) => score(a) - score(b) || (a.id < b.id ? -1 : 1));
-
-  const picked = new Set();
-  const picks = [];
-  const take = (list, n) => {
-    for (const e of list) {
-      if (n <= 0) break;
-      if (picked.has(e.id)) continue;
-      picked.add(e.id);
-      picks.push(e);
-      n--;
-    }
-    return n;
-  };
-  PLAN.forEach(({ easy, hard }, i) => {
-    const pool = byRank(BY_STAGE[i] ?? []);
-    const easyList = pool.filter((e) => e.level <= 2);
-    const hardList = pool.filter((e) => e.level >= 3);
-    const leftHard = take(hardList, hard);
-    const leftEasy = take(easyList, easy + leftHard);
-    take(pool, leftEasy); // a small stage: whatever it has
-  });
-  // still short (a tiny database): top up from anywhere
-  if (picks.length < DAILY_CARDS) take(byRank(BY_STAGE.flat()), DAILY_CARDS - picks.length);
-
-  // a gentle ramp: sorted by stage with seeded jitter so neighbouring stages mix
-  const order = picks.map((e) => ({ e, k: e.stage + rng() * 1.6 })).sort((a, b) => a.k - b.k);
-  const cards = order.slice(0, DAILY_CARDS).map(({ e }) => ({ expr: e, options: optionsFor(e, seed) }));
+  const cards = pickRun(byStage, { seed, rankKey: (id) => `${dateId}|${id}`, cards: DAILY_CARDS });
   return { dateId, n: dailyNumber(dateId), seed, cards };
 }
 

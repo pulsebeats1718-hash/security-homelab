@@ -14,6 +14,38 @@ const TEX_H = 320;
 const INK = '#1a1446';
 const HINT_INK = '#5b4f99';
 const DANGER = new THREE.Color(0xff5068);
+const BLANK_FILL = 'rgba(122, 92, 255, 0.16)';
+const BLANK_INK = '#7a5cff';
+/** Face colours for twist cards. */
+const TWIST_FACE = { flip: 0xe4f8ee, build: 0xe3f1ff, gap: 0xf0e9ff, listen: 0xffeedf };
+
+const font = (px, weight = 700) => `${weight} ${px}px "Fredoka Variable", "Fredoka", "Nunito Variable", system-ui, sans-serif`;
+
+/** Greedy word wrap for the current canvas font. */
+function wrap(g, text, maxW) {
+  const words = String(text).split(/\s+/).filter(Boolean);
+  const lines = [];
+  let line = '';
+  for (const w of words) {
+    const next = line ? `${line} ${w}` : w;
+    if (line && g.measureText(next).width > maxW) {
+      lines.push(line);
+      line = w;
+    } else line = next;
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+function roundRect(g, x, y, w, h, r) {
+  g.beginPath();
+  g.moveTo(x + r, y);
+  g.arcTo(x + w, y, x + w, y + h, r);
+  g.arcTo(x + w, y + h, x, y + h, r);
+  g.arcTo(x, y + h, x, y, r);
+  g.arcTo(x, y, x + w, y, r);
+  g.closePath();
+}
 
 export class ExpressionCard {
   constructor(scene) {
@@ -82,14 +114,17 @@ export class ExpressionCard {
   /**
    * Draw the expression, fitting it on one or two lines. A sense hint in brackets
    * ("pick up (a language)") goes on its own smaller, softer line underneath.
+   * Twist cards: `kind` 'flip' / 'build' show a meaning, 'gap' a sentence with a
+   * highlighted blank (up to three lines each), 'listen' a speaker.
    */
-  _draw(text) {
+  _draw(text, kind = null) {
     const g = this.ctx;
     g.clearRect(0, 0, TEX_W, TEX_H);
     g.textAlign = 'center';
     g.textBaseline = 'middle';
     g.fillStyle = INK;
-    const font = (px, weight = 700) => `${weight} ${px}px "Fredoka Variable", "Fredoka", "Nunito Variable", system-ui, sans-serif`;
+    if (kind === 'listen') return this._drawListen();
+    if (kind) return this._drawLong(text, kind === 'gap');
     const m = text.match(/^(.*\S)\s*\(([^()]+)\)$/);
     const main = m ? m[1] : text;
     const hint = m ? `(${m[2].trim()})` : '';
@@ -125,15 +160,94 @@ export class ExpressionCard {
     this.texture.needsUpdate = true;
   }
 
-  /** Bring a new expression in at the top of the fall zone. `golden`: a triple-points card. */
-  show(text, { scale, spawnY, impactY, accent, golden = false }) {
-    this._draw(text);
+  /** A meaning or a sentence: the largest size that fits in at most three lines. A "___" becomes a coloured blank. */
+  _drawLong(text, blank) {
+    const g = this.ctx;
+    const maxW = TEX_W - 120;
+    let size = 92;
+    let lines;
+    for (;;) {
+      g.font = font(size, 700);
+      lines = wrap(g, text, maxW);
+      if ((lines.length <= 2 && size <= 92) || (lines.length <= 3 && size <= 76) || size <= 46) break;
+      size -= 4;
+    }
+    const lh = size * 1.12;
+    const top = TEX_H / 2 - (lines.length * lh) / 2;
+    lines.forEach((line, i) => {
+      const y = top + lh * (i + 0.5) + size * 0.04;
+      if (!blank || !line.includes('___')) {
+        g.fillStyle = INK;
+        g.fillText(line, TEX_W / 2, y);
+        return;
+      }
+      // draw the line in pieces so the blank can stand out
+      const parts = line.split('___');
+      const blankW = size * 1.9;
+      const widths = parts.map((p) => g.measureText(p).width);
+      const total = widths.reduce((a, b) => a + b, 0) + blankW * (parts.length - 1);
+      let x = TEX_W / 2 - total / 2;
+      g.textAlign = 'left';
+      parts.forEach((p, j) => {
+        g.fillStyle = INK;
+        g.fillText(p, x, y);
+        x += widths[j];
+        if (j < parts.length - 1) {
+          g.fillStyle = BLANK_FILL;
+          roundRect(g, x + size * 0.12, y - size * 0.5, blankW - size * 0.24, size * 0.98, size * 0.22);
+          g.fill();
+          g.fillStyle = BLANK_INK;
+          g.fillRect(x + size * 0.22, y + size * 0.3, blankW - size * 0.44, Math.max(4, size * 0.07));
+          x += blankW;
+        }
+      });
+      g.textAlign = 'center';
+    });
+    this.texture.needsUpdate = true;
+  }
+
+  /** Listen cards: a speaker and its sound waves, and the word "Listen". */
+  _drawListen() {
+    const g = this.ctx;
+    const cx = TEX_W / 2 - 170;
+    const cy = TEX_H / 2;
+    g.fillStyle = INK;
+    g.beginPath();
+    g.moveTo(cx - 70, cy - 34);
+    g.lineTo(cx - 30, cy - 34);
+    g.lineTo(cx + 22, cy - 82);
+    g.lineTo(cx + 22, cy + 82);
+    g.lineTo(cx - 30, cy + 34);
+    g.lineTo(cx - 70, cy + 34);
+    g.closePath();
+    g.fill();
+    g.strokeStyle = INK;
+    g.lineCap = 'round';
+    g.lineWidth = 16;
+    for (const r of [52, 92]) {
+      g.beginPath();
+      g.arc(cx + 30, cy, r, -0.85, 0.85);
+      g.stroke();
+    }
+    g.font = font(120);
+    g.textAlign = 'left';
+    g.fillText('Listen', cx + 150, cy + 6);
+    g.textAlign = 'center';
+    this.texture.needsUpdate = true;
+  }
+
+  /** Bring a new expression in at the top of the fall zone. `golden`: a triple-points card; `kind`: a twist card's kind. */
+  show(text, { scale, spawnY, impactY, accent, golden = false, kind = null }) {
+    this._draw(text, kind);
     this.golden = golden;
+    this.kind = kind;
     // golden: a rich gold face and a polished frame (the frame shimmers in update())
     this.frameMat.metalness = golden ? 0.35 : 0;
     this.frameMat.roughness = golden ? 0.28 : 0.4;
-    this.faceMat.color.set(golden ? 0xffdf86 : 0xfff6e3);
-    this.faceMat.emissive.set(golden ? 0xffc94a : 0xfff1d6);
+    // twist cards: a soft tint of their own, so they read as different at a glance
+    const face = golden ? 0xffdf86 : (kind && TWIST_FACE[kind]) || 0xfff6e3;
+    this.faceMat.color.set(face);
+    this.faceMat.emissive.set(golden ? 0xffc94a : kind ? face : 0xfff1d6);
     this.faceMat.emissiveIntensity = golden ? 0.36 : 0.5;
     this.glow.scale.set(W * (golden ? 2.1 : 1.7), H * (golden ? 4 : 3.2), 1);
     for (const gem of this.gems) gem.rotation.y = 0;
