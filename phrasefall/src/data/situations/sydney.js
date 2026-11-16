@@ -19,11 +19,11 @@ export default [
       },
       { say: 'The sun here is very strong, even in the morning. You can get sunburnt fast.' },
       {
-        ask: 'Say you’ll protect your skin before you swim.',
+        ask: 'Say you’ll protect your skin before doing anything else.',
         options: [
-          { id: 'put-on-sun-cream', right: true, line: 'Then I’ll put on some sun cream first.', note: '“Put on sun cream” means spread it on your skin: the first thing to do under a strong sun.' },
+          { id: 'first-things-first', right: true, line: 'In that case, first things first: sun cream, then a swim!', note: '“First things first” means you do the most important job before the rest. Here, that’s sun cream!' },
           { id: 'soak-up', note: '“Soak up the sun” means relax and enjoy the sunshine. It won’t protect your skin!' },
-          { id: 'put-on-the-heating', note: '“Put on the heating” means switch the heating on. On a boiling day? No, thanks!' },
+          { id: 'last-but-not-least', note: '“Last but not least” introduces the final item in a list. Here, sun cream has to come first!' },
         ],
       },
       { say: 'Good thinking! A hat and a T-shirt help too.' },
@@ -111,7 +111,7 @@ export default [
           { id: 'see-eye-to-eye', note: '“See eye to eye” means agree with someone. It isn’t about watching.' },
         ],
       },
-      { say: 'You’ve got sharp eyes! And look, there’s the Harbour Bridge.' },
+      { say: 'Good plan! Every sailor needs sharp eyes. And look, there’s the Harbour Bridge.' },
     ],
   },
   {
@@ -137,7 +137,7 @@ export default [
         options: [
           { id: 'im-not-fussed', right: true, line: 'I’m not fussed. They both smell delicious!', note: '“I’m not fussed” is a relaxed British way to say you don’t mind which.' },
           { id: 'im-not-keen', note: '“I’m not keen” means you don’t really like something. Ember might think you want neither!' },
-          { id: 'whatever', note: '“Whatever” shows you don’t care, and it often sounds rude. Not kind to your host!' },
+          { id: 'help-yourself', note: '“Help yourself” is what a host says to let guests take what they want. That’s Ember’s line, not yours!' },
         ],
       },
       { say: 'Then you get one of each! Enjoy.' },
