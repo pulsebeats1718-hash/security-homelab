@@ -47,7 +47,8 @@ export function createJourney(app) {
           h('li', h('b', `${XP.game} XP`), ' every game you finish'),
           h('li', h('b', `${XP.goal} XP`), ' reaching your daily goal, and ', h('b', `${XP.daily} XP`), ' for the daily challenge'),
           h('li', h('b', '40–90 XP'), ' each daily quest, plus the reward chest'),
-          h('li', h('b', `${XP.review} XP`), ' each flashcard you review')
+          h('li', h('b', `${XP.review} XP`), ' each flashcard you review'),
+          h('li', h('b', `${XP.situation} XP`), ' each situation you finish, plus ', h('b', `${XP.right} XP`), ' for each reply right first time')
         )
       )
     );

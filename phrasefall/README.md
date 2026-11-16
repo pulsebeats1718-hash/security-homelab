@@ -13,6 +13,19 @@ four options before they land.
   side by side, no server involved; `src/game/duel.js`) and *Second chance* (straight
   after a game, the expressions you missed fall again, slowly, with no lives to lose;
   one missed again comes back once more).
+- **Memory garden** (`src/world/garden.js`, `src/game/garden.js`) – every expression you
+  master plants a flower on the island: daisies for everyday phrases, tulips for phrasal
+  verbs, sunflowers for idioms, bluebells for set phrases, lavender for collocations, roses
+  for advanced expressions. When an expression is due for review its flower droops and
+  fades; the garden chip on the menu starts a quick *watering* round (up to ten, like a
+  second chance) and each one put right stands up again. Flowers keep their spot in each
+  place and grow outwards from the dais, clear of the place's buildings, streets and water.
+- **Situations** (`src/ui/screens/talk.js`, content in `src/data/situations/`) – comic-strip
+  conversations with the characters in each place. At each turn you pick the most natural of
+  three expressions; a wrong pick explains what it really means, the right one appears in
+  your bubble with a note on why it fits. A reply right first time counts as a right answer
+  for that expression. Places open with your level. Writing guide: `dev/SITUATIONS_GUIDE.md`;
+  check with `node scripts/check-situations.mjs`.
 - **Twist cards** (`src/game/twists.js`) – about one card in four that shows an
   expression you have met before asks for it another way: *Flip* (the meaning falls,
   pick the expression), *Fill the gap* (a phrasal verb's example with its particle
@@ -118,7 +131,9 @@ src/
     animator.js           procedural animation: idle layers, action clips, secondary motion
     models/               one file per character (auto-discovered)
     thumbnails.js         portrait renderer for the collection strip
-  world/                  sky, lighting themes, island, clouds, particle effects; places/ (Home, London, New York, Sydney)
+  world/                  sky, lighting themes, island, clouds, particle effects, the memory garden;
+                          places/ (Home, London, New York, Sydney), seasons/
+  data/situations/        the Situations, one file per place
   game/                   rules and modes (game.js), fixed 20-card runs (run.js) for the daily challenge
                           (daily.js) and friend challenges (duel.js), twist cards (twists.js),
                           levels/streak/quests (progress.js), the falling card, camera framing, the live hero

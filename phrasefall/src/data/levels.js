@@ -12,6 +12,7 @@
 export const XP = {
   right: 10, // each right answer (×3 for a golden card, ×2 in fever mode)
   twist: 5, // extra for a twist card (flip, fill the gap, listen, build it) answered right
+  situation: 20, // finishing a situation (each reply right first time also earns `right`)
   game: 20, // finishing any game, however it went
   daily: 50, // finishing the ranked daily challenge
   goal: 50, // reaching the daily goal

@@ -168,7 +168,7 @@ export function createResults(app) {
   }
 
   // ── second chance: the missed expressions, straight away ────────────────
-  function secondChance(ids, { again = false } = {}) {
+  function secondChance(ids, { again = false, mode = 'retry' } = {}) {
     const list = ids.filter((id) => getExpression(id)).slice(0, RETRY_MAX);
     if (!list.length) return null;
     const n = list.length;
@@ -180,7 +180,7 @@ export function createResults(app) {
         h('b', again ? `Try ${n === 1 ? 'it' : `these ${n}`} once more` : `Second chance: fix the ${n === 1 ? 'one' : n} you missed`),
         h('span', 'They fall again, slowly, with no lives to lose. XP for each one you put right.')
       ),
-      h('button.btn.btn--gold.second__go', { 'data-quiet': '1', onclick: () => (audio.play('select'), app.startGame({ mode: 'retry', ids: list })) }, icon('play'), again ? 'Go' : 'Fix them')
+      h('button.btn.btn--gold.second__go', { 'data-quiet': '1', onclick: () => (audio.play('select'), app.startGame({ mode, ids: list })) }, icon('play'), again ? 'Go' : 'Fix them')
     );
   }
 
@@ -312,6 +312,19 @@ export function createResults(app) {
       });
     }
 
+    // new flowers in the memory garden
+    const planted = r.planted ?? [];
+    if (planted.length) {
+      const names = planted.slice(0, 3).map((id) => getExpression(id)?.text).filter(Boolean);
+      rows.push(
+        h(
+          'div.gain.gain--garden',
+          h('span.gain__ico', icon('flower')),
+          h('div.gain__body', h('div.gain__line', h('b', planted.length === 1 ? 'A new flower in your garden!' : `${planted.length} new flowers in your garden!`)), h('span.gain__sub', `Mastered: ${names.join(', ')}${planted.length > 3 ? '…' : ''}`))
+        )
+      );
+    }
+
     // daily goal and streak
     const s = p.streak;
     const g = p.goal();
@@ -426,15 +439,26 @@ export function createResults(app) {
         clear(stats).append(stat(String(r.correct), 'Right'), stat(`${r.accuracy}%`, 'Accuracy'), r.twists.shown ? stat(`${r.twists.right}/${r.twists.shown}`, 'Twists') : stat(String(r.seen.length), 'Cards'));
         clear(playBtn).append(icon('leaf'), 'Relax again');
         playBtn.onclick = () => app.startGame({ mode: 'relax' });
-      } else if (mode === 'retry') {
+      } else if (mode === 'retry' || mode === 'water') {
         const t = r.retry;
         const all = t.missed.length === 0;
-        eyebrow.textContent = 'Second chance';
-        title.textContent = all ? 'All put right!' : 'Good work';
-        best.textContent = all ? 'Every one you missed, fixed' : `${t.missed.length} still to learn: they come round again soon`;
-        clear(stats).append(stat(`${t.fixed.length}/${t.total}`, 'Put right'), stat(`${r.accuracy}%`, 'Accuracy'), stat(`×${r.streak}`, 'Best streak'));
-        clear(playBtn).append(icon('refresh'), 'Play again');
-        playBtn.onclick = () => app.startGame();
+        const water = mode === 'water';
+        eyebrow.textContent = water ? 'Memory garden' : 'Second chance';
+        title.textContent = all ? (water ? 'Garden watered!' : 'All put right!') : water ? 'Nearly there' : 'Good work';
+        const fixedN = t.fixed.length;
+        best.textContent = all
+          ? water
+            ? `${fixedN === 1 ? 'Your flower is' : `All ${fixedN} flowers are`} standing tall again`
+            : 'Every one you missed, fixed'
+          : `${t.missed.length} still ${water ? 'droopy' : 'to learn'}: ${t.missed.length === 1 ? 'it comes' : 'they come'} round again soon`;
+        clear(stats).append(stat(`${t.fixed.length}/${t.total}`, water ? 'Watered' : 'Put right'), stat(`${r.accuracy}%`, 'Accuracy'), stat(`×${r.streak}`, 'Best streak'));
+        if (water) {
+          clear(playBtn).append(icon('flower'), 'See your garden');
+          playBtn.onclick = () => app.toMenu();
+        } else {
+          clear(playBtn).append(icon('refresh'), 'Play again');
+          playBtn.onclick = () => app.startGame();
+        }
       } else {
         eyebrow.textContent = `Reached stage ${r.stage.n} · ${r.stage.short}`;
         title.textContent = 'Game over';
@@ -446,7 +470,7 @@ export function createResults(app) {
       showRank(shownKey);
 
       score.textContent = '0';
-      if (mode === 'retry') score.textContent = `${r.retry.fixed.length}/${r.retry.total}`;
+      if (mode === 'retry' || mode === 'water') score.textContent = `${r.retry.fixed.length}/${r.retry.total}`;
       else {
         const to = mode === 'relax' ? r.correct : r.score;
         later(350, () => countUp(score, to, { ms: Math.min(1400, 500 + to / 4), onTick: () => audio.play('count') }));
@@ -463,8 +487,22 @@ export function createResults(app) {
       if (daily) body.append(dailyCard(r));
       if (mode === 'duel') body.append(duelCard(r));
       // the expressions just missed, while they are fresh (a second chance offers the rest once more)
-      const offer = mode === 'retry' ? secondChance(r.retry.missed, { again: true }) : secondChance(r.wrong);
+      const offer = mode === 'retry' || mode === 'water' ? secondChance(r.retry.missed, { again: true, mode }) : secondChance(r.wrong);
       if (offer) body.append(offer);
+      // the rest of the garden: more thirsty flowers than one round waters
+      if (mode === 'water' && !offer) {
+        const more = app.garden?.refresh().thirsty.length ?? 0;
+        if (more) {
+          body.append(
+            h(
+              'div.second.second--water',
+              h('span.second__ico', icon('drop')),
+              h('div.second__body', h('b', `${more} more ${more === 1 ? 'flower needs' : 'flowers need'} water`), h('span', 'Another quick round puts the next ten right.')),
+              h('button.btn.btn--gold.second__go', { 'data-quiet': '1', onclick: () => (audio.play('select'), app.garden.water()) }, icon('drop'), 'Keep watering')
+            )
+          );
+        }
+      }
       const gains = progressBlock(r);
       if (gains) body.append(gains);
       // characters unlocked by the game, and by a streak milestone reached during it
@@ -497,10 +535,10 @@ export function createResults(app) {
         });
       }
 
-      const wrong = (mode === 'retry' ? r.retry.missed : r.wrong).filter((id) => getExpression(id));
+      const wrong = (mode === 'retry' || mode === 'water' ? r.retry.missed : r.wrong).filter((id) => getExpression(id));
       if (wrong.length) {
         body.append(
-          h('div.eyebrow', mode === 'retry' ? 'Still to learn' : 'Worth another look'),
+          h('div.eyebrow', mode === 'retry' || mode === 'water' ? 'Still to learn' : 'Worth another look'),
           h(
             'div.review',
             wrong.map((id) => {

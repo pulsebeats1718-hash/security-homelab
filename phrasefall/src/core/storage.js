@@ -78,7 +78,7 @@ const defaults = () => ({
   seenUnlocks: [],
   best: { score: 0, streak: 0, stage: 1 },
   totals: { games: 0, correct: 0, wrong: 0, score: 0, xp: 0 },
-  /** id → { seen, correct, wrong, streak, last: 'c' | 'w', fav, practise, t, box, due } */
+  /** id → { seen, correct, wrong, streak, last: 'c' | 'w', fav, practise, t, box, due, bloom } (bloom: when its garden flower was planted) */
   expr: {},
   /** 'YYYY-MM-DD' → ranked daily challenge attempt */
   daily: {},
@@ -294,7 +294,8 @@ export class Save {
   }
   /**
    * A game answer: updates the stats and the Leitner box (right → up one, wrong → box 0).
-   * Returns { fresh, mastered }: met for the first time ever / mastered by this answer.
+   * Returns { fresh, mastered, planted }: met for the first time ever / mastered by this
+   * answer / mastered for the first time ever (its garden flower is planted).
    */
   recordAnswer(id, correct) {
     const s = this._rec(id);
@@ -314,9 +315,12 @@ export class Save {
     }
     s.box = correct ? Math.min(SR_MAX_BOX, (s.box ?? 0) + 1) : 0;
     s.due = dueFor(s.box, s.t);
+    // the memory garden: an expression's flower is planted the first time it is mastered
+    const planted = !s.bloom && s.streak >= MASTERY_STREAK;
+    if (planted) s.bloom = s.t;
     if (correct) this.data.totals.correct++;
     else this.data.totals.wrong++;
-    return { fresh, mastered: !wasMastered && s.streak >= MASTERY_STREAK };
+    return { fresh, mastered: !wasMastered && s.streak >= MASTERY_STREAK, planted };
   }
   /** A flashcard review ("I knew it" / "Not yet"): moves the Leitner box only. Returns the new box. */
   review(id, knew) {
@@ -353,6 +357,17 @@ export class Save {
     return Object.keys(ex)
       .filter((id) => ex[id].seen > 0 && (ex[id].due ?? 0) <= now && (!keep || keep(id)))
       .sort((a, b) => (ex[a].due ?? 0) - (ex[b].due ?? 0) || (ex[a].box ?? 0) - (ex[b].box ?? 0));
+  }
+  /**
+   * The memory garden: ids with a flower (mastered at least once), oldest flower first.
+   * Records from before the garden existed count if they are mastered now.
+   */
+  plantedIds() {
+    const ex = this.data.expr;
+    const when = (id) => ex[id].bloom || ex[id].t || 0;
+    return Object.keys(ex)
+      .filter((id) => ex[id].bloom > 0 || ex[id].streak >= MASTERY_STREAK)
+      .sort((a, b) => when(a) - when(b) || (a < b ? -1 : 1));
   }
   get seenIds() {
     return Object.keys(this.data.expr).filter((id) => this.data.expr[id].seen > 0);

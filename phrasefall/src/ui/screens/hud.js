@@ -156,10 +156,10 @@ export function createHud(app) {
       best.textContent = game.correct === 1 ? 'Right answer' : 'Right answers';
       return;
     }
-    if (game.mode === 'retry') {
+    if (game.mode === 'retry' || game.mode === 'water') {
       const f = game.fixedInfo;
       scoreNum.textContent = `${f?.fixed ?? 0}/${f?.unique ?? 0}`;
-      best.textContent = 'Put right';
+      best.textContent = game.mode === 'water' ? 'Watered' : 'Put right';
       return;
     }
     scoreNum.textContent = formatScore(value);
@@ -197,7 +197,7 @@ export function createHud(app) {
 
   /** Friend challenges and second chances: how far through the cards. */
   function setFixed(f) {
-    stageName.textContent = game.mode === 'retry' ? 'Second chance' : 'Challenge';
+    stageName.textContent = game.mode === 'retry' ? 'Second chance' : game.mode === 'water' ? 'Watering' : 'Challenge';
     clear(pips).append(h('b.hud__count', `${f.index}/${f.total}`));
   }
 
@@ -299,11 +299,11 @@ export function createHud(app) {
 
   // ── game events ─────────────────────────────────────────────────────────
   events.on('game:intro', ({ stage, daily, mode, fixed, duel }) => {
-    const safe = mode === 'relax' || mode === 'retry';
+    const safe = mode === 'relax' || mode === 'retry' || mode === 'water';
     el.classList.toggle('is-safe', safe);
     el.dataset.mode = mode;
-    clear(modeIco).append(icon(mode === 'relax' ? 'leaf' : 'refresh'));
-    modeText.textContent = mode === 'relax' ? 'Relax' : '2nd chance';
+    clear(modeIco).append(icon(mode === 'relax' ? 'leaf' : mode === 'water' ? 'drop' : 'refresh'));
+    modeText.textContent = mode === 'relax' ? 'Relax' : mode === 'water' ? 'Watering' : '2nd chance';
     setScore(0, false);
     setStreak(0);
     setLives(SCORING.lives, false);
@@ -316,7 +316,7 @@ export function createHud(app) {
     else setStage(stage, 0);
     rankedNote.hidden = !daily?.ranked;
     relaxNote.hidden = finishBtn.hidden = mode !== 'relax';
-    restartBtn.hidden = mode === 'retry' || mode === 'duel' || mode === 'relax';
+    restartBtn.hidden = mode !== 'classic' && mode !== 'daily';
     buttons = [];
     build = null;
     question = null;
@@ -331,6 +331,7 @@ export function createHud(app) {
     else if (mode === 'duel') showBanner('Challenge', 'Ready?', duel?.opponent ? `Beat ${duel.opponent.name || 'your friend'}'s ${formatScore(duel.opponent.score)}` : `${fixed.total} cards · then send them to a friend`);
     else if (mode === 'relax') showBanner('Relax mode', 'Take your time', 'No lives, no rush. Finish whenever you like.');
     else if (mode === 'retry') showBanner('Second chance', 'Fix them!', `${fixed.unique} ${fixed.unique === 1 ? 'expression' : 'expressions'} to put right`);
+    else if (mode === 'water') showBanner('Memory garden', 'Watering time', `${fixed.unique} thirsty ${fixed.unique === 1 ? 'flower' : 'flowers'}: get each one right`);
     else showBanner(`Stage ${stage.n}`, 'Ready?', stage.name);
   });
 
@@ -374,7 +375,7 @@ export function createHud(app) {
     } else if (q.golden) {
       items.push(pill('.fpill--gold', 'Golden expression · triple points!'));
     }
-    if (q.mode === 'retry' && q.expr.example) items.push(pill('.fpill--example', h('b.fpill__tag', 'Example'), h('span', q.expr.example)));
+    if ((q.mode === 'retry' || q.mode === 'water') && q.expr.example) items.push(pill('.fpill--example', h('b.fpill__tag', 'Example'), h('span', q.expr.example)));
     if (q.mode === 'relax' && !tw && q.expr.example) items.push(h('button.fbtn', { 'data-quiet': '1', onclick: (e) => showExample(q, e.currentTarget) }, icon('book'), 'Example'));
     float(...items);
     if (!save.data.tutorialDone && q.number === 1) showHint('Tap the meaning before the expression lands!');
@@ -422,9 +423,9 @@ export function createHud(app) {
     }
     // after a Listen card, show what was said; after a miss with no lives at stake, the example
     if (q && twist === 'listen') float(pill('.fpill--twist', h('b.fpill__tag', 'It was'), h('span', phrase(q.expr.text))));
-    else if (q && !correct && safe && q.expr.example && q.mode !== 'retry') float(pill('.fpill--example', h('b.fpill__tag', 'Example'), h('span', q.expr.example)));
+    else if (q && !correct && safe && q.expr.example && q.mode === 'relax') float(pill('.fpill--example', h('b.fpill__tag', 'Example'), h('span', q.expr.example)));
     if (correct && !game.daily && !game.fixed) setStage(game.stageDef, game.correctInStage);
-    if (game.mode === 'retry' || game.mode === 'relax') setScore(0, correct);
+    if (game.safe) setScore(0, correct);
   });
 
   events.on('game:score', ({ score, gained, bonus, speed, twist, golden, fever, safe, mode, streak: n, x, y }) => {
@@ -436,7 +437,7 @@ export function createHud(app) {
       dy += 44;
     };
     if (safe) {
-      ui.popup(mode === 'retry' ? 'Fixed!' : 'Right!', x, y, 'pop--calm');
+      ui.popup(mode === 'retry' ? 'Fixed!' : mode === 'water' ? 'Watered!' : 'Right!', x, y, 'pop--calm');
       if (question?.twist) tag(TWIST_INFO[question.twist.kind].label, 'pop--twist');
       return;
     }

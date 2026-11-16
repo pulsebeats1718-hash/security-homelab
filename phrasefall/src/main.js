@@ -28,14 +28,16 @@ import { createLeaderboard } from './ui/screens/leaderboard.js';
 import { createToday } from './ui/screens/today.js';
 import { createJourney } from './ui/screens/journey.js';
 import { createDuel } from './ui/screens/duel.js';
+import { createTalk } from './ui/screens/talk.js';
 import { decodeDuel } from './game/duel.js';
 import { warmUpSpeech } from './audio/speech.js';
+import { createGarden } from './game/garden.js';
 import { createNotifier } from './ui/notify.js';
 import { Progress } from './game/progress.js';
 import { currentSeason } from './data/seasons.js';
 import { createAccount } from './ui/account.js';
 import { createOnline } from './online/index.js';
-import { loadExpressions, expressionsReady } from './data/expressions/index.js';
+import { loadExpressions, expressionsReady, whenExpressionsReady } from './data/expressions/index.js';
 
 const params = new URLSearchParams(location.search);
 
@@ -121,11 +123,14 @@ async function boot() {
     try {
       player.touch();
       if (env.place && env.place !== player.place && ui.name !== 'play') env.setPlace?.(player.place);
+      if (ui.name !== 'play') app.garden?.refresh(); // flowers mastered or reviewed on another device
     } finally {
       catchingUp = false;
     }
   });
   app.online = createOnline(app); // Google sign-in, cloud save, leaderboards — inert unless Firebase is configured
+  app.garden = createGarden(app); // the memory garden: a flower on the island for every mastered expression
+  whenExpressionsReady().then(() => app.garden.refresh(), () => {});
   window.__pf = app; // handy for testing from the console
   progress(0.3);
 
@@ -133,6 +138,7 @@ async function boot() {
   stage.setShot(shots.title(stage), 0);
   stage.onUpdate((dt, t) => {
     env.update(dt, t);
+    app.garden.world.update(t, dt);
     game.update(dt);
     hero.update(dt);
     fx.update(dt, t, game.dizzyAnchor);
@@ -186,6 +192,7 @@ async function boot() {
   s.today = ui.add('today', createToday(app));
   s.journey = ui.add('journey', createJourney(app));
   s.duel = ui.add('duel', createDuel(app));
+  s.talk = ui.add('talk', createTalk(app));
   ui.finish();
   createNotifier(app); // toasts for quests, goals and level-ups
   app.account = createAccount(app); // header chip, account sheet, nickname dialog (online builds only)

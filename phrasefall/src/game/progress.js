@@ -119,6 +119,11 @@ export class Progress {
     events.on('game:stage', ({ stage }) => this._bump('stage', stage.n, true));
     events.on('game:ending', (r) => this._finished(r));
     events.on('cards:review', (p) => this._reviewed(p));
+    events.on('talk:answered', (p) => this._answered({ correct: p.correct, type: p.type, safe: true }));
+    events.on('talk:done', () => {
+      this.addXp(XP.situation);
+      this.save.write();
+    });
   }
 
   get data() {
@@ -401,8 +406,8 @@ export class Progress {
   _finished(r) {
     const id = localDay();
     const day = this._day(id);
-    // a second chance is a bonus round, and a relax session counts as a game once it has some substance
-    if (r.mode === 'retry' || (r.mode === 'relax' && r.answered < RELAX_GAME_MIN)) {
+    // second chances and waterings are review rounds; a relax session counts as a game once it has some substance
+    if (r.mode === 'retry' || r.mode === 'water' || (r.mode === 'relax' && r.answered < RELAX_GAME_MIN)) {
       this._checkGoal(id);
       if (this.run) this.run.done = true;
       this.save.write();

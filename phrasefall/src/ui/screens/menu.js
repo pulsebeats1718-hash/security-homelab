@@ -6,10 +6,12 @@ import { utcDateId, dailyNumber, msToNextDaily, formatCountdown, DAILY_CARDS } f
 import { formatScore } from '../../core/utils.js';
 import { ring } from './today.js';
 import { getPlace } from '../../data/places.js';
+import { loadSituations } from '../../data/situations/index.js';
 
 /**
  * Main menu: today's strip (level, streak, daily goal, quests), Play (with Relax
- * and Challenge a friend beside it), the daily challenge and four tiles. The header keeps a slot next to the settings button
+ * and Challenge a friend beside it), the daily challenge (with Situations beside
+ * it) and four tiles. The header keeps a slot next to the settings button
  * (`accountSlot`, `.menu__account`) for the account chip.
  */
 export function createMenu(app) {
@@ -18,6 +20,10 @@ export function createMenu(app) {
   const dueBadge = h('span.tile__badge', { hidden: true });
   const heroName = h('div.menu__hero-name');
   const heroTitle = h('span.chip');
+  // the memory garden: how many flowers, and a tap to water the thirsty ones
+  const gardenIco = h('span.garden-chip__ico');
+  const gardenText = h('span');
+  const gardenChip = h('button.chip.garden-chip', { 'data-quiet': '1', onclick: () => onGarden() }, gardenIco, gardenText);
   const bestChip = h('span');
   const foundChip = h('span');
   const foot = h('div.menu__foot', h('span.chip.chip--gold', icon('trophy'), bestChip), h('span.chip', icon('book'), foundChip));
@@ -36,6 +42,10 @@ export function createMenu(app) {
   const dailySub = h('span.daily__sub');
   const dailyTag = h('span.daily__tag');
   const dailyBtn = h('button.daily', { 'data-quiet': '1', title: 'The same cards for everyone today', onclick: () => start('daily') }, h('span.daily__ico', icon('calendar')), h('span.daily__text', dailyTitle, dailySub), dailyTag);
+  // Situations sit beside the daily challenge, as Relax and Challenge sit beside Play
+  const talkBadge = h('span.tile__badge.mode-btn__badge', { hidden: true });
+  const talkBtn = h('button.mode-btn.mode-btn--talk', { 'data-quiet': '1', title: 'Situations: chat with the characters', onclick: () => (audio.play('select'), ui.go('talk', { from: 'menu' })) }, h('span.mode-btn__ico', icon('chat'), talkBadge), h('span.mode-btn__label', 'Situations'));
+  const dailyRow = h('div.menu__dailyrow', dailyBtn, talkBtn);
   const status = h('div.menu__status', { hidden: true, role: 'status' });
 
   // ── today strip: level, streak, daily goal, quests ──────────────────────
@@ -71,7 +81,7 @@ export function createMenu(app) {
       notice,
       strip,
       playRow,
-      dailyBtn,
+      dailyRow,
       h(
         'div.menu__grid',
         tile('user', 'Characters', sub.chars, 'var(--violet)', () => ui.go('characters')),
@@ -81,7 +91,7 @@ export function createMenu(app) {
       )
     ),
     foot,
-    h('div.menu__hero', heroName, heroTitle)
+    h('div.menu__hero', heroName, heroTitle, gardenChip)
   );
   // a wide account chip needs the logo to step down on narrow portrait screens
   new MutationObserver(() => el.classList.toggle('has-account', accountSlot.childElementCount > 0)).observe(accountSlot, { childList: true });
@@ -180,6 +190,57 @@ export function createMenu(app) {
     }
   }
 
+  // ── the memory garden ───────────────────────────────────────────────────
+  let gardenSeen = null; // the garden as last shown here, to celebrate what changed since
+  function refreshGarden() {
+    const garden = app.garden;
+    if (!garden || !expressionsReady()) {
+      gardenChip.hidden = true;
+      return;
+    }
+    const st = garden.refresh();
+    const n = st.thirsty.length;
+    gardenChip.hidden = false;
+    gardenChip.classList.toggle('is-thirsty', n > 0);
+    clear(gardenIco).append(icon(n ? 'drop' : st.count ? 'flower' : 'leaf'));
+    gardenText.textContent = n ? `${n} ${n === 1 ? 'flower needs' : 'flowers need'} water` : st.count ? `${st.count.toLocaleString('en-GB')} ${st.count === 1 ? 'flower' : 'flowers'} in your garden` : 'Grow your garden';
+    // sparkles for flowers that are new, or standing up again, since the menu was last here
+    if (gardenSeen) {
+      const had = new Set(gardenSeen.plants.map((p) => p.id));
+      const wasThirsty = new Set(gardenSeen.thirsty);
+      const now = new Set(st.thirsty);
+      const cheer = st.plants.filter((p) => !had.has(p.id) || (wasThirsty.has(p.id) && !now.has(p.id))).slice(0, 14);
+      if (cheer.length) {
+        setTimeout(() => {
+          if (ui.name !== 'menu') return;
+          audio.play('quest');
+          for (const p of cheer) {
+            const pos = garden.world.positionOf(p.id);
+            if (pos) app.fx.burst(pos, { count: 10, color: 0xfff6c8, color2: 0x7ef0c8, speed: 1.6, size: 0.34, life: 0.8, gravity: -0.6, up: 0.9 });
+          }
+        }, 1100);
+      }
+    }
+    gardenSeen = st;
+  }
+  function onGarden() {
+    const st = app.garden?.state;
+    if (!st) return;
+    if (st.thirsty.length) {
+      audio.play('select');
+      app.garden.water();
+      return;
+    }
+    audio.play('tap');
+    ui.toast({
+      icon: 'flower',
+      title: 'Your memory garden',
+      sub: st.count ? 'Every expression you master grows a flower. When one is due for review it droops: tap here to water it.' : 'Get an expression right three times in a row and its flower grows here.',
+      tone: 'sky',
+      ms: 5600,
+    });
+  }
+
   /** Places unlocked away from the results screen (a chest, flashcards): travel there with a hello. */
   function welcomeNewPlaces() {
     const fresh = progress.unseenPlaces().filter((p) => p.id !== 'home');
@@ -216,6 +277,17 @@ export function createMenu(app) {
     heroTitle.textContent = def.title;
     heroName.style.color = `#${def.accent.toString(16).padStart(6, '0')}`;
     refreshDaily();
+    refreshGarden();
+    // situations still to play in the places that are open (loaded in the background)
+    loadSituations().then(
+      (all) => {
+        const level = progress.level;
+        const n = all.filter((x) => level >= getPlace(x.place).level && !save.data.talk?.[x.id]?.done).length;
+        talkBadge.textContent = String(n);
+        talkBadge.hidden = !n;
+      },
+      () => {}
+    );
     if (!loaded) whenExpressionsReady().then(() => ui.name === 'menu' && refresh(), () => {});
   }
 

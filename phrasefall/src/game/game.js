@@ -18,6 +18,7 @@
  *   retry    "second chance" straight after a game: the expressions just missed
  *            fall again, slowly, with no lives to lose. One that is missed again
  *            comes back once more at the end
+ *   water    the same for the memory garden's thirsty flowers (expressions due for review)
  *
  * Fever: ten right answers in a row light the island up and double the points
  * of every answer after that, until the next miss. Golden cards (classic only,
@@ -60,7 +61,9 @@ export const RETRY_MAX = 10;
 const RETRY_SLOW = 1.35;
 /** Relax mode: every card falls at stage 1's starting speed, this much slower. */
 const RELAX_SLOW = 1.45;
-export const MODES = ['classic', 'daily', 'duel', 'relax', 'retry'];
+export const MODES = ['classic', 'daily', 'duel', 'relax', 'retry', 'water'];
+/** Review rounds over a fixed list of expressions: second chance, and watering the memory garden. */
+const REVIEW = ['retry', 'water'];
 export const GOLD = 0xffb21e;
 export const FEVER_COLOR = 0xff6a2b;
 
@@ -105,7 +108,8 @@ export class Game {
     this.correct = 0;
     this.wrong = [];
     this.seen = [];
-    this.fixedIds = new Set(); // retry: expressions put right
+    this.fixedIds = new Set(); // retry / water: expressions put right
+    this.planted = []; // expressions mastered for the first time this run (new garden flowers)
     this.twists = { shown: 0, right: 0 };
     this.used = new Set();
     this.deck = [];
@@ -129,9 +133,9 @@ export class Game {
   get active() {
     return this.state !== 'idle' && this.state !== 'over';
   }
-  /** Relax and second chance: no lives to lose and no points. */
+  /** Relax, second chance and watering: no lives to lose and no points. */
   get safe() {
-    return this.mode === 'relax' || this.mode === 'retry';
+    return this.mode === 'relax' || REVIEW.includes(this.mode);
   }
   /** What the interface needs to know about a daily run (null in other games). */
   get dailyInfo() {
@@ -193,7 +197,7 @@ export class Game {
       const cards = buildDuel(seed, BY_STAGE);
       this.fixed = { cards, index: 0, total: cards.length, requeued: new Set() };
       this.duel = { seed, opponent: opts.opponent ?? null };
-    } else if (this.mode === 'retry') {
+    } else if (REVIEW.includes(this.mode)) {
       const exprs = [...new Set(opts.ids ?? [])].map(getExpression).filter(Boolean).slice(0, RETRY_MAX);
       const cards = shuffle(exprs.map((expr) => ({ expr, options: this._options(expr) })));
       this.fixed = { cards, index: 0, total: cards.length, requeued: new Set() };
@@ -202,13 +206,13 @@ export class Game {
     this.card.hide();
     this.fx.setDizzy(false);
     this.env.setDim(0);
-    this.env.setTheme(this.mode === 'retry' ? 'golden' : this.stageDef.theme, 1.4);
+    this.env.setTheme(this.mode === 'retry' ? 'golden' : this.mode === 'water' ? 'midday' : this.stageDef.theme, 1.4);
     this.env.island.setStreak(0);
     this.ch.animator.stop();
     this.ch.animator.gazeUp = 0;
     this.ch.animator.worry = 0;
     this.audio.music?.muffle(false);
-    this.audio.music?.set('game', this.mode === 'retry' ? 3 : 1);
+    this.audio.music?.set('game', REVIEW.includes(this.mode) ? 3 : 1);
     this.applyShot(1.0);
     this._set('intro');
     this.events.emit('game:intro', { stage: this.stageDef, lives: this.lives, mode: this.mode, daily: this.dailyInfo, fixed: this.fixedInfo, duel: this.duel });
@@ -377,7 +381,7 @@ export class Game {
     const own = STAGES[expr.stage - 1] ?? st;
     let fall;
     if (d || this.mode === 'duel') fall = own.fall * PACE.standard.factor; // fixed pace: scores stay comparable
-    else if (this.mode === 'retry') fall = own.fall * RETRY_SLOW * pace;
+    else if (REVIEW.includes(this.mode)) fall = own.fall * RETRY_SLOW * pace;
     else if (this.mode === 'relax') fall = STAGES[0].fall * RELAX_SLOW * pace;
     else fall = Math.max(st.floor, st.fall - st.step * this.correctInStage) * pace;
     if (twist) fall = fall * TWIST_TIME[twist.kind] + (twist.kind === 'listen' ? LISTEN_EXTRA : 0);
@@ -448,7 +452,7 @@ export class Game {
     this.streak++;
     this.bestStreak = Math.max(this.bestStreak, this.streak);
     if (q.twist) this.twists.right++;
-    if (this.mode === 'retry') this.fixedIds.add(q.expr.id);
+    if (REVIEW.includes(this.mode)) this.fixedIds.add(q.expr.id);
     // relax and second chance score no points; fever doubles, a golden card triples (both: ×6)
     const fever = this.fever;
     const bonus = safe ? 0 : streakBonus(this.streak);
@@ -458,6 +462,7 @@ export class Game {
     const gained = base + bonus + speed + twist;
     this.score += gained;
     const rec = this.save.recordAnswer(q.expr.id, true);
+    if (rec.planted) this.planted.push(q.expr.id);
     if (this.daily || this.mode === 'duel') this.marks += 'c';
     if (this.daily) this._saveDaily(false);
     this.events.emit('game:answered', { choice: index, correct: true, correctIndex: q.correctIndex, id: q.expr.id, type: q.expr.type, golden: !!q.golden, fever, streak: this.streak, fresh: rec.fresh, mastered: rec.mastered, mode: this.mode, twist: q.twist?.kind ?? null, safe });
@@ -545,8 +550,8 @@ export class Game {
     if (!this.safe) this.lives--;
     const rec = this.save.recordAnswer(q.expr.id, false);
     if (!this.wrong.includes(q.expr.id)) this.wrong.push(q.expr.id);
-    // second chance: a card missed again comes back once more at the end
-    if (this.mode === 'retry' && f && !f.requeued.has(q.expr.id)) {
+    // second chance / watering: a card missed again comes back once more at the end
+    if (REVIEW.includes(this.mode) && f && !f.requeued.has(q.expr.id)) {
       f.requeued.add(q.expr.id);
       f.cards.push({ expr: q.expr, options: this._options(q.expr) });
     }
@@ -658,8 +663,8 @@ export class Game {
       this.fx.confetti(_v.setY(1.4), { count: 70, spread: 4 });
     }
     this.audio.music?.muffle(true);
-    // a second chance is a bonus round, not a game: it does not count towards scores or games played
-    const record = this.mode === 'retry' ? { newBest: false, unlocked: [] } : this.save.finishGame({ score: this.score, bestStreak: this.safe ? 0 : this.bestStreak, stage: this.stageIndex + 1, mode: this.mode });
+    // a second chance or a watering is a review round, not a game: it does not count towards scores or games played
+    const record = REVIEW.includes(this.mode) ? { newBest: false, unlocked: [] } : this.save.finishGame({ score: this.score, bestStreak: this.safe ? 0 : this.bestStreak, stage: this.stageIndex + 1, mode: this.mode });
     const d = this.daily;
     if (d) this._saveDaily(true);
     const f = this.fixed;
@@ -670,10 +675,11 @@ export class Game {
       daily: d && { ...this.dailyInfo, marks: this.marks, rankedRecord: this.save.dailyRecord(d.dateId) },
       duel: this.duel && { seed: this.duel.seed, opponent: this.duel.opponent, marks: this.marks, total: f.cards.length },
       retry:
-        this.mode === 'retry'
+        REVIEW.includes(this.mode)
           ? { total: f.total, fixed: [...this.fixedIds], missed: [...new Set(f.cards.map((c) => c.expr.id))].filter((id) => !this.fixedIds.has(id)) }
           : null,
       twists: { ...this.twists },
+      planted: this.planted.slice(),
       score: this.score,
       best: this.save.data.best.score,
       newBest: record.newBest && this.score > 0,

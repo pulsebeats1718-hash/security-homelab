@@ -235,5 +235,28 @@ test('mastering expressions opens the same tiers without the points', () => {
   assert.equal(describeRule(ROSTER.find((r) => r.id === 'corgi').rule), `Earn 20,000 points in total, or master ${TIERS[1].mastered} expressions`);
 });
 
+test('memory garden: a flower is planted the first time an expression is mastered, and stays', () => {
+  const save = new Save();
+  assert.deepEqual(save.plantedIds(), []);
+  assert.equal(save.recordAnswer('break-the-ice', true).planted, false);
+  save.recordAnswer('break-the-ice', true);
+  const third = save.recordAnswer('break-the-ice', true);
+  assert.equal(third.mastered, true);
+  assert.equal(third.planted, true);
+  assert.deepEqual(save.plantedIds(), ['break-the-ice']);
+  // a wrong answer later: no longer mastered, but the flower stays (thirsty: due for review)
+  save.recordAnswer('break-the-ice', false);
+  assert.equal(save.isMastered('break-the-ice'), false);
+  assert.deepEqual(save.plantedIds(), ['break-the-ice']);
+  assert.equal(save.isDue('break-the-ice'), true);
+  // mastered again: not a second planting
+  save.recordAnswer('break-the-ice', true);
+  save.recordAnswer('break-the-ice', true);
+  assert.equal(save.recordAnswer('break-the-ice', true).planted, false);
+  // records from before the garden count when mastered
+  save.data.expr['old-friend'] = { seen: 5, correct: 5, wrong: 0, streak: 4, last: 'c', t: 1, box: 4, due: 0 };
+  assert.deepEqual(save.plantedIds(), ['old-friend', 'break-the-ice']);
+});
+
 Date.now = realNow;
 console.log(process.exitCode ? 'FAILED' : `✓ ${passed} tests passed`);
