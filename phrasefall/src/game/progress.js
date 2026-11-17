@@ -136,6 +136,10 @@ export class Progress {
       this.addXp(XP.situation);
       this.save.write();
     });
+    events.on('album:complete', () => {
+      this.addXp(XP.sticker);
+      this.save.write();
+    });
   }
 
   get data() {

@@ -10,9 +10,28 @@ four options before they land.
   lives and no clock: slow cards, an *Example* button that holds the card while you
   read, finish when you like), *Challenge a friend* (20 cards from a seed; the link
   carries your score, your friend plays exactly the same cards and both results show
-  side by side, no server involved; `src/game/duel.js`) and *Second chance* (straight
+  side by side, no server involved; `src/game/duel.js`), *Party* (pass-and-play for 2–4
+  people on one phone: names and characters, 5 or 10 cards each, everyone gets the same
+  cards, a pass screen between turns and a scoreboard; party games never count towards
+  the phone owner's progress; `src/ui/screens/party.js`) and *Second chance* (straight
   after a game, the expressions you missed fall again, slowly, with no lives to lose;
   one missed again comes back once more).
+- **Boss storm clouds** (`src/world/boss.js`) – at the end of each stage of a classic game
+  a grumpy storm cloud rolls in (Grumble, Drizzle, Thunderbumble, Gloomsby, The Great
+  Muddle) and throws a quick volley of four cards from the stage, a little faster. Hit it
+  three times and it cheers up, turns white and floats away: +150 × the stage and a
+  power-up (two from stage 3). In the endless final stage a boss comes back every 12
+  right answers.
+- **Power-ups** (`src/game/powers.js`) – kept between classic games (up to 9 of each):
+  *Shield* (the next miss costs no life), *Slow-mo* (the next three cards fall 1.7×
+  slower), *50/50* (two wrong answers vanish) and *Hint* (shows the example). One of each
+  to start; more drop from golden cards, now and then from a right answer, and from bosses.
+- **Sticker album** (`src/data/sets.js`, `src/game/album.js`) – 16 themed sets of 16
+  well-known expressions (weather, food, money, feelings, animals …) under *My Collection →
+  Stickers*. Master every expression in a set to earn its sticker and a reward: a hat that
+  every character can wear (`src/characters/kit/hats.js`) or a decoration for the memory
+  garden (`src/world/decor.js`). Any set can be practised on its own (relax mode dealing
+  only that set's cards). Check the sets with `node scripts/check-sets.mjs`.
 - **Memory garden** (`src/world/garden.js`, `src/game/garden.js`) – every expression you
   master plants a flower on the island: daisies for everyday phrases, tulips for phrasal
   verbs, sunflowers for idioms, bluebells for set phrases, lavender for collocations, roses
@@ -131,11 +150,14 @@ src/
     animator.js           procedural animation: idle layers, action clips, secondary motion
     models/               one file per character (auto-discovered)
     thumbnails.js         portrait renderer for the collection strip
-  world/                  sky, lighting themes, island, clouds, particle effects, the memory garden;
-                          places/ (Home, London, New York, Sydney), seasons/
+  world/                  sky, lighting themes, island, clouds, particle effects, the memory garden and
+                          its decorations, boss storm clouds; places/ (Home, London, New York, Sydney),
+                          seasons/, theatre/ (Literal Theatre's scenes)
   data/situations/        the Situations, one file per place
+  data/sets.js            the sticker album's themed sets
   game/                   rules and modes (game.js), fixed 20-card runs (run.js) for the daily challenge
-                          (daily.js) and friend challenges (duel.js), twist cards (twists.js),
+                          (daily.js) and friend challenges (duel.js), twist cards (twists.js), power-ups
+                          (powers.js), the sticker album (album.js), achievements (achievements.js),
                           levels/streak/quests (progress.js), the falling card, camera framing, the live hero
   audio/                  synthesised sound effects and generative music
   online/                 optional Google sign-in, cloud save and leaderboards (Firebase, loaded on demand)
