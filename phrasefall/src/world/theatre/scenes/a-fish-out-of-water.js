@@ -62,7 +62,7 @@ export default {
     const C = BOWL.clone().setY(0.53 + R * 0.92);
     const glass = new THREE.Mesh(s.own(new THREE.SphereGeometry(R, 32, 20, 0, Math.PI * 2, Math.PI * 0.2, Math.PI * 0.8)), k.glass(0xd4ecff, 0.22));
     glass.position.copy(C);
-    const water = new THREE.Mesh(s.own(new THREE.SphereGeometry(R * 0.96, 32, 16, 0, Math.PI * 2, Math.PI * 0.36, Math.PI * 0.64)), k.mat(0x4fb6ff, { transparent: true, opacity: 0.38, rough: 0.05, depthWrite: false }));
+    const water = new THREE.Mesh(s.own(new THREE.SphereGeometry(R * 0.96, 32, 16, 0, Math.PI * 2, Math.PI * 0.36, Math.PI * 0.64)), k.mat(0x3aa6ff, { transparent: true, opacity: 0.5, rough: 0.05, depthWrite: false }));
     water.position.copy(C);
     const surface = k.at(k.disc(k.mat(0x8fd4ff, { transparent: true, opacity: 0.55, rough: 0.05, depthWrite: false }), R * 0.83, 32), C.x, C.y + R * 0.42, C.z, -Math.PI / 2, 0, 0);
     const pebbles = k.group();
@@ -73,6 +73,8 @@ export default {
     water.renderOrder = 2;
     surface.renderOrder = 2;
 
+    // a splash of water round the fish, drying up while it flops
+    const puddle = s.add(k.at(k.cyl(k.mat(0x8fd4ff, { rough: 0.05, transparent: true, opacity: 0.6 }), 0.45, 0.45, 0.01, 24), SPOT.x, 0.01, SPOT.z));
     const { fish, body, tail, face } = goldfish(s);
     fish.scale.setScalar(1.25);
     s.add(fish);
@@ -134,6 +136,8 @@ export default {
         const want = dry ? (Math.sin(t * 7) > 0 ? 'worried' : 'surprised') : t >= HOME ? 'happy' : 'neutral';
         if (face.current !== want) face.set(want, 1e9);
         surface.position.y = C.y + R * 0.42 + Math.sin(t * 2.5) * 0.008;
+        const wet = t < LAND ? 0 : t < BACK ? 1 - ((t - LAND) / (BACK - LAND)) * 0.75 : Math.max(0, 0.25 - (t - BACK) * 0.4);
+        puddle.scale.set(wet + 0.001, 1, wet * 0.7 + 0.001);
         hero.mood(t > OUT && t < HOME ? 'worried' : t >= HOME ? 'happy' : null);
         for (const at of [OUT + 0.05, HOME - 0.02]) {
           if (s.cue(at)) {

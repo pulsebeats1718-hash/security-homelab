@@ -28,7 +28,8 @@ const MISSES = 2;
  * { id, correct, type } once per scene and 'theatre:done' { n, right } at the end of a round.
  *
  * show(params): { from = 'menu' } — where Back goes; { scene: id } starts the round with that scene.
- * The scenes and their director live in src/world/theatre/ and load on the first visit.
+ * Keys: 1–4 (or A–D) pick, Enter / Space next, Enter on the curtain call for another round, Escape
+ * back. The scenes and their director live in src/world/theatre/ and load on the first visit.
  */
 export function createTheatre(app) {
   const { ui, save, audio, events } = app;
@@ -157,6 +158,7 @@ export function createTheatre(app) {
       if (round.i >= round.list.length) return round.list.length ? finishRound() : renderError();
       return startScene();
     }
+    app.env.setTheme(def.theme ?? 'midday', 1.1); // most scenes play in bright daylight
     renderScene();
     later(WATCH_MS, openOptions);
   }
@@ -296,6 +298,7 @@ export function createTheatre(app) {
     const right = round.right;
     events.emit('theatre:done', { n, right });
     director.bow(right >= n - 1);
+    app.env.setTheme('midday', 1.1);
     audio.play(right === n ? 'newBest' : 'stage');
     const head = right === n ? 'A standing ovation!' : right >= n - 2 ? 'Bravo!' : right >= 2 ? 'Well played!' : 'Every show gets better';
     setPanel(
@@ -367,11 +370,15 @@ export function createTheatre(app) {
     key(e) {
       if (e.key === 'Escape') return back();
       if (state === 'scene') {
-        const n = Number(e.key);
+        // 1–4, or A–D like the game's answers
+        const n = Number(e.key) || ' abcd'.indexOf(String(e.key).toLowerCase());
         if (n >= 1 && n <= 4) cur?.btns[n - 1]?.click();
       } else if (state === 'reveal' && (e.key === 'Enter' || e.key === ' ')) {
         e.preventDefault?.();
         next();
+      } else if (state === 'summary' && e.key === 'Enter') {
+        audio.play('select');
+        startRound();
       }
     },
     relayout() {

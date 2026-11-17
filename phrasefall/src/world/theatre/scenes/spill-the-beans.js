@@ -57,7 +57,7 @@ export default {
     const { k } = s;
     const hero = s.hero();
     hero.place(-0.55, 0.05, 0.25);
-    const friend = s.cast(s.other(['bunny', 'panda', 'penguin']), { x: 1.5, z: -0.05, yaw: -0.55 });
+    const friend = s.cast(s.other(['panda', 'penguin', 'bear']), { x: 1.5, z: -0.05, yaw: -0.55 });
 
     // the tin: a metal can with a paper label, open at the top
     const tin = k.group();

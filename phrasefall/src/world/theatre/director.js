@@ -8,6 +8,7 @@
  *   director.celebrate()     confetti and happy faces for a right answer
  *   director.bow(big)        the curtain call at the end of a round: the hero alone on the dais
  *   director.seek(t)         jump to a moment of the scene (previews and screenshots)
+ *   director.paused          true holds the scene still on its current moment (screenshots)
  *
  * A scene definition (one module per idiom in ./scenes/, named after the expression id):
  *
@@ -16,8 +17,10 @@
  *     loop: 6,                          // seconds; the scene plays round and round
  *     frame: { x, y, z, w, h },         // the box (world units) the camera must show
  *     view: { yaw, pitch },             // optional camera angle (default a gentle 3/4 view)
+ *     theme: 'twilight',                // optional lighting (src/world/themes.js); default midday
  *     avoid: ['…'],                     // idioms never offered as wrong answers for this scene
- *     build(s) { …; return { update(t, dt) {} }; },   // s: the SceneKit (kit.js)
+ *     build(s) { …; return { update(t, dt) {}, dispose() {} }; },   // s: the SceneKit (kit.js);
+ *                                       // dispose() only for anything the kit does not track
  *     celebrate(s) {},                  // optional: extra delight when the player gets it right
  *   };
  *
@@ -38,6 +41,7 @@ export class Director {
     this.scene = null;
     this.t = 0;
     this.area = null;
+    this.paused = false;
     this._framing = CURTAIN;
     // one listener for the life of the app; it does nothing while no scene plays
     this.stage.onUpdate((dt) => this.update(dt));
@@ -50,6 +54,7 @@ export class Director {
   /** Build and start a scene. */
   play(def, { seconds = 0.9 } = {}) {
     this.clear();
+    this.paused = false;
     const s = new SceneKit(this, def);
     let live;
     try {
@@ -96,6 +101,7 @@ export class Director {
   update(dt) {
     const sc = this.scene;
     if (!sc) return;
+    if (this.paused) dt = 0;
     const loop = sc.def.loop ?? 6;
     const prev = this.t;
     let t = prev + dt;

@@ -46,7 +46,7 @@ function room(s) {
   return out;
 }
 
-/** A big friendly elephant sitting down, facing +Z. Returns { group, head, trunk: [segments], face, ears }. */
+/** A big friendly elephant sitting down, facing +Z. Returns { group, head, trunk: [beads], face, ears }. */
 function elephant(s) {
   const { k } = s;
   const grey = k.mat(0xa9b1cf, { rough: 0.7 });
@@ -69,7 +69,7 @@ function elephant(s) {
   });
   body.add(k.at(k.cap(grey, 0.04, 0.45), 0.35, 0.4, -0.65, -0.6, 0, 0.6));
   g.add(s.baked(body));
-  // head, with flapping ears and a trunk made of segments that can curl
+  // head, with flapping ears
   const head = k.at(k.group(), 0, 1.78, 0.18);
   head.add(k.ball(grey, 0.58, 0.53, 0.52));
   const ears = [];
@@ -80,17 +80,13 @@ function elephant(s) {
     head.add(ear);
     ears.push({ ear, sd });
   });
-  const trunk = [];
-  let parent = head;
-  for (let i = 0; i < 6; i++) {
-    const seg = k.at(k.group(), 0, i === 0 ? -0.12 : -0.17, i === 0 ? 0.42 : 0);
-    const r = 0.16 - i * 0.017;
-    seg.add(k.at(k.cap(grey, r, 0.26), 0, -0.08, 0));
-    if (i === 5) seg.add(k.at(k.ball(pink, r * 0.9, 0.03, r * 0.9), 0, -0.2, 0));
-    parent.add(seg);
-    trunk.push(seg);
-    parent = seg;
-  }
+  // the trunk: a string of beads along a curve from the face to its tip, which the scene steers
+  const trunk = Array.from({ length: 11 }, (_, i) => {
+    const r = 0.155 - i * 0.008;
+    const bead = k.ball(i === 10 ? pink : grey, r, r, r);
+    g.add(bead);
+    return bead;
+  });
   g.add(head);
   const face = s.face({ parent: head, radii: [0.58, 0.53, 0.52], eye: { yaw: 30, pitch: 14, size: 0.07 }, mouth: false, cheeks: { color: 0xff9db3, yaw: 40, pitch: -8, size: 0.09 }, brow: { color: 0x5a6280, thick: 0.014 } });
   face.set('happy', 1e9);
@@ -108,10 +104,10 @@ export default {
     const { k } = s;
     s.add(room(s));
     const hero = s.hero();
-    hero.place(-0.95, 0.45, 0.2);
+    hero.place(-0.62, 0.42, -0.4);
     const el = elephant(s);
-    el.group.position.set(0.75, 0, -0.3);
-    el.group.rotation.y = -0.35;
+    el.group.position.set(0.82, 0, -0.32);
+    el.group.rotation.y = -0.55;
     el.group.scale.setScalar(0.9);
     s.add(el.group);
 
@@ -130,7 +126,8 @@ export default {
       P.armLX += -0.9 - sip * 0.7;
       P.armLZ += -0.2 - sip * 0.3;
       P.armRZ += -0.15;
-      P.headY += -0.55;
+      P.headY += -0.6;
+      P.yaw += -0.12;
       P.headX += -0.12 + sip * 0.15;
       P.headZ += 0.1;
       const tap = tapping(t);
@@ -141,12 +138,23 @@ export default {
     return {
       update(t) {
         const tap = tapping(t);
-        // the trunk sways and curls; then reaches across to tap the hero
-        el.trunk.forEach((seg, i) => {
-          const sway = Math.sin(t * 1.6 - i * 0.5) * 0.12 * (1 - tap);
-          const curl = (0.1 + i * 0.05) * (1 - tap) + Math.sin(t * 1.1) * 0.05;
-          const reach = tap * (i < 2 ? -0.55 : 0.12);
-          seg.rotation.set(-curl + reach * 0.4 - (i === 5 ? Math.max(0, Math.sin((t - TAP[0]) * 9)) * 0.5 * tap : 0), 0, sway - tap * (i < 3 ? 0.42 : 0.1));
+        // the trunk hangs and curls; then reaches across to tap the hero on the shoulder
+        el.head.localToWorld(_a.set(0, -0.18, 0.46));
+        el.group.worldToLocal(_a);
+        hero.rig.head.getWorldPosition(_b);
+        _b.y += hero.rig.headCenter.y * 0.5;
+        _b.x += 0.35;
+        el.group.worldToLocal(_b);
+        const tapBob = Math.max(0, Math.sin((t - TAP[0]) * 9)) * tap;
+        _c.set(0.12 + Math.sin(t * 1.3) * 0.08, 0.72, 0.95).lerp(_b, tap);
+        _c.y += tapBob * 0.12;
+        _m.addVectors(_a, _c).multiplyScalar(0.5);
+        _m.z += 0.35 * (1 - tap);
+        _m.y += -0.25 * (1 - tap) + 0.3 * tap;
+        el.trunk.forEach((bead, i) => {
+          const u = i / (el.trunk.length - 1);
+          // quadratic Bézier: base → bend → tip
+          bead.position.set(0, 0, 0).addScaledVector(_a, (1 - u) * (1 - u)).addScaledVector(_m, 2 * u * (1 - u)).addScaledVector(_c, u * u);
         });
         el.head.rotation.set(Math.sin(t * 0.9) * 0.04, -0.15 - tap * 0.35, Math.sin(t * 0.7) * 0.05);
         for (const { ear, sd } of el.ears) ear.rotation.y = sd * (0.15 + Math.sin(t * 2.3) * 0.18);
@@ -168,3 +176,7 @@ export default {
 };
 
 const _v = new THREE.Vector3();
+const _a = new THREE.Vector3();
+const _b = new THREE.Vector3();
+const _c = new THREE.Vector3();
+const _m = new THREE.Vector3();

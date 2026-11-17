@@ -9,18 +9,22 @@
  *   s.root            the scene's group, in world space. y = 0 is the top of the dais, which is
  *                     centred on the origin (radius 1.5); the audience looks from +Z.
  *   s.add(...)        add objects to the scene;  s.ground(x, z) the height of the floor there
- *   s.hero()          the player's own character, as an Actor (see actor.js)
+ *   s.own(x)          hand over a texture / material / geometry made outside the kit for disposal
+ *   s.hero()          the player's own character, as an Actor (see actor.js); s.heroId its id
  *   s.cast(id, o)     a guest character ({ x, z, yaw, y, scale }); s.other(ids) picks one that is
  *                     not the hero
  *   s.t, s.clock      the scene time (wraps every `loop` seconds) and the time since it began
- *   s.cue(t0)         true on the one frame each loop when the scene time passes t0
+ *   s.cue(t0)         true on the one frame each loop when the scene time passes t0; s.first is
+ *                     true during the first time through
  *   s.face(o)         an expressive face for a prop (see characters/kit/face.js), kept alive
  *   s.label(text, o)  a flat text card (canvas texture)
- *   s.bake(obj)       merge a little model into one vertex-coloured geometry (one draw call)
- *   s.vc(o)           the toy material for baked geometry
+ *   s.bake(obj)       merge a little model into one vertex-coloured geometry; s.baked(obj) as a
+ *                     mesh (one draw call); s.vc(o) is their toy material
  *   s.swarm(...)      many copies of one geometry, placed each frame by a function (one draw call)
+ *   s.blob(r)         a soft round contact shadow
  *   s.every(fn)       run fn(t, dt) every frame, after the scene's own update
  *   s.fx, s.sound(n)  the game's particle effects; a sound effect (first time through only)
+ *   s.director        the director (its stage, for a camera shake)
  */
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
@@ -308,7 +312,7 @@ export class SceneKit {
       hero.rig.pivot.getWorldPosition(_v);
       blob.position.x = _v.x;
       blob.position.z = _v.z;
-      blob.position.y = this.ground(_v.x, _v.z) + 0.012 + Math.max(0, hero.root.position.y);
+      blob.position.y = this.ground(_v.x, _v.z) + 0.012;
     }
   }
 

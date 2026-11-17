@@ -24,7 +24,7 @@ export default {
     const heroIsCat = s.heroId === 'cat';
     const hero = s.hero();
     const cat = heroIsCat ? hero : s.cast('cat', { scale: 0.86 });
-    const opener = heroIsCat ? s.cast(s.other(['bunny', 'panda', 'penguin'])) : hero;
+    const opener = heroIsCat ? s.cast(s.other(['panda', 'penguin', 'bear'])) : hero;
     opener.place(-0.95, 0.15, 0.55);
     if (heroIsCat) hero.root.scale.setScalar(0.86);
     cat.place(SACK.x, SACK.z + 0.05, -0.15);
@@ -58,7 +58,7 @@ export default {
       cat.idle(P, { arms: false });
       const up = rise(t);
       // hidden below the floor until it pops up, standing in the sack
-      P.y += -2.3 + up * 2.66;
+      P.y += -2.3 + up * 2.92;
       cat.clip(P, 'cheer', clamp((t - popAt) / 0.8), up);
       const wave = t > popAt + 0.8 && t < duck ? 1 : 0;
       if (wave) {

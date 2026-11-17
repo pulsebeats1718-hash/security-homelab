@@ -29,10 +29,9 @@ function moon(s) {
   g.add(body);
   // craters, and the face on the fattest part, looking out at the audience
   const crater = k.mat(0xf2c54f, { rough: 0.7 });
-  [[-0.62, 1.75, 0.07], [-0.45, 0.42, 0.06], [-0.75, 0.95, 0.05]].forEach(([x, y, r]) => g.add(k.at(k.ball(crater, r, r, r * 0.35), x + 0.25, y, 0.31)));
-  const C = new THREE.Vector3(-0.45 + 0.25, R + 0.2, 0.05);
-  const face = s.face({ parent: g, radii: [0.3, 0.3, 0.26], center: C, eye: { yaw: 24, pitch: 10, size: 0.055 }, mouth: { pitch: -18, width: 0.075 }, cheeks: { color: 0xff8f5c, opacity: 0.6 }, brow: { color: 0xc27a08, thick: 0.01 } });
-  face.set('happy', 1e9);
+  [[-0.33, 1.72, 0.07], [-0.36, 0.52, 0.06], [-0.2, 1.95, 0.04]].forEach(([x, y, r]) => g.add(k.at(k.ball(crater, r, r, r * 0.35), x, y, 0.3)));
+  const C = new THREE.Vector3(-0.5, R + 0.15, 0.05);
+  const face = s.face({ parent: g, radii: [0.34, 0.34, 0.26], center: C, eye: { yaw: 28, pitch: 14, size: 0.1, tall: 1.2 }, mouth: { pitch: -22, width: 0.14 }, cheeks: { color: 0xff8f5c, opacity: 0.7, size: 0.08 }, brow: false });
   const glow = k.halo(0xffe7a0, 3.2, 0.32);
   glow.position.set(-0.1, R + 0.1, -0.3);
   g.add(glow);

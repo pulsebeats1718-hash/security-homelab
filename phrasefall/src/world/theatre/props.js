@@ -221,11 +221,3 @@ export function dropGeometry(s, r = 0.035) {
   g.scale(1, 2.6, 1);
   return s.own(g);
 }
-
-/** A speech bubble with a word in it (a label on a rounded card with a little tail). */
-export function bubble(s, text, { size = 0.42, color = '#17123f', bg = '#fff6e3' } = {}) {
-  const card = s.label(text, { size, color, stroke: null, bg, weight: 700, pad: 0.42 });
-  const g = new THREE.Group();
-  g.add(card);
-  return g;
-}

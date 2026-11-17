@@ -3,7 +3,7 @@
  * in and leaning right back, hangs on to their reins. They rear up — whoa! — and settle again.
  */
 import * as THREE from 'three';
-import { keys, clamp } from '../../../core/utils.js';
+import { keys } from '../../../core/utils.js';
 import { rope } from '../props.js';
 
 const LOOP = 6;
@@ -19,9 +19,9 @@ function horse(s, { coat, mane, muzzle }) {
   const white = k.mat(0xffffff);
   const strap = k.mat(0xe8323c, { rough: 0.5 });
   const b = k.group();
-  b.add(k.at(k.cap(c, 0.3, 1.15), 0, 0.82, 0, Math.PI / 2, 0, 0));
+  b.add(k.at(k.cap(c, 0.34, 1.2), 0, 0.84, 0, Math.PI / 2, 0, 0));
   b.add(k.at(k.cap(c, 0.17, 0.62), 0, 1.15, 0.46, 0.55, 0, 0));
-  b.add(k.at(k.ball(c, 0.2, 0.22, 0.3), 0, 1.44, 0.7, 0.55, 0, 0));
+  b.add(k.at(k.ball(c, 0.23, 0.25, 0.33), 0, 1.45, 0.7, 0.55, 0, 0));
   b.add(k.at(k.ball(nose, 0.16, 0.14, 0.15), 0, 1.31, 0.9));
   k.both((sd) => {
     b.add(k.at(k.ball(dark, 0.022, 0.03, 0.02), sd * 0.06, 1.33, 1.03));
@@ -46,8 +46,8 @@ function horse(s, { coat, mane, muzzle }) {
   // legs: a pivot at the hip / shoulder each, swinging
   const legGeo = (() => {
     const l = k.group();
-    l.add(k.at(k.cap(c, 0.075, 0.66), 0, -0.3, 0));
-    l.add(k.at(k.cyl(dark, 0.085, 0.095, 0.08, 12), 0, -0.6, 0.01));
+    l.add(k.at(k.cap(c, 0.09, 0.66), 0, -0.3, 0));
+    l.add(k.at(k.cyl(dark, 0.1, 0.11, 0.09, 12), 0, -0.6, 0.01));
     return s.bake(l);
   })();
   const vm = s.vc();
@@ -66,26 +66,25 @@ function horse(s, { coat, mane, muzzle }) {
 export default {
   id: 'hold-your-horses',
   loop: LOOP,
-  frame: { x: 0.25, y: 1.15, z: 0.15, w: 4.3, h: 2.9 },
-  view: { yaw: 0.0, pitch: 0.14 },
-  avoid: ['as-cool-as-a-cucumber'],
+  frame: { x: 0.1, y: 1.2, z: 0.15, w: 4.5, h: 3.0 },
+  view: { yaw: -0.08, pitch: 0.14 },
 
   build(s) {
     const hero = s.hero();
-    hero.place(-1.15, 0.25, 0.75);
+    hero.place(-1.35, 0.45, 0.8);
     hero.mood('focus');
     const horses = [
       horse(s, { coat: 0xb9774a, mane: 0x4a2a1e, muzzle: 0xf1d2b0 }),
       horse(s, { coat: 0xf3ece2, mane: 0x8a6a5a, muzzle: 0xffd9e0 }),
     ];
     const spots = [
-      [0.55, 0.55, 1.15],
-      [1.05, -0.15, 1.0],
+      [0.4, 0.6, 0.8, 1.1],
+      [1.35, -0.3, 0.65, 1.06],
     ];
     horses.forEach((h, i) => {
       h.group.position.set(spots[i][0], 0, spots[i][1]);
       h.group.rotation.y = spots[i][2];
-      h.group.scale.setScalar(0.92);
+      h.group.scale.setScalar(spots[i][3]);
       s.add(h.group);
     });
     const reins = horses.map(() => s.add(rope(s, { r: 0.02, color: 0x8a5a3c })));
@@ -106,7 +105,7 @@ export default {
       P.y += r * 0.1 + Math.abs(Math.sin(t * 9)) * 0.02;
       P.x += Math.sin(t * 23) * 0.012;
     };
-    hero.yaw = 1.05;
+    hero.yaw = 1.2;
 
     return {
       update(t) {

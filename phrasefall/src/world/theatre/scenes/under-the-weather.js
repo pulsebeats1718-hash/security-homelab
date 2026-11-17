@@ -4,7 +4,7 @@
  * hero shivers, shuffles aside (the cloud follows) and sneezes. Bless you!
  */
 import * as THREE from 'three';
-import { keys, clamp } from '../../../core/utils.js';
+import { keys } from '../../../core/utils.js';
 import { cloud, sun, dropGeometry } from '../props.js';
 
 const LOOP = 6.4;

@@ -7,13 +7,18 @@
  * idles. Built-in clips can be mixed in at any phase (`actor.clip(P, 'cheer', u)`), so a scene is a
  * pure function of its time and loops seamlessly.
  *
- *   actor.root            placement in the world (root.position); the hero's root lives in the
- *                         stage scene, a guest's in the scene's group
+ *   actor.place(x, z, yaw, y)  put it somewhere; actor.root is its placement in the world (the
+ *                         hero's root lives in the stage scene, a guest's in the scene's group)
  *   actor.yaw             facing in radians, added to the pose (0 = towards the audience, +Z)
+ *   actor.idle(P, o)      breathing, sway and the character's own idle ({ own, arms } to leave out)
+ *   actor.clip(P, n, u)   a built-in animation clip at progress u
  *   actor.mood(name)      hold a face: happy, focus, worried, surprised, hurt, neutral (null = let go)
- *   actor.hold(side, obj) put a prop in the 'L' or 'R' hand ({ x, y, z, rx, ry, rz, upright })
+ *   actor.hold(side, obj) put a prop in the 'L' or 'R' hand ({ x, y, z, rx, ry, rz, upright, asIs })
  *   actor.attach(at, obj) put a prop on a joint ('head', 'torso', 'hips', 'pivot') or any Object3D
  *   actor.keep(obj, …)    remember properties of a part the scene is about to change
+ *   actor.handPos(side)   where a hand is in the world;  actor.at(t, fn) measures a future pose
+ *
+ * Pose helpers for P: walk, sit, gasp (hands to mouth), shrug, point.
  *
  * release() undoes everything: props are taken off, kept values restored, the face and the
  * animator handed back. `upright` props keep their own orientation in the world (an umbrella held
@@ -162,8 +167,11 @@ export class Actor {
   }
 
   _attach(parent, obj, o) {
-    obj.position.set(o.x ?? 0, o.y ?? 0, o.z ?? 0);
-    obj.rotation.set(o.rx ?? 0, o.ry ?? 0, o.rz ?? 0);
+    // asIs: the prop is already placed in the parent's space (e.g. with k.onSphere)
+    if (!o.asIs) {
+      obj.position.set(o.x ?? 0, o.y ?? 0, o.z ?? 0);
+      obj.rotation.set(o.rx ?? 0, o.ry ?? 0, o.rz ?? 0);
+    }
     if (o.scale) obj.scale.setScalar(o.scale);
     parent.add(obj);
     this._held.push({ obj, upright: o.upright ? new THREE.Quaternion().setFromEuler(new THREE.Euler(o.rx ?? 0, o.ry ?? 0, o.rz ?? 0)) : null });
@@ -182,6 +190,23 @@ export class Actor {
       this._kept.push([obj, p, v && typeof v.clone === 'function' ? v.clone() : v]);
     }
     return obj;
+  }
+
+  /**
+   * Pose the character as it will be at scene time t and measure something there — fn() runs
+   * with the skeleton in that pose (e.g. where a held hammer's head lands, so a scene can put the
+   * nail right under it). Nothing is left changed but the pose, which the next frame rewrites.
+   */
+  at(t, fn) {
+    const kit = this.kit;
+    const keepT = kit.t;
+    kit.t = t;
+    this._clip.t = Math.max(this._clip.t, 1); // fully blended in
+    this.animator.update(0);
+    this.root.updateMatrixWorld(true);
+    const out = fn();
+    kit.t = keepT;
+    return out;
   }
 
   /** World position of a hand (or any part) — for things that follow it without being held. */

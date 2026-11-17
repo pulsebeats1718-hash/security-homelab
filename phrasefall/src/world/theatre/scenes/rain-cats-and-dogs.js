@@ -95,7 +95,10 @@ export default {
     for (let i = 0; i < PETS; i++) {
       const a = (i / PETS) * Math.PI * 2 + rng() * 0.3;
       const r = 1.15 + rng() * 0.95;
-      spots.push({ x: Math.cos(a) * r, z: 0.25 + Math.sin(a) * r * 0.62, phase: ((i * 5) % PETS) / PETS + rng() * 0.03, wob: rng() * 6, landed: false });
+      let x = Math.cos(a) * r;
+      const z = 0.25 + Math.sin(a) * r * 0.62;
+      if (z > 0.4 && Math.abs(x) < 0.75) x = (x < 0 ? -1 : 1) * (0.75 + rng() * 0.3); // keep the hero's face clear
+      spots.push({ x, z, phase: ((i * 5) % PETS) / PETS + rng() * 0.03, wob: rng() * 6, landed: false });
     }
     const vmat = s.vc();
     looks.forEach(([kind, c], v) => {

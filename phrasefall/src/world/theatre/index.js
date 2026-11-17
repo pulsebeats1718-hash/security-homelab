@@ -27,25 +27,28 @@ export const sceneById = (id) => SCENES.find((d) => d.id === id) ?? null;
  * enough in the picture (two rainy scenes, two cloudy ones) that a learner could fairly pick either.
  */
 const NEAR = [
-  ['on-cloud-nine', 'over-the-moon', 'i-m-over-the-moon', 'have-your-head-in-the-clouds'],
+  // close in meaning
+  ['on-cloud-nine', 'over-the-moon', 'i-m-over-the-moon'],
   ['spill-the-beans', 'let-the-cat-out-of-the-bag'],
-  ['rain-cats-and-dogs', 'under-the-weather', 'rain-on-someones-parade', 'a-storm-in-a-teacup'],
   ['butterflies-in-your-stomach', 'have-butterflies-in-your-stomach', 'get-cold-feet'],
   ['a-storm-in-a-teacup', 'make-a-mountain-out-of-a-molehill'],
-  ['break-the-ice', 'the-tip-of-the-iceberg', 'get-cold-feet', 'as-cool-as-a-cucumber'],
-  ['a-piece-of-cake', 'the-icing-on-the-cake', 'bite-off-more-than-you-can-chew'],
-  ['hold-your-horses', 'as-cool-as-a-cucumber'],
-  ['over-the-moon', 'once-in-a-blue-moon'],
+  ['pigs-might-fly', 'once-in-a-blue-moon'],
+  ['the-elephant-in-the-room', 'let-sleeping-dogs-lie', 'the-tip-of-the-iceberg'],
+  ['bark-up-the-wrong-tree', 'a-red-herring'],
   ['the-early-bird-catches-the-worm', 'an-early-bird'],
   ['all-ears', 'i-m-all-ears'],
   ['under-the-weather', 'ive-been-under-the-weather'],
   ['in-hot-water', 'be-on-thin-ice', 'skate-on-thin-ice'],
+  // close in the picture
+  ['on-cloud-nine', 'have-your-head-in-the-clouds'],
+  ['rain-cats-and-dogs', 'under-the-weather', 'rain-on-someones-parade', 'a-storm-in-a-teacup'],
+  ['break-the-ice', 'the-tip-of-the-iceberg', 'get-cold-feet', 'as-cool-as-a-cucumber'],
+  ['a-piece-of-cake', 'the-icing-on-the-cake', 'bite-off-more-than-you-can-chew'],
+  ['over-the-moon', 'once-in-a-blue-moon'],
   ['a-couch-potato', 'a-hot-potato', 'hit-the-sack', 'hit-the-hay'],
-  ['bark-up-the-wrong-tree', 'let-the-cat-out-of-the-bag', 'let-sleeping-dogs-lie', 'rain-cats-and-dogs'],
-  ['hit-the-nail-on-the-head', 'the-ball-is-in-your-court'],
   ['a-fish-out-of-water', 'a-red-herring'],
-  ['the-elephant-in-the-room', 'the-tip-of-the-iceberg'],
-  ['turn-over-a-new-leaf', 'money-doesnt-grow-on-trees'],
+  ['spill-the-beans', 'cry-over-spilt-milk'],
+  ['bark-up-the-wrong-tree', 'let-sleeping-dogs-lie'],
 ];
 
 const nearMap = new Map();
