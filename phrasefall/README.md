@@ -51,6 +51,11 @@ four options before they land.
   your bubble with a note on why it fits. A reply right first time counts as a right answer
   for that expression. Places open with your level. Writing guide: `dev/SITUATIONS_GUIDE.md`;
   check with `node scripts/check-situations.mjs`.
+- **Literal Theatre** (`src/ui/screens/theatre.js`, scenes in `src/world/theatre/`) – the
+  island's characters act out 25 idioms word for word (raining cats and dogs, the elephant
+  in the room, pigs might fly …) and you guess which idiom it is from four. Rounds of six,
+  least-seen first; right first time counts as a right answer for that expression. Its
+  door is at the top of *Situations*.
 - **Twist cards** (`src/game/twists.js`) – about one card in four that shows an
   expression you have met before asks for it another way: *Flip* (the meaning falls,
   pick the expression), *Fill the gap* (a phrasal verb's example with its particle
