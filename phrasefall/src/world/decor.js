@@ -60,11 +60,13 @@ const FLOWER_GAP = 0.09;
  * watching the character; 'cam': faces the menu camera) and whether its front matters.
  */
 const SPEC = {
-  bunting: { poles: true, h: 1.3 },
-  windmill: { foot: [[0, 0, 0.17]], h: 1.05, face: 'cam', front: 0.3 },
+  // between two poles behind the dais; where there is no room for that, a short one stands like the rest
+  bunting: { poles: true, h: 1.3, fallback: { foot: [[-0.5, 0, 0.07], [0, 0, 0.07], [0.5, 0, 0.07]], len: 1, h: 1.3, face: 'cam' } },
+  // the tower, and the strip of ground under its sails (they sweep down to knee height in front)
+  windmill: { foot: [[0, 0, 0.17], [-0.22, 0.16, 0.11], [0.22, 0.16, 0.11]], h: 1.05, face: 'cam', front: 0.3 },
   'wishing-well': { foot: [[0, 0, 0.215]], h: 0.86, face: 'cam', front: 0.3 },
   fountain: { foot: [[0, 0, 0.235]], h: 0.5, face: 'cam' },
-  bench: { foot: [[-0.24, -0.01, 0.15], [0.24, -0.01, 0.15]], h: 0.46, face: 'in', front: 0.6 },
+  bench: { foot: [[-0.25, -0.03, 0.165], [0, -0.03, 0.165], [0.25, -0.03, 0.165]], h: 0.46, face: 'in', front: 0.6 },
   birdbath: { foot: [[0, 0, 0.175]], h: 0.5, face: 'cam', front: 0.15 },
   sundial: { foot: [[0, 0, 0.155]], h: 0.42, face: 'cam' },
   beehive: { foot: [[0, 0, 0.17]], h: 0.44, face: 'cam', front: 0.2 },
@@ -427,12 +429,12 @@ function windmill(P, g, mats) {
     const ca = Math.cos(a);
     const sa = Math.sin(a);
     // spar
-    S.add('matte', rbox(0.022, 0.4, 0.016, 0.006), 0x8a5a30, -sa * 0.2, ca * 0.2, 0, 0, 0, a);
+    S.add('matte', rbox(0.022, 0.34, 0.016, 0.006), 0x8a5a30, -sa * 0.17, ca * 0.17, 0, 0, 0, a);
     // the sail cloth on a lattice, to one side of the spar
-    const cx = -sa * 0.24 + ca * 0.05;
-    const cy = ca * 0.24 + sa * 0.05;
-    S.add('cloth', rbox(0.085, 0.27, 0.008, 0.004), CREAM, cx, cy, 0.004, 0, 0, a);
-    for (const f of [-0.08, 0, 0.08]) S.add('matte', rbox(0.1, 0.01, 0.012, 0.004), 0x8a5a30, cx - sa * f, cy + ca * f, 0.008, 0, 0, a);
+    const cx = -sa * 0.2 + ca * 0.045;
+    const cy = ca * 0.2 + sa * 0.045;
+    S.add('cloth', rbox(0.075, 0.23, 0.008, 0.004), CREAM, cx, cy, 0.004, 0, 0, a);
+    for (const f of [-0.07, 0, 0.07]) S.add('matte', rbox(0.09, 0.01, 0.012, 0.004), 0x8a5a30, cx - sa * f, cy + ca * f, 0.008, 0, 0, a);
   }
   S.build(hub, mats);
   g.add(hub);
@@ -598,7 +600,7 @@ export class Decor {
     this.time = { value: 0 };
     this.mats = materials(this.time);
     this.view = menuCamera();
-    /** id → { id, group, tick, s (0…1 shown), want, spot, pending } */
+    /** id → { id, group, tick, s (0…1 shown), want, spot, pending (its next spot), homeless, delay } */
     this.items = new Map();
     this.want = new Set();
     this.place = null;
@@ -628,7 +630,7 @@ export class Decor {
   _item(id) {
     let it = this.items.get(id);
     if (!it) {
-      it = { id, group: null, tick: null, s: 0, want: false, spot: null, pending: null, delay: 0, built: null };
+      it = { id, group: null, tick: null, s: 0, want: false, spot: null, pending: null, homeless: false, delay: 0, built: null };
       this.items.set(id, it);
     }
     return it;
@@ -681,7 +683,8 @@ export class Decor {
     const max = this.garden?.max ?? MAX_FLOWERS;
     for (const s of gardenSpots(env).slice(0, max)) C.add(s.x, s.z, FLOWER_GAP);
     for (const [x, z, s] of STEPPING_STONES) C.add(x, z, s + 0.05);
-    for (const a of place.avoid ?? []) C.add(a.x, a.z, a.r);
+    for (const w of place.avoid ?? []) C.add(w.x, w.z, w.r);
+    for (const p of place.props ?? []) if (!p.far) C.add(p.x, p.z, 0.3);
     // the place's props (and the season's, which live in the place's group), up to the height a
     // decoration reaches: their trunks, posts and bases, not the canopies and lamps overhead
     const v = new THREE.Vector3();
@@ -691,6 +694,9 @@ export class Decor {
       inv.copy(place.group.matrixWorld).invert();
     }
     const m = new THREE.Matrix4();
+    const a = new THREE.Vector3();
+    const b = new THREE.Vector3();
+    const c = new THREE.Vector3();
     const seen = new Set();
     // only this season's dressing counts (another season's may still be fading out)
     const dressings = env.seasons?.dressings?.get(entry);
@@ -711,14 +717,32 @@ export class Decor {
             }
           }
         } else {
-          const p = o.geometry.attributes.position;
-          for (let i = 0; i < p.count; i++) {
-            v.fromBufferAttribute(p, i).applyMatrix4(m);
-            if (Math.hypot(v.x, v.z) > 4.6 || v.y > groundY(v.x, v.z) + 1.4) continue;
-            const k = Math.round(v.x * 20) * 100000 + Math.round(v.z * 20);
-            if (seen.has(k)) continue;
+          // every vertex low enough to be in the way, and points across big triangles (a bench seat
+          // or a slab has no vertices in its middle)
+          const pos = o.geometry.attributes.position;
+          const idx = o.geometry.index;
+          const n = idx ? idx.count : pos.count;
+          const add = (x, y, z) => {
+            if (Math.hypot(x, z) > 4.6 || y > groundY(x, z) + 1.4) return;
+            const k = Math.round(x * 20) * 100000 + Math.round(z * 20);
+            if (seen.has(k)) return;
             seen.add(k);
-            C.add(v.x, v.z, 0.04);
+            C.add(x, z, 0.04);
+          };
+          for (let i = 0; i + 2 < n; i += 3) {
+            a.fromBufferAttribute(pos, idx ? idx.getX(i) : i).applyMatrix4(m);
+            b.fromBufferAttribute(pos, idx ? idx.getX(i + 1) : i + 1).applyMatrix4(m);
+            c.fromBufferAttribute(pos, idx ? idx.getX(i + 2) : i + 2).applyMatrix4(m);
+            if (Math.min(a.y, b.y, c.y) > 1.4 || Math.min(Math.hypot(a.x, a.z), Math.hypot(b.x, b.z), Math.hypot(c.x, c.z)) > 4.7) continue;
+            const steps = Math.min(24, Math.ceil(Math.max(a.distanceTo(b), b.distanceTo(c), c.distanceTo(a)) / 0.08));
+            for (let u = 0; u <= steps; u++) {
+              for (let w = 0; u + w <= steps; w++) {
+                const fu = u / steps;
+                const fw = w / steps;
+                const fv = 1 - fu - fw;
+                add(a.x * fv + b.x * fu + c.x * fw, a.y * fv + b.y * fu + c.y * fw, a.z * fv + b.z * fu + c.z * fw);
+              }
+            }
           }
         }
       }
@@ -731,10 +755,10 @@ export class Decor {
     return { C, place };
   }
 
-  /** Is (x, z) on open ground a decoration may stand on? */
-  _ground(place, x, z) {
+  /** Is (x, z) on open ground a decoration may stand on? (`path`: the edges of the front path too) */
+  _ground(place, x, z, path = false) {
     if (islandR(x, z) > 0.86) return false;
-    if (Math.abs(x) < 1.15 && z > 1.25) return false; // the path to the front of the dais
+    if (!path && Math.abs(x) < 1.15 && z > 1.25) return false; // the path to the front of the dais
     if (place.free && !place.free(x, z)) return false;
     const g = place.ground;
     if (g?.keep && !g.keep(x, z) && !g.sand) return false; // streets and pavements (a beach is fine)
@@ -771,11 +795,13 @@ export class Decor {
     const spots = {};
     const placed = [];
     const camXZ = new THREE.Vector2(this.view.cam.position.x, this.view.cam.position.z);
-    const free = (x, z, r) => Math.hypot(x, z) - r >= DAIS_R && C.room(x, z, r, 0.01) >= 0 && this._ground(place, x, z);
+    let path = false;
+    const free = (x, z, r) => Math.hypot(x, z) - r >= DAIS_R && C.room(x, z, r, 0.01) >= 0 && this._ground(place, x, z, path);
 
     for (const id of ORDER) {
-      const spec = SPEC[id];
+      let spec = SPEC[id];
       let best = null;
+      path = false;
       if (spec.poles) {
         // two poles either side of the back of the dais, the string between them behind the character
         for (let a = 20; a <= 70; a += 2) {
@@ -803,54 +829,62 @@ export class Decor {
           }
           // keep tall things from under the string near the poles
           for (let k = 1; k < 8; k++) C.add(A[0] + ((B[0] - A[0]) * k) / 8, A[1] + ((B[1] - A[1]) * k) / 8, 0.1);
+          continue;
         }
-        continue;
+        spec = spec.fallback;
       }
-      const R = Math.max(...spec.foot.map((f) => Math.hypot(f[0], f[1]) + f[2]));
-      for (let pass = 0; pass < 2 && !best; pass++) {
+      const foot = spec.foot;
+      const R = Math.max(...foot.map((f) => Math.hypot(f[0], f[1]) + f[2]));
+      const turns = spec.face === 'in' ? [0, -0.25, 0.25] : [0, -0.35, 0.35, -0.7, 0.7];
+      // the ring round the dais first; then further out; at last also the edges of the front path
+      for (let pass = 0; pass < 3 && !best; pass++) {
+        path = pass === 2;
         const rMax = pass === 0 ? 2.4 : 4.2;
         for (let deg = -150; deg <= 150; deg += 3) {
           const th = (deg * Math.PI) / 180;
           for (let r = DAIS_R + R - 0.02; r <= rMax; r += 0.035) {
             const x = Math.sin(th) * r;
             const z = -Math.cos(th) * r;
-            const ry = spec.face === 'in' ? Math.atan2(-x, -z) : Math.atan2(camXZ.x - x, camXZ.y - z);
-            const cs = Math.cos(ry);
-            const sn = Math.sin(ry);
-            let ok = true;
-            for (const [fx, fz, fr] of spec.foot) {
-              const wx = x + fx * cs + fz * sn;
-              const wz = z - fx * sn + fz * cs;
-              if (!free(wx, wz, fr)) {
-                ok = false;
-                break;
+            const ry0 = spec.face === 'in' ? Math.atan2(-x, -z) : Math.atan2(camXZ.x - x, camXZ.y - z);
+            for (const turn of turns) {
+              const ry = ry0 + turn;
+              const cs = Math.cos(ry);
+              const sn = Math.sin(ry);
+              let ok = true;
+              for (const [fx, fz, fr] of foot) {
+                const wx = x + fx * cs + fz * sn;
+                const wz = z - fx * sn + fz * cs;
+                if (!free(wx, wz, fr)) {
+                  ok = false;
+                  break;
+                }
               }
+              if (!ok) continue;
+              // seen from the menu camera (beside and behind the dais, not out front), close to the dais,
+              // apart from the others on screen and on the ground, its front towards the viewer
+              let score = 2.2 * this._seen(x, z, spec.h, R) - Math.max(0, r - (DAIS_R + R + 0.04)) * 1.4;
+              score -= 1.6 * smooth(0.15, 1.25, z);
+              const sx = this._screenX(x, z, spec.h);
+              for (const o of placed) {
+                score -= Math.max(0, 0.72 - Math.hypot(o.x - x, o.z - z)) * 1.5;
+                if (o.sx != null) score -= Math.max(0, 0.1 - Math.abs(o.sx - sx)) * 5;
+              }
+              if (spec.front) {
+                const tx = camXZ.x - x;
+                const tz = camXZ.y - z;
+                score += spec.front * ((Math.sin(ry) * tx + Math.cos(ry) * tz) / Math.hypot(tx, tz));
+              }
+              score -= Math.abs(deg) * 0.0006 + Math.abs(turn) * 0.25;
+              if (!best || score > best.score) best = { score, x, z, ry };
             }
-            if (!ok) continue;
-            // seen from the menu camera (beside and behind the dais, not out front), close to the dais,
-            // apart from the others on screen and on the ground, its front towards the viewer
-            let score = 2.2 * this._seen(x, z, spec.h, R) - Math.max(0, r - (DAIS_R + R + 0.04)) * 1.4;
-            score -= 1.6 * smooth(0.15, 1.25, z);
-            const sx = this._screenX(x, z, spec.h);
-            for (const o of placed) {
-              score -= Math.max(0, 0.72 - Math.hypot(o.x - x, o.z - z)) * 1.5;
-              if (o.sx != null) score -= Math.max(0, 0.1 - Math.abs(o.sx - sx)) * 5;
-            }
-            if (spec.front) {
-              const tx = camXZ.x - x;
-              const tz = camXZ.y - z;
-              score += spec.front * ((Math.sin(ry) * tx + Math.cos(ry) * tz) / Math.hypot(tx, tz));
-            }
-            score -= Math.abs(deg) * 0.0006;
-            if (!best || score > best.score) best = { score, x, z, ry };
           }
         }
       }
       if (best) {
-        spots[id] = { x: best.x, z: best.z, ry: best.ry };
+        spots[id] = { x: best.x, z: best.z, ry: best.ry, ...(spec.len ? { len: spec.len } : {}) };
         const cs = Math.cos(best.ry);
         const sn = Math.sin(best.ry);
-        for (const [fx, fz, fr] of spec.foot) C.add(best.x + fx * cs + fz * sn, best.z - fx * sn + fz * cs, fr + 0.07);
+        for (const [fx, fz, fr] of foot) C.add(best.x + fx * cs + fz * sn, best.z - fx * sn + fz * cs, fr + 0.07);
         placed.push({ x: best.x, z: best.z, sx: this._screenX(best.x, best.z, spec.h) });
       }
     }
@@ -888,6 +922,9 @@ export class Decor {
         const spots = this._layout();
         for (const it of this.items.values()) {
           const s = spots[it.id];
+          // nowhere to stand here: it bows out (and comes back where there is room)
+          it.homeless = !s;
+          it.pending = null;
           if (!s) continue;
           if (!it.spot || !it.group?.visible) this._place(it, s);
           else if (Math.hypot(s.x - it.spot.x, s.z - it.spot.z) > 0.02 || Math.abs(s.ry - it.spot.ry) > 0.02 || (s.len ?? 0) !== (it.spot.len ?? 0)) it.pending = s;
@@ -900,7 +937,7 @@ export class Decor {
     for (const it of this.items.values()) {
       if (!it.spot && ready && this.spots[it.id] && it.want) this._place(it, this.spots[it.id]);
       if (!it.group) continue;
-      const goal = it.want && !it.pending && ready ? 1 : 0;
+      const goal = it.want && !it.pending && !it.homeless && ready ? 1 : 0;
       if (goal > it.s) {
         if (it.delay > 0) it.delay -= dt;
         else it.s = Math.min(1, it.s + dt / 0.6);
