@@ -3,6 +3,7 @@ import { formatScore } from '../../core/utils.js';
 import { SCORING, STAGES } from '../../data/stages.js';
 import { TWIST_INFO, mainText } from '../../game/twists.js';
 import { speak, stopSpeaking } from '../../audio/speech.js';
+import { POWERS, POWER_IDS, powerCount, powerTotal } from '../../game/powers.js';
 
 const HEART = 'M12 21s-8-4.900-9.800-10C.900 7.300 3.200 3.800 6.800 3.800c2.100 0 3.800 1.100 5.200 3 1.400-1.900 3.100-3 5.200-3 3.600 0 5.900 3.500 4.600 7.200C20 16.100 12 21 12 21z';
 const KEYS = ['A', 'B', 'C', 'D'];
@@ -53,7 +54,8 @@ export function createHud(app) {
   const modeIco = h('span.hud__mode-ico');
   const modeText = h('span');
   const modeChip = h('div.hud__mode', modeIco, modeText);
-  const left = h('div.hud__left', lives, modeChip);
+  const shieldBadge = h('span.hud__shield', { hidden: true, title: 'Shield: your next miss costs no life' }, icon('shield'));
+  const left = h('div.hud__left', lives, shieldBadge, modeChip);
   const streakN = h('span');
   const feverTag = h('b.hud__fever', { hidden: true }, 'Fever ×2');
   const streak = h('div.chip.hud__streak.is-off', icon('flame'), streakN, feverTag);
@@ -102,8 +104,50 @@ export function createHud(app) {
     )
   );
 
+  // ── power-ups (classic): a column of buttons on the right ───────────────
+  const powerBtns = {};
+  const powersEl = h(
+    'div.hud__powers',
+    { hidden: true },
+    POWER_IDS.map((kind) => {
+      const n = h('b.power__n');
+      const btn = h('button.power', { 'data-quiet': '1', 'aria-label': `${POWERS[kind].name}: ${POWERS[kind].text}`, title: `${POWERS[kind].name}: ${POWERS[kind].text}`, onclick: () => usePower(kind) }, icon(POWERS[kind].icon), n);
+      powerBtns[kind] = { btn, n };
+      return btn;
+    })
+  );
+  function renderPowers() {
+    const on = game.powersOn && powerTotal(save) > 0;
+    powersEl.hidden = !on;
+    if (!on) return;
+    const q = question;
+    const tw = q?.twist?.kind;
+    for (const kind of POWER_IDS) {
+      const { btn, n } = powerBtns[kind];
+      const count = powerCount(save, kind);
+      n.textContent = String(count);
+      const usable =
+        count > 0 &&
+        !locked &&
+        (kind !== 'shield' || !game.shield) &&
+        (kind !== 'fifty' || (q && q.options.length >= 4 && !q.removed)) &&
+        (kind !== 'hint' || (q && q.expr.example && !q.hinted && !['flip', 'build', 'listen'].includes(tw)));
+      btn.disabled = !usable;
+      btn.classList.toggle('is-empty', count === 0);
+      btn.classList.toggle('is-active', (kind === 'shield' && game.shield) || (kind === 'slow' && game.slowLeft > 0));
+    }
+    shieldBadge.hidden = !game.shield;
+  }
+  function usePower(kind) {
+    if (!game.usePower(kind)) {
+      audio.play('wrong');
+      return;
+    }
+    renderPowers();
+  }
+
   const bottom = h('div.hud__bottom', floatBar, hint, answers);
-  const el = h('section.hud', top, mid, bottom, pause);
+  const el = h('section.hud', top, mid, bottom, powersEl, pause);
 
   /** The tutorial line above the answers (it takes up room, so the camera reframes). */
   function showHint(text) {
@@ -171,6 +215,10 @@ export function createHud(app) {
       best.classList.toggle('is-beaten', !daily.ranked && !!ranked && value > ranked.score);
       return;
     }
+    if (game.mode === 'party') {
+      best.textContent = `${game.party?.player?.name ?? 'Player'}'s turn`;
+      return;
+    }
     if (game.mode === 'duel') {
       const opp = game.duel?.opponent;
       best.textContent = opp ? `${opp.name || 'Friend'} ${formatScore(opp.score)}` : 'Challenge';
@@ -195,13 +243,22 @@ export function createHud(app) {
     clear(pips).append(h('b.hud__count', `${d.index}/${d.total}`));
   }
 
-  /** Friend challenges and second chances: how far through the cards. */
+  /** A boss round: its name and how many hits are still needed. */
+  function setBoss(b) {
+    stageName.textContent = `Boss · ${b.name}`;
+    clear(pips).append(...Array.from({ length: b.hp }, (_, i) => h(`i.pip--boss${i < b.hits ? '.is-hit' : ''}`)));
+    stageChip.classList.add('is-boss');
+  }
+
+  /** Friend challenges, second chances and party turns: how far through the cards. */
   function setFixed(f) {
-    stageName.textContent = game.mode === 'retry' ? 'Second chance' : game.mode === 'water' ? 'Watering' : 'Challenge';
+    stageChip.classList.remove('is-boss');
+    stageName.textContent = game.mode === 'retry' ? 'Second chance' : game.mode === 'water' ? 'Watering' : game.mode === 'party' ? `${game.party?.player?.name ?? 'Party'}` : 'Challenge';
     clear(pips).append(h('b.hud__count', `${f.index}/${f.total}`));
   }
 
   function setStage(stage, done) {
+    stageChip.classList.remove('is-boss');
     stageName.textContent = `Stage ${stage.n} · ${stage.short}`;
     clear(pips);
     if (Number.isFinite(stage.goal)) for (let i = 0; i < stage.goal; i++) pips.append(h(`i${i < done ? '.is-on' : ''}`));
@@ -298,7 +355,7 @@ export function createHud(app) {
   }
 
   // ── game events ─────────────────────────────────────────────────────────
-  events.on('game:intro', ({ stage, daily, mode, fixed, duel }) => {
+  events.on('game:intro', ({ stage, daily, mode, fixed, duel, party, gift }) => {
     const safe = mode === 'relax' || mode === 'retry' || mode === 'water';
     el.classList.toggle('is-safe', safe);
     el.dataset.mode = mode;
@@ -332,7 +389,15 @@ export function createHud(app) {
     else if (mode === 'relax') showBanner('Relax mode', 'Take your time', 'No lives, no rush. Finish whenever you like.');
     else if (mode === 'retry') showBanner('Second chance', 'Fix them!', `${fixed.unique} ${fixed.unique === 1 ? 'expression' : 'expressions'} to put right`);
     else if (mode === 'water') showBanner('Memory garden', 'Watering time', `${fixed.unique} thirsty ${fixed.unique === 1 ? 'flower' : 'flowers'}: get each one right`);
+    else if (mode === 'party') showBanner(party?.of > 1 ? `Player ${party.turn + 1} of ${party.of}` : 'Party', `${party?.player?.name ?? 'Player'}, ready?`, `${fixed.total} cards · the same for everyone`);
     else showBanner(`Stage ${stage.n}`, 'Ready?', stage.name);
+    renderPowers();
+    if (gift) {
+      setTimeout(() => {
+        audio.play('quest');
+        ui.toast({ icon: 'gift', title: 'Power-ups!', sub: 'One of each to try: tap them on the right during a game', tone: 'gold', ms: 5200 });
+      }, 1600);
+    }
   });
 
   events.on('game:go', () => showBanner('', 'Go!'));
@@ -358,9 +423,11 @@ export function createHud(app) {
       answers.append(...buttons);
     }
     lock(false);
-    if (q.daily) setDaily(q.daily);
+    if (q.boss) setBoss(q.boss);
+    else if (q.daily) setDaily(q.daily);
     else if (q.fixed) setFixed(q.fixed);
     else setStage(q.stage, game.correctInStage);
+    renderPowers();
 
     // what floats above the answers
     const items = [];
@@ -424,11 +491,13 @@ export function createHud(app) {
     // after a Listen card, show what was said; after a miss with no lives at stake, the example
     if (q && twist === 'listen') float(pill('.fpill--twist', h('b.fpill__tag', 'It was'), h('span', phrase(q.expr.text))));
     else if (q && !correct && safe && q.expr.example && q.mode === 'relax') float(pill('.fpill--example', h('b.fpill__tag', 'Example'), h('span', q.expr.example)));
-    if (correct && !game.daily && !game.fixed) setStage(game.stageDef, game.correctInStage);
+    if (correct && !game.daily && !game.fixed && !game.boss) setStage(game.stageDef, game.correctInStage);
     if (game.safe) setScore(0, correct);
+    renderPowers();
   });
 
-  events.on('game:score', ({ score, gained, bonus, speed, twist, golden, fever, safe, mode, streak: n, x, y }) => {
+  events.on('game:score', ({ score, gained, bonus, speed, twist, bossHit, found, golden, fever, safe, mode, streak: n, x, y, boss }) => {
+    if (boss) setBoss(boss);
     setScore(score);
     setStreak(n);
     let dy = 46;
@@ -446,8 +515,47 @@ export function createHud(app) {
     if (golden) tag('Golden ×3', 'pop--gold');
     if (fever) tag('Fever ×2', 'pop--fever');
     if (twist) tag(`${TWIST_INFO[question?.twist?.kind]?.label ?? 'Twist'} +${twist}`, 'pop--twist');
+    if (bossHit) tag(`Boss hit +${bossHit}`, 'pop--boss');
     if (bonus) tag(`Streak ×${n}  +${bonus}`, 'pop--bonus');
     if (speed) tag(`Quick +${speed}`, 'pop--speed');
+    if (found) {
+      tag(`Found: ${POWERS[found].name}!`, 'pop--power');
+      audio.play('unlock');
+    }
+    renderPowers();
+  });
+
+  // ── power-ups and bosses ────────────────────────────────────────────────
+  events.on('power:used', ({ kind, removed, example }) => {
+    if (kind === 'fifty' && removed) for (const i of removed) buttons[i]?.classList.add('is-gone');
+    if (kind === 'hint' && example) floatBar.append(pill('.fpill--example', h('b.fpill__tag', 'Hint'), h('span', example)));
+    if (kind === 'shield') retrigger(shieldBadge, 'is-on');
+    if (kind === 'slow') showBanner('Slow-mo', 'Easy does it', 'This card and the next two fall slowly');
+    renderPowers();
+  });
+  events.on('power:shielded', () => {
+    showBanner('Shield', 'Saved!', 'No life lost this time');
+    renderPowers();
+  });
+  events.on('power:gained', () => renderPowers());
+  events.on('boss:start', ({ name, cards, hp, stage }) => {
+    clear(answers);
+    buttons = [];
+    build = null;
+    answers.className = 'answers is-empty';
+    float();
+    setBoss({ name, hp, hits: 0 });
+    showBanner(`Stage ${stage + 1} boss`, name, `Get ${hp} of the next ${cards} right to clear the storm!`, true);
+  });
+  events.on('boss:end', ({ won, name, reward, found }) => {
+    clear(answers);
+    buttons = [];
+    answers.className = 'answers is-empty';
+    float();
+    const prizes = found.map((k) => POWERS[k].name);
+    if (won) showBanner('Storm cleared!', `+${formatScore(reward)}`, prizes.length ? `${name} left you: ${prizes.join(' and ')}` : `${name} has cheered up`, true);
+    else showBanner('Close!', 'The storm drifted away', `${name} will be back`, true);
+    renderPowers();
   });
 
   events.on('game:lives', ({ lives: n }) => {

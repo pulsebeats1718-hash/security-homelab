@@ -5429,3 +5429,116 @@ svg.ico.fill {
   top: -7px;
   right: -9px;
 }
+
+/* ── power-ups and bosses ──────────────────────────────────────────────── */
+.hud__powers {
+  position: absolute;
+  right: var(--sr);
+  bottom: calc(var(--answers-h, 280px) + 64px);
+  z-index: 3;
+  display: grid;
+  gap: 9px;
+}
+.power {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  font-size: 1.25rem;
+  color: var(--ink);
+  background: var(--cream);
+  box-shadow: inset 0 -4px 0 var(--cream-3), 0 6px 14px rgba(10, 6, 44, 0.35);
+  transition: transform 0.09s ease, opacity 0.2s, filter 0.2s;
+}
+.power:active {
+  transform: translateY(2px);
+}
+.power[disabled] {
+  opacity: 0.55;
+  filter: saturate(0.4);
+}
+.power.is-empty {
+  opacity: 0.32;
+}
+.power.is-active {
+  opacity: 1;
+  filter: none;
+  color: var(--ink);
+  background: #9ff3ff;
+  box-shadow: inset 0 -4px 0 #4cc9e0, 0 0 0 3px rgba(126, 240, 255, 0.55), 0 6px 14px rgba(10, 6, 44, 0.35);
+}
+.power__n {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 99px;
+  font: 700 0.72rem/20px var(--display);
+  text-align: center;
+  color: var(--cream);
+  background: var(--ink-3);
+  box-shadow: 0 0 0 2px var(--cream);
+}
+.hud__shield {
+  display: grid;
+  place-items: center;
+  margin-left: 6px;
+  padding: 0 9px;
+  border-radius: 14px;
+  font-size: 1.1rem;
+  color: var(--ink);
+  background: #9ff3ff;
+  box-shadow: 0 0 14px rgba(126, 240, 255, 0.8), 0 6px 14px rgba(10, 6, 44, 0.3);
+}
+.hud__shield.is-on {
+  animation: bump-chip 0.4s var(--ease-back);
+}
+.answer.is-gone {
+  opacity: 0.18 !important;
+  filter: grayscale(1);
+  pointer-events: none;
+}
+.hud__stage.is-boss {
+  color: #fff;
+  background: linear-gradient(160deg, #6d5bd0, #3b2f8a);
+  box-shadow: 0 0 16px rgba(143, 123, 255, 0.6);
+}
+.pips .pip--boss {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  transform: rotate(45deg);
+  background: var(--gold);
+  box-shadow: 0 0 6px rgba(255, 200, 61, 0.8);
+}
+.pips .pip--boss.is-hit {
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: none;
+}
+.pop--boss {
+  color: #c9b8ff;
+  font-size: clamp(1.15rem, 4.8vw, 1.8rem);
+  animation-duration: 1.4s;
+  animation-delay: 0.05s;
+}
+.pop--power {
+  color: #9ff3ff;
+  font-size: clamp(1.15rem, 4.8vw, 1.8rem);
+  animation-duration: 1.7s;
+  animation-delay: 0.15s;
+}
+@media (max-height: 560px) and (orientation: landscape) {
+  .hud__powers {
+    grid-template-columns: repeat(4, auto);
+    bottom: calc(var(--answers-h, 200px) + 10px);
+  }
+  .power {
+    width: 40px;
+    height: 40px;
+    font-size: 1.05rem;
+  }
+}

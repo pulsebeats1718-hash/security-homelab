@@ -19,6 +19,17 @@
  *            fall again, slowly, with no lives to lose. One that is missed again
  *            comes back once more at the end
  *   water    the same for the memory garden's thirsty flowers (expressions due for review)
+ *   party    pass-and-play: each player in turn gets the same few cards from a seed (like a
+ *            friend challenge). Several people share the phone, so nothing is recorded to
+ *            the phone owner's learning, XP or records
+ *
+ * Bosses (classic): when a stage's goal is reached, a storm cloud rolls in and throws
+ * BOSS_CARDS quick cards; BOSS_HP right answers beat it (points, XP, a power-up), otherwise it
+ * drifts away. Then the stage moves on. In the endless final stage a boss comes every
+ * BOSS_EVERY_FINAL right answers.
+ *
+ * Power-ups (classic, see powers.js): shield, slow-mo, 50/50 and hint, found on golden cards,
+ * now and then after a right answer, and from beaten bosses.
  *
  * Fever: ten right answers in a row light the island up and double the points
  * of every answer after that, until the next miss. Golden cards (classic only,
@@ -40,6 +51,8 @@ import { buildDaily, dailySegment, speedBonus, utcDateId } from './daily.js';
 import { buildDuel, cleanSeed, newDuelSeed } from './duel.js';
 import { pickTwist, phrasalIndex } from './twists.js';
 import { speechAvailable } from '../audio/speech.js';
+import { Boss, BOSSES } from '../world/boss.js';
+import { POWERS, DROP_CHANCE, SLOW_FACTOR, SLOW_CARDS, addPower, rollPower, spendPower, powerCount, welcomeGift } from './powers.js';
 import { clamp, shuffle, smoothstep } from '../core/utils.js';
 
 /** Classic games deal expressions that are due for spaced-repetition review this much more often. */
@@ -61,7 +74,16 @@ export const RETRY_MAX = 10;
 const RETRY_SLOW = 1.35;
 /** Relax mode: every card falls at stage 1's starting speed, this much slower. */
 const RELAX_SLOW = 1.45;
-export const MODES = ['classic', 'daily', 'duel', 'relax', 'retry', 'water'];
+export const MODES = ['classic', 'daily', 'duel', 'relax', 'retry', 'water', 'party'];
+/** Boss rounds: cards thrown, right answers needed, points for each hit and for the win (× stage number). */
+export const BOSS_CARDS = 4;
+export const BOSS_HP = 3;
+export const BOSS_HIT_BONUS = 50;
+export const BOSS_WIN_BONUS = 150;
+const BOSS_EVERY_FINAL = 12;
+/** Party games: cards per player (chosen from a challenge-style run, evenly across the stages). */
+export const PARTY_CARDS = [5, 10];
+const NO_RECORD = { fresh: false, mastered: false, planted: false };
 /** Review rounds over a fixed list of expressions: second chance, and watering the memory garden. */
 const REVIEW = ['retry', 'water'];
 export const GOLD = 0xffb21e;
@@ -94,6 +116,9 @@ export class Game {
     this.metrics = null;
     this.dizzyAnchor = new THREE.Vector3();
     this._phrasal = null;
+    this.boss3d = new Boss(stage.scene);
+    this.clock = 0;
+    this.party = null; // party games: { players, turn } as passed in by the party screen
     this.reset();
   }
 
@@ -125,6 +150,13 @@ export class Game {
     this.feverT = 0;
     this.lastGolden = false;
     this.held = false;
+    this.shield = false; // power-up: the next miss costs no life
+    this.slowLeft = 0; // power-up: cards still to fall slowly
+    this.protectedMiss = false;
+    this.boss = null; // a boss round in progress: { stage, cards, index, hits, done }
+    this.bosses = { met: 0, beaten: 0 };
+    this.powersGained = [];
+    this.powersUsed = [];
   }
 
   get stageDef() {
@@ -132,6 +164,15 @@ export class Game {
   }
   get active() {
     return this.state !== 'idle' && this.state !== 'over';
+  }
+  /** Power-ups can be used (classic games only, so the challenges stay fair). */
+  get powersOn() {
+    return this.mode === 'classic';
+  }
+  /** The boss of the current round, if one is on: { name, hp, hits, cards, index }. */
+  get bossInfo() {
+    const b = this.boss;
+    return b && { name: BOSSES[Math.min(b.stage, BOSSES.length - 1)].name, hp: BOSS_HP, hits: b.hits, cards: b.cards.length, index: b.index };
   }
   /** Relax, second chance and watering: no lives to lose and no points. */
   get safe() {
@@ -189,6 +230,11 @@ export class Game {
     this.daily = null;
     this.fixed = null;
     this.duel = null;
+    this.party = null;
+    this.boss3d.hide();
+    // power-ups: one of each to try, the first time a classic game starts
+    this.giftGiven = this.mode === 'classic' && welcomeGift(this.save);
+    if (this.giftGiven) this.save.write();
     if (this.mode === 'daily') {
       const run = buildDaily(utcDateId());
       this.daily = { ...run, index: 0, ranked: !this.save.dailyRecord(run.dateId), started: false, settled: false };
@@ -197,6 +243,15 @@ export class Game {
       const cards = buildDuel(seed, BY_STAGE);
       this.fixed = { cards, index: 0, total: cards.length, requeued: new Set() };
       this.duel = { seed, opponent: opts.opponent ?? null };
+    } else if (this.mode === 'party') {
+      const seed = cleanSeed(opts.seed) ?? newDuelSeed();
+      const n = PARTY_CARDS.includes(opts.cards) ? opts.cards : PARTY_CARDS[1];
+      const all = buildDuel(seed, BY_STAGE);
+      // evenly through the run, so a short party still visits every stage
+      const cards = Array.from({ length: n }, (_, i) => all[Math.floor((i * all.length) / n)]);
+      this.fixed = { cards, index: 0, total: cards.length, requeued: new Set() };
+      this.duel = { seed, opponent: null };
+      this.party = opts.party ?? { player: { name: 'Player 1' }, turn: 0, of: 1 };
     } else if (REVIEW.includes(this.mode)) {
       const exprs = [...new Set(opts.ids ?? [])].map(getExpression).filter(Boolean).slice(0, RETRY_MAX);
       const cards = shuffle(exprs.map((expr) => ({ expr, options: this._options(expr) })));
@@ -215,7 +270,7 @@ export class Game {
     this.audio.music?.set('game', REVIEW.includes(this.mode) ? 3 : 1);
     this.applyShot(1.0);
     this._set('intro');
-    this.events.emit('game:intro', { stage: this.stageDef, lives: this.lives, mode: this.mode, daily: this.dailyInfo, fixed: this.fixedInfo, duel: this.duel });
+    this.events.emit('game:intro', { stage: this.stageDef, lives: this.lives, mode: this.mode, daily: this.dailyInfo, fixed: this.fixedInfo, duel: this.duel, party: this.party, gift: this.giftGiven });
     this.audio.play('start');
     this.after(0.55, () => {
       this.audio.play('ready');
@@ -275,6 +330,8 @@ export class Game {
     }
     this.env.island.setStreak(0);
     this.audio.music?.muffle(false);
+    this.boss3d.hide();
+    this.boss = null;
     this._set('idle');
   }
 
@@ -353,11 +410,16 @@ export class Game {
         d.started = true;
         this._saveDaily(false);
       }
+    } else if (this.boss) {
+      const b = this.boss;
+      expr = b.cards[b.index++];
+      options = this._options(expr);
+      this.boss3d.throw();
     } else if (f) {
       const card = f.cards[f.index];
       if (!card) return this._finish('complete');
       ({ expr, options } = card);
-      if (this.mode === 'duel') this._daySky(f.index, f.cards.length);
+      if (this.mode === 'duel' || this.mode === 'party') this._daySky(f.index, f.cards.length);
       f.index++;
     } else {
       if (!this.deck.length) this._refillDeck();
@@ -372,7 +434,7 @@ export class Game {
       if (twist.kind === 'flip' || twist.kind === 'gap') options = twist.options;
       else if (twist.kind === 'build') options = [];
     }
-    const golden = this.mode === 'classic' && !twist && this.answered >= 2 && !this.lastGolden && Math.random() < GOLDEN_CHANCE;
+    const golden = this.mode === 'classic' && !this.boss && !twist && this.answered >= 2 && !this.lastGolden && Math.random() < GOLDEN_CHANCE;
     this.lastGolden = golden;
     this.question = { expr, options, correctIndex: options.findIndex((o) => o.correct), number: this.answered + 1, golden, twist };
 
@@ -380,11 +442,16 @@ export class Game {
     const pace = (PACE[this.save.settings.pace] ?? PACE.standard).factor;
     const own = STAGES[expr.stage - 1] ?? st;
     let fall;
-    if (d || this.mode === 'duel') fall = own.fall * PACE.standard.factor; // fixed pace: scores stay comparable
+    if (d || this.mode === 'duel' || this.mode === 'party') fall = own.fall * PACE.standard.factor; // fixed pace: scores stay comparable
+    else if (this.boss) fall = Math.max(4.2, st.floor * 0.82) * pace; // bosses throw fast
     else if (REVIEW.includes(this.mode)) fall = own.fall * RETRY_SLOW * pace;
     else if (this.mode === 'relax') fall = STAGES[0].fall * RELAX_SLOW * pace;
     else fall = Math.max(st.floor, st.fall - st.step * this.correctInStage) * pace;
     if (twist) fall = fall * TWIST_TIME[twist.kind] + (twist.kind === 'listen' ? LISTEN_EXTRA : 0);
+    if (this.slowLeft > 0) {
+      fall *= SLOW_FACTOR;
+      this.slowLeft--;
+    }
     this.fallTime = fall;
     this.tickT = 0;
     this.qTime = 0;
@@ -392,7 +459,7 @@ export class Game {
 
     const m = (this.metrics = shots.play(this.stage, this.layout.panelH, this.layout.hudH));
     const headTop = (this.ch?.rig.metrics.height ?? 2) + 0.05;
-    const accent = golden ? GOLD : this.fever ? FEVER_COLOR : this.env.v.accent;
+    const accent = golden ? GOLD : this.boss ? BOSSES[Math.min(this.boss.stage, BOSSES.length - 1)].bolt : this.fever ? FEVER_COLOR : this.env.v.accent;
     const face = !twist ? expr.text : twist.kind === 'gap' ? twist.sentence : twist.kind === 'listen' ? '' : twist.prompt;
     this.card.show(face, {
       scale: m.cardScale,
@@ -405,7 +472,7 @@ export class Game {
     this.fx.line(this.card.pos, this.card.halfWidth, { count: golden ? 40 : 16, color: golden ? 0xfff1b8 : 0xffffff, color2: accent, speed: golden ? 4 : 2.5, size: golden ? 0.55 : 0.4, life: golden ? 0.8 : 0.5, gravity: 0 });
     this.audio.play(golden ? 'golden' : 'spawn');
     this._set('playing');
-    this.events.emit('game:question', { ...this.question, stage: st, stageIndex: this.stageIndex, fallTime: this.fallTime, mode: this.mode, daily: this.dailyInfo, fixed: this.fixedInfo });
+    this.events.emit('game:question', { ...this.question, stage: st, stageIndex: this.stageIndex, fallTime: this.fallTime, mode: this.mode, daily: this.dailyInfo, fixed: this.fixedInfo, boss: this.bossInfo, party: this.party });
   }
 
   /** Daily and duel runs: the sky moves through the day as the cards go by. */
@@ -421,7 +488,7 @@ export class Game {
   answer(index) {
     if (this.state !== 'playing' || this.paused || !this.question) return;
     const opt = this.question.options[index];
-    if (!opt) return;
+    if (!opt || this.question.removed?.includes(index)) return;
     if (opt.correct) this._hit(index);
     else this._miss(index);
   }
@@ -430,6 +497,44 @@ export class Game {
   answerBuilt() {
     if (this.state !== 'playing' || this.paused || this.question?.twist?.kind !== 'build') return;
     this._hit(null);
+  }
+
+  /**
+   * Use a power-up on the current card. Returns true if it was used (and spent):
+   * shield → the next miss costs no life; slow → this card and the next two fall slowly;
+   * fifty → two wrong answers go; hint → the example sentence shows (not on twist cards
+   * whose example would give the answer away).
+   */
+  usePower(kind) {
+    if (!this.powersOn || this.state !== 'playing' || this.paused || !POWERS[kind] || powerCount(this.save, kind) <= 0) return false;
+    const q = this.question;
+    const tw = q?.twist?.kind;
+    if (kind === 'shield' && this.shield) return false;
+    if (kind === 'fifty' && (!q || q.options.length < 4 || q.removed)) return false;
+    if (kind === 'hint' && (!q?.expr.example || q.hinted || ['flip', 'build', 'listen'].includes(tw))) return false;
+    if (!spendPower(this.save, kind)) return false;
+    this.powersUsed.push(kind);
+    if (kind === 'shield') this.shield = true;
+    else if (kind === 'slow') {
+      this.fallTime *= SLOW_FACTOR;
+      this.slowLeft = SLOW_CARDS - 1;
+    } else if (kind === 'fifty') {
+      const wrong = q.options.map((o, i) => (o.correct ? -1 : i)).filter((i) => i >= 0);
+      q.removed = shuffle(wrong).slice(0, 2);
+    } else if (kind === 'hint') q.hinted = true;
+    this.save.write();
+    this.audio.play('select');
+    this.events.emit('power:used', { kind, removed: q?.removed ?? null, example: kind === 'hint' ? q.expr.example : null, shield: this.shield, slow: this.slowLeft });
+    return true;
+  }
+
+  /** Give the player a power-up found in play (golden card, lucky drop, boss). */
+  _gainPower(source) {
+    const kind = rollPower();
+    if (!addPower(this.save, kind, 1)) return null;
+    this.powersGained.push(kind);
+    this.events.emit('power:gained', { kind, n: 1, source });
+    return kind;
   }
 
   /** Build it: a word tapped out of order brings the card a little closer. */
@@ -453,24 +558,32 @@ export class Game {
     this.bestStreak = Math.max(this.bestStreak, this.streak);
     if (q.twist) this.twists.right++;
     if (REVIEW.includes(this.mode)) this.fixedIds.add(q.expr.id);
+    const boss = this.boss;
+    if (boss) {
+      boss.hits++;
+      this.boss3d.hit();
+    }
     // relax and second chance score no points; fever doubles, a golden card triples (both: ×6)
     const fever = this.fever;
     const bonus = safe ? 0 : streakBonus(this.streak);
-    const speed = this.daily || this.mode === 'duel' ? speedBonus(this.qTime) : 0;
+    const speed = this.daily || this.mode === 'duel' || this.mode === 'party' ? speedBonus(this.qTime) : 0;
     const twist = q.twist && !safe ? TWIST_BONUS : 0;
     const base = safe ? 0 : SCORING.correct * (q.golden ? 3 : 1) * (fever ? 2 : 1);
-    const gained = base + bonus + speed + twist;
+    const bossHit = boss ? BOSS_HIT_BONUS : 0;
+    const gained = base + bonus + speed + twist + bossHit;
     this.score += gained;
-    const rec = this.save.recordAnswer(q.expr.id, true);
+    const rec = this.mode === 'party' ? NO_RECORD : this.save.recordAnswer(q.expr.id, true);
     if (rec.planted) this.planted.push(q.expr.id);
-    if (this.daily || this.mode === 'duel') this.marks += 'c';
+    if (this.daily || this.mode === 'duel' || this.mode === 'party') this.marks += 'c';
+    // power-ups: every golden card, and now and then a lucky find (classic)
+    const found = this.mode === 'classic' && (q.golden || Math.random() < DROP_CHANCE) ? this._gainPower(q.golden ? 'golden' : 'lucky') : null;
     if (this.daily) this._saveDaily(false);
     this.events.emit('game:answered', { choice: index, correct: true, correctIndex: q.correctIndex, id: q.expr.id, type: q.expr.type, golden: !!q.golden, fever, streak: this.streak, fresh: rec.fresh, mastered: rec.mastered, mode: this.mode, twist: q.twist?.kind ?? null, safe });
 
     const a = this.ch.animator;
     a.worry = 0;
     const clip = this.ch.def.attack === 'kick' ? 'kick' : 'attack';
-    this.pendingBurst = { gained, base, bonus, speed, twist, golden: !!q.golden, fever, safe };
+    this.pendingBurst = { gained, base, bonus, speed, twist, bossHit, found, golden: !!q.golden, fever, safe };
     a.play(clip, { speed: 1.25 });
     // safety net in case the release event is missed
     this.after(0.5, () => this._release());
@@ -520,7 +633,7 @@ export class Game {
     }
 
     const screen = this.stage.toScreen(pos);
-    this.events.emit('game:score', { score: this.score, gained: pb.base, bonus: pb.bonus, speed: pb.speed, twist: pb.twist, golden: pb.golden, fever: pb.fever, safe: pb.safe, mode: this.mode, streak: this.streak, x: screen.x, y: screen.y });
+    this.events.emit('game:score', { score: this.score, gained: pb.base, bonus: pb.bonus, speed: pb.speed, twist: pb.twist, bossHit: pb.bossHit, found: pb.found, golden: pb.golden, fever: pb.fever, safe: pb.safe, mode: this.mode, streak: this.streak, x: screen.x, y: screen.y, boss: this.bossInfo });
     this.env.island.setStreak(this.streak);
     this.env.island.pulseRing(pb.bonus ? 1 : 0.45);
     this.ch.animator.play('cheer', { speed: 1.1 });
@@ -535,7 +648,10 @@ export class Game {
     if (!this.safe && !this.fever && this.streak >= FEVER_AT) this.after(0.35, () => this.streak >= FEVER_AT && this._setFever(true));
 
     const stages = this.mode === 'classic' || this.mode === 'relax';
-    if (stages && this.correctInStage >= this.stageDef.goal && this.stageIndex < STAGES.length - 1) this.after(0.75, () => this._stageUp());
+    const last = this.stageIndex >= STAGES.length - 1;
+    const cleared = stages && !this.boss && (last ? this.mode === 'classic' && this.correctInStage > 0 && this.correctInStage % BOSS_EVERY_FINAL === 0 : this.correctInStage >= this.stageDef.goal);
+    if (cleared && this.mode === 'classic') this.after(0.75, () => this._bossStart());
+    else if (cleared && !last) this.after(0.75, () => this._stageUp());
     else this.after(0.62, () => this._advance());
   }
 
@@ -547,16 +663,21 @@ export class Game {
     this.held = false;
     this.answered++;
     this.streak = 0;
-    if (!this.safe) this.lives--;
-    const rec = this.save.recordAnswer(q.expr.id, false);
+    // a shield takes the hit instead of a life
+    this.protectedMiss = !this.safe && this.shield;
+    if (this.protectedMiss) this.shield = false;
+    if (!this.safe && !this.protectedMiss) this.lives--;
+    if (this.boss) this.boss3d.laugh();
+    const rec = this.mode === 'party' ? NO_RECORD : this.save.recordAnswer(q.expr.id, false);
     if (!this.wrong.includes(q.expr.id)) this.wrong.push(q.expr.id);
     // second chance / watering: a card missed again comes back once more at the end
     if (REVIEW.includes(this.mode) && f && !f.requeued.has(q.expr.id)) {
       f.requeued.add(q.expr.id);
       f.cards.push({ expr: q.expr, options: this._options(q.expr) });
     }
-    if (this.daily || this.mode === 'duel') this.marks += 'w';
+    if (this.daily || this.mode === 'duel' || this.mode === 'party') this.marks += 'w';
     if (this.daily) this._saveDaily(false);
+    if (this.protectedMiss) this.events.emit('power:shielded', {});
     this.events.emit('game:answered', { choice: index, correct: false, correctIndex: q.correctIndex, timeout: index == null, id: q.expr.id, type: q.expr.type, golden: !!q.golden, fever: false, streak: 0, fresh: rec.fresh, mastered: false, mode: this.mode, twist: q.twist?.kind ?? null, safe: this.safe });
     this._setFever(false);
     this.env.island.setStreak(0);
@@ -577,15 +698,20 @@ export class Game {
     const a = this.ch.animator;
     a.worry = 0;
     a.gazeUp = 0;
-    if (this.safe) {
-      // relax / second chance: a soft bump, no life lost, and time to read the right answer
+    if (this.safe || this.protectedMiss) {
+      // relax / second chance / a shield: a soft bump, no life lost, and time to read the right answer
       this.fx.shatter(pos, card.halfWidth * 0.8, card.halfHeight, { count: 14, colors: [0xfff6e3, 0xffd6a0, 0xffffff], speed: 3.5, size: 0.26 * card.scale + 0.06, down: 1 });
       this.stage.shake(4, 0.25);
       a.flash(0xffb07a, 0.5);
       a.play('hit');
       this.audio.play('hit');
-      this.events.emit('game:missed', { safe: true });
-      this.after(2.1, () => this._advance());
+      this.events.emit('game:missed', { safe: true, shielded: this.protectedMiss });
+      if (this.protectedMiss) {
+        this.ch.rig.root.getWorldPosition(_v);
+        this.fx.ring(_v.setY(0.9), { color: 0x7ef0ff, from: 0.4, to: 2.6, life: 0.5, opacity: 0.9 });
+        this.fx.burst(_v, { count: 18, color: 0x9ff3ff, color2: 0xffffff, speed: 3, size: 0.4, life: 0.6, gravity: 2 });
+      }
+      this.after(this.protectedMiss ? 1.5 : 2.1, () => this._advance());
       return;
     }
     this.fx.shatter(pos, card.halfWidth * 0.8, card.halfHeight, { count: 20, colors: [0xfff6e3, 0xff5068, 0xffb0b8], speed: 5, size: 0.3 * card.scale + 0.08, down: 1 });
@@ -616,8 +742,69 @@ export class Game {
 
   /** Next card — or, at the end of a fixed run, the finish. */
   _advance() {
+    if (this.boss) {
+      if (this.boss.index >= this.boss.cards.length) this._bossEnd();
+      else this.nextCard();
+      return;
+    }
     const run = this.daily ?? this.fixed;
     if (run && run.index >= run.cards.length) this._finish('complete');
+    else this.nextCard();
+  }
+
+  // ── bosses ──────────────────────────────────────────────────────────────
+  _bossStart() {
+    if (this.state === 'over' || this.state === 'idle') return;
+    const stage = this.stageIndex;
+    // expressions from this stage, ones the player has met first (they deserve a harder test)
+    const pool = BY_STAGE[stage] ?? BY_STAGE.flat();
+    const met = shuffle(pool.filter((e) => this.save.stat(e.id)?.seen && !this.used.has(e.id)));
+    const rest = shuffle(pool.filter((e) => !this.used.has(e.id) && !met.includes(e)));
+    const cards = [...met, ...rest].slice(0, BOSS_CARDS);
+    if (cards.length < BOSS_CARDS) return this._afterBoss();
+    for (const e of cards) this.used.add(e.id);
+    this.boss = { stage, cards, index: 0, hits: 0 };
+    this.bosses.met++;
+    this._set('stageup');
+    const m = (this.metrics = shots.play(this.stage, this.layout.panelH, this.layout.hudH));
+    // behind and a little above where the cards appear, clear of the score at the top
+    this.boss3d.show(stage, _v.set(0, m.spawnY + m.cardH * 0.2, -3.6), 0.78 + m.cardScale * 0.32);
+    this.audio.play('fever');
+    this.stage.shake(5, 0.4);
+    this.ch.animator.play('power');
+    this.events.emit('boss:start', { stage, name: this.bossInfo.name, cards: BOSS_CARDS, hp: BOSS_HP });
+    this.after(2.3, () => this.nextCard());
+  }
+
+  _bossEnd() {
+    const b = this.boss;
+    const won = b.hits >= BOSS_HP;
+    const stageN = b.stage + 1;
+    let found = [];
+    let reward = 0;
+    if (won) {
+      this.bosses.beaten++;
+      reward = BOSS_WIN_BONUS * stageN;
+      this.score += reward;
+      this.boss3d.defeat();
+      this.fx.confetti(this.boss3d.position, { count: 80, spread: 3 });
+      this.fx.ring(this.boss3d.position, { color: 0xffffff, from: 0.6, to: 4.5, life: 0.6, opacity: 0.85 });
+      this.audio.play('newBest');
+      this.ch.animator.play('cheer', { speed: 1 });
+      found = [this._gainPower('boss'), stageN >= 3 ? this._gainPower('boss') : null].filter(Boolean);
+    } else {
+      this.boss3d.escape();
+      this.audio.play('feverEnd');
+    }
+    this.boss = null;
+    this.events.emit('boss:end', { won, hits: b.hits, stage: b.stage, name: BOSSES[Math.min(b.stage, BOSSES.length - 1)].name, reward, found, score: this.score });
+    this.after(won ? 2.6 : 1.9, () => this._afterBoss());
+  }
+
+  /** After a boss: the stage moves on (the endless final stage just carries on). */
+  _afterBoss() {
+    if (this.state === 'over' || this.state === 'idle') return;
+    if (this.stageIndex < STAGES.length - 1) this._stageUp();
     else this.nextCard();
   }
 
@@ -664,7 +851,9 @@ export class Game {
     }
     this.audio.music?.muffle(true);
     // a second chance or a watering is a review round, not a game: it does not count towards scores or games played
-    const record = REVIEW.includes(this.mode) ? { newBest: false, unlocked: [] } : this.save.finishGame({ score: this.score, bestStreak: this.safe ? 0 : this.bestStreak, stage: this.stageIndex + 1, mode: this.mode });
+    this.boss3d.hide();
+    this.boss = null;
+    const record = REVIEW.includes(this.mode) || this.mode === 'party' ? { newBest: false, unlocked: [] } : this.save.finishGame({ score: this.score, bestStreak: this.safe ? 0 : this.bestStreak, stage: this.stageIndex + 1, mode: this.mode });
     const d = this.daily;
     if (d) this._saveDaily(true);
     const f = this.fixed;
@@ -673,13 +862,16 @@ export class Game {
       reason,
       // daily: run info, this run's marks and the day's ranked attempt (this run, or an earlier one if this was practice)
       daily: d && { ...this.dailyInfo, marks: this.marks, rankedRecord: this.save.dailyRecord(d.dateId) },
-      duel: this.duel && { seed: this.duel.seed, opponent: this.duel.opponent, marks: this.marks, total: f.cards.length },
+      duel: this.mode === 'duel' ? { seed: this.duel.seed, opponent: this.duel.opponent, marks: this.marks, total: f.cards.length } : null,
       retry:
         REVIEW.includes(this.mode)
           ? { total: f.total, fixed: [...this.fixedIds], missed: [...new Set(f.cards.map((c) => c.expr.id))].filter((id) => !this.fixedIds.has(id)) }
           : null,
       twists: { ...this.twists },
       planted: this.planted.slice(),
+      bosses: { ...this.bosses },
+      powers: { gained: this.powersGained.slice(), used: this.powersUsed.slice() },
+      party: this.party && { ...this.party, marks: this.marks, total: f?.cards.length ?? 0 },
       score: this.score,
       best: this.save.data.best.score,
       newBest: record.newBest && this.score > 0,
@@ -776,6 +968,8 @@ export class Game {
       this.dizzyAnchor.y += ch.rig.headRadii[1] * 1.9 + 0.1;
     }
     if (this.paused) return;
+    this.clock += dt;
+    this.boss3d.update(dt, this.clock);
 
     for (let i = this.timers.length - 1; i >= 0; i--) {
       const tm = this.timers[i];

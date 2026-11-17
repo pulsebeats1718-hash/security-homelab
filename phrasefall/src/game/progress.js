@@ -112,12 +112,24 @@ export class Progress {
     /** The current / last game: what changed during it, for the results screen. */
     this.run = null;
     this.touch();
-    events.on('game:intro', () => this._runStart());
-    events.on('game:answered', (p) => this._answered(p));
-    events.on('game:score', (p) => this._bump('score', p.score, true));
-    events.on('game:fever', (p) => p.on && this._bump('fever', 1, true));
-    events.on('game:stage', ({ stage }) => this._bump('stage', stage.n, true));
-    events.on('game:ending', (r) => this._finished(r));
+    // party games are several people sharing the phone: they don't count towards the owner's progress
+    this.mode = 'classic';
+    const own = () => this.mode !== 'party';
+    events.on('game:intro', (p) => {
+      this.mode = p?.mode ?? 'classic';
+      this._runStart();
+    });
+    events.on('game:answered', (p) => own() && this._answered(p));
+    events.on('game:score', (p) => own() && this._bump('score', p.score, true));
+    events.on('game:fever', (p) => own() && p.on && this._bump('fever', 1, true));
+    events.on('game:stage', ({ stage }) => own() && this._bump('stage', stage.n, true));
+    events.on('game:ending', (r) => (own() ? this._finished(r) : this.run && (this.run.done = true)));
+    events.on('boss:end', (p) => p.won && own() && this.addXp(XP.boss));
+    events.on('theatre:answered', (p) => this._answered({ correct: p.correct, type: p.type, safe: true }));
+    events.on('theatre:done', () => {
+      this.addXp(XP.theatre);
+      this.save.write();
+    });
     events.on('cards:review', (p) => this._reviewed(p));
     events.on('talk:answered', (p) => this._answered({ correct: p.correct, type: p.type, safe: true }));
     events.on('talk:done', () => {
