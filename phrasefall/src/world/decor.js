@@ -604,7 +604,6 @@ export class Decor {
     this.place = null;
     this.key = '';
     this.spots = {};
-    this.queue = 0;
   }
 
   /** Show these decorations (ids from DECOR) in the garden; new ones pop in, missing ones go. */

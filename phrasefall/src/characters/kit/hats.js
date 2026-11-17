@@ -2,12 +2,13 @@
  * Hats for every character (sticker album rewards): a top hat, a party hat, a flower crown, a woolly
  * hat with a pompom, a straw sun hat, a crown, a graduation cap and a beret.
  *
- *   import { HATS, setHat, canWearHat } from './kit/hats.js';
+ *   import { HATS, setHat, removeHat, canWearHat } from './kit/hats.js';
  *
  *   setHat(rig, 'party');      // → true when worn; false if this character can't wear it
  *   setHat(rig, 'crown');      // replaces the party hat
- *   setHat(rig, null);         // takes it off (the rig is restored exactly)
- *   canWearHat('owl', 'grad'); // → false (the owl already wears a mortarboard)
+ *   setHat(rig, null);         // takes it off (same as removeHat(rig); the rig is restored exactly)
+ *   canWearHat('owl', 'grad'); // → false (the owl already wears a mortarboard); also takes a rig
+ *   rig.props.wornHat          // while one is worn: { id, group, fit, meshes, remove() }
  *
  * Call it on a built rig (after createCharacter / captureRest), any time, also mid-animation. The
  * hat rides on the head joint, so it follows every animation; it hides while the character is shown
@@ -20,9 +21,11 @@
  *     ears and antennae;
  *   - fitted hats (woolly hat, straw hat, graduation cap) and the flower crown hug the head's real
  *     outline on a band just above the brows, tilted back, and their crowns cover whatever is on top
- *     of the head; ears, horns and antennae poke out through them.
- * The size follows the head (rig.headRadii). Characters whose own headgear rules a hat out — or
- * that need a nudge — are in FIT below.
+ *     of the head; ears, horns and antennae poke out through them. On big hair, manes and spines the
+ *     band rides higher and the straw brim / mortarboard lift clear instead of cutting through.
+ * The size follows the head (rig.headRadii). When the character topples over (KO), a wide hat rests
+ * on the ground instead of sinking into it. Characters whose own headgear rules a hat out — or that
+ * need a nudge — are in FIT below.
  *
  * Light: each hat is one to four meshes (parts merged per finish, painted with vertex colours).
  */
@@ -82,6 +85,8 @@ const FIT = {
     hide: (rig, hat) => (COVERING.has(hat) ? rig.head.children.filter((o) => o.isGroup && o.children.some((c) => c.isSprite) && o.position.y > rig.headCenter.y) : []),
   },
   ghost: { hide: (rig, hat) => (COVERING.has(hat) ? rig.head.children.filter((o) => o.isGroup && o.position.y > 0.85 && o.position.y < 1) : []) },
+  // the corgi's ears are so big that the straw hat and the cap fit as if they were not there
+  corgi: { tweak: { straw: { q: 0.55, brimQ: 0.55 }, grad: { q: 0.55, boardQ: 0.55 } } },
   // the woolly hat sits up on top of the lion's mane; the straw hat covers the unicorn's mane
   lion: { tweak: { beanie: { maxH: 0.36 }, straw: { q: 0.97, maxH: 0.42 } } },
   unicorn: { tweak: { straw: { q: 0.97, maxH: 0.42 } } },
@@ -169,7 +174,7 @@ class Parts {
   }
 }
 
-const sphere = (seg = 18) => new THREE.SphereGeometry(1, seg, Math.max(6, Math.round(seg * 0.7)));
+const sphere = (seg = 14) => new THREE.SphereGeometry(1, seg, Math.max(5, Math.round(seg * 0.7)));
 const lathe = (pts, seg = 32, steps = 24) => {
   let profile = pts.map(([r, y]) => new THREE.Vector2(r, y));
   if (pts.length > 2 && steps) profile = new THREE.SplineCurve(profile).getPoints(steps).map((p) => new THREE.Vector2(Math.max(0, p.x), p.y));
@@ -423,7 +428,10 @@ class HeadCaster {
       sdf = sdCapsule(p.radius, p.height ?? p.length ?? 0);
       bound = (p.height ?? p.length ?? 0) / 2 + p.radius + 1e-3;
     }
-    return { m, kind, p, sdf, bound, side: m.material?.side ?? THREE.FrontSide, inv: rel.clone().invert() };
+    if (!g.boundingSphere) g.computeBoundingSphere();
+    const bc = g.boundingSphere.center.clone().applyMatrix4(rel);
+    const br = g.boundingSphere.radius * rel.getMaxScaleOnAxis() + 1e-3;
+    return { m, kind, p, sdf, bound, bc, br, side: m.material?.side ?? THREE.FrontSide, inv: rel.clone().invert() };
   }
 
   /** Distance along a head-space ray (unit direction) to the first surface, or Infinity. */
@@ -432,6 +440,13 @@ class HeadCaster {
     this.lastMesh = null;
     const { o, d } = this;
     for (const it of this.items) {
+      // skip meshes whose bounding sphere the ray misses (or that are farther than the best hit)
+      const cx = it.bc.x - origin.x;
+      const cy = it.bc.y - origin.y;
+      const cz = it.bc.z - origin.z;
+      const along = cx * dir.x + cy * dir.y + cz * dir.z;
+      if (along < -it.br || along - it.br > best) continue;
+      if (cx * cx + cy * cy + cz * cz - along * along > it.br * it.br) continue;
       o.copy(origin).applyMatrix4(it.inv);
       d.copy(origin).add(dir).applyMatrix4(it.inv).sub(o);
       if (!(d.lengthSq() > 1e-18)) continue;
@@ -625,10 +640,11 @@ function bandPoint(b, x, y, z, out = new THREE.Vector3()) {
 
 /**
  * How far the head (its hair, mane, spines …) rises above points of a fitted hat (hat space,
- * [x, y, z]): the hat must go up this much for them to clear it. A high quantile, so the odd ear,
- * horn or antenna may still poke through.
+ * [x, y, z]): the hat must go up this much for them to clear it, at most `cap`. Anything rising
+ * more than `cap` above a point is an ear, horn or antenna, which pokes through instead; and a
+ * high quantile leaves the odd stray point out too.
  */
-function clearance(cast, b, pts, q = 0.88) {
+function clearance(cast, b, pts, q = 0.9, cap = 0.2) {
   const from = b.y + 3;
   const c = Math.cos(b.tilt);
   const v = new THREE.Vector3();
@@ -636,9 +652,10 @@ function clearance(cast, b, pts, q = 0.88) {
   for (const [x, y, z] of pts) {
     bandPoint(b, x, y, z, v);
     const top = topY(cast, v.x, v.z, from);
-    over.push(top > -Infinity ? (top - v.y) * c : 0);
+    const h = top > -Infinity ? (top - v.y) * c : 0;
+    over.push(h > cap ? 0 : h);
   }
-  return Math.max(0, quantile(over, q));
+  return clamp(quantile(over, q), 0, cap);
 }
 
 /** Seat of a perched hat: the ring of radius r round (x, z) rests on the top of the head. */
@@ -755,14 +772,14 @@ function buildParty(P, { r, s }, col) {
       const nrm = new THREE.Vector3(Math.sin(a) * Math.cos(slope), Math.sin(slope), Math.cos(a) * Math.cos(slope));
       const d = (0.042 - f * 0.018) * s;
       _q.setFromUnitVectors(new THREE.Vector3(0, 0, 1), nrm);
-      P.addM('satin', sphere(10), DOT_COLORS[n++ % DOT_COLORS.length] === col.main ? 0xffffff : DOT_COLORS[(n - 1) % DOT_COLORS.length], _m.compose(pos, _q, _s.set(d, d, d * 0.3)));
+      P.addM('satin', sphere(8), DOT_COLORS[n++ % DOT_COLORS.length] === col.main ? 0xffffff : DOT_COLORS[(n - 1) % DOT_COLORS.length], _m.compose(pos, _q, _s.set(d, d, d * 0.3)));
     }
   }
   underside(P, 'satin', r, col.main);
   // frilly trim round the base
   for (let i = 0; i < 14; i++) {
     const a = (i / 14) * TAU;
-    P.add('cloth', sphere(10), col.trim, Math.sin(a) * r * 1.02, 0.012 * s, Math.cos(a) * r * 1.02, 0, a, 0, 0.05 * s, 0.035 * s, 0.05 * s);
+    P.add('cloth', sphere(8), col.trim, Math.sin(a) * r * 1.02, 0.012 * s, Math.cos(a) * r * 1.02, 0, a, 0, 0.05 * s, 0.035 * s, 0.05 * s);
   }
 }
 
@@ -780,7 +797,7 @@ function buildPompom(P, s, color, R = 0.07) {
     const a = i * 2.39996;
     const y = 1 - (i + 0.5) / 6;
     const rr = Math.sqrt(Math.max(0, 1 - y * y));
-    P.add('cloth', sphere(10), color, Math.cos(a) * rr * R * 0.78 * s, c + y * R * 0.78 * s, Math.sin(a) * rr * R * 0.78 * s, 0, 0, 0, R * 0.44 * s);
+    P.add('cloth', sphere(8), color, Math.cos(a) * rr * R * 0.78 * s, c + y * R * 0.78 * s, Math.sin(a) * rr * R * 0.78 * s, 0, 0, 0, R * 0.44 * s);
   }
 }
 
@@ -1006,54 +1023,65 @@ function buildFlowers(P, fit, col) {
       const pp = pos.clone().add(off);
       // petal: flattened along the flower's normal, long side pointing out from the centre
       const m = new THREE.Matrix4().compose(pp, q.clone().multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), b)), _s.set(R * 0.82, R * 0.58, R * 0.26));
-      P.addM('satin', sphere(10), c, m);
+      P.addM('satin', sphere(8), c, m);
     }
-    P.add('satin', sphere(10), col.centre, pos.x + n.x * R * 0.18, pos.y + n.y * R * 0.18, pos.z + n.z * R * 0.18, 0, 0, 0, R * 0.42);
+    P.add('satin', sphere(8), col.centre, pos.x + n.x * R * 0.18, pos.y + n.y * R * 0.18, pos.z + n.z * R * 0.18, 0, 0, 0, R * 0.42);
     // two leaves either side
     for (const sgn of [1, -1]) {
       const la = a + sgn * (0.2 + 0.12 * size);
       const lp = leafAt(la);
       const tangent = new THREE.Vector3(Math.cos(la) * A, 0, -Math.sin(la) * B).normalize().multiplyScalar(sgn);
       _q.setFromUnitVectors(new THREE.Vector3(1, 0, 0), tangent);
-      P.addM('cloth', sphere(10), i % 2 ? col.leaf : col.leaf2, _m.compose(lp.add(new THREE.Vector3(0, tube * 0.4, 0)), _q, _s.set(0.06 * s * size, 0.016 * s, 0.032 * s * size)));
+      P.addM('cloth', sphere(7), i % 2 ? col.leaf : col.leaf2, _m.compose(lp.add(new THREE.Vector3(0, tube * 0.4, 0)), _q, _s.set(0.06 * s * size, 0.016 * s, 0.032 * s * size)));
     }
   });
 }
 
 // ── putting it on ───────────────────────────────────────────────────────
 
-/** The outermost points of everything under `root` (in its space): a ring of directions, plus top and bottom. */
-function extremes(root, N = 24) {
+/**
+ * The outermost points of everything under `root` (in its space): in a ring of directions, plus the
+ * top and the bottom. Big meshes are sampled (every few vertices), which is close enough here.
+ */
+function extremes(root, N = 16, budget = 1500) {
   root.updateMatrixWorld(true);
   const inv = new THREE.Matrix4().copy(root.matrixWorld).invert();
   const m = new THREE.Matrix4();
-  const v = new THREE.Vector3();
-  const best = Array.from({ length: N + 2 }, () => ({ d: -Infinity, p: new THREE.Vector3() }));
+  const dir = [];
+  for (let k = 0; k < N; k++) dir.push([Math.sin((k / N) * TAU), Math.cos((k / N) * TAU)]);
+  const best = new Float64Array(N + 2).fill(-Infinity);
+  const pts = Array.from({ length: N + 2 }, () => new THREE.Vector3());
   root.traverse((o) => {
     if (!o.isMesh) return;
-    m.multiplyMatrices(inv, o.matrixWorld);
-    const pos = o.geometry.attributes.position;
-    for (let i = 0; i < pos.count; i++) {
-      v.fromBufferAttribute(pos, i).applyMatrix4(m);
+    const e = m.multiplyMatrices(inv, o.matrixWorld).elements;
+    const a = o.geometry.attributes.position.array;
+    const count = a.length / 3;
+    const step = Math.max(1, Math.floor(count / budget));
+    for (let i = 0; i < count; i += step) {
+      const x0 = a[i * 3];
+      const y0 = a[i * 3 + 1];
+      const z0 = a[i * 3 + 2];
+      const x = e[0] * x0 + e[4] * y0 + e[8] * z0 + e[12];
+      const y = e[1] * x0 + e[5] * y0 + e[9] * z0 + e[13];
+      const z = e[2] * x0 + e[6] * y0 + e[10] * z0 + e[14];
       for (let k = 0; k < N; k++) {
-        const a = (k / N) * TAU;
-        const d = v.x * Math.sin(a) + v.z * Math.cos(a);
-        if (d > best[k].d) {
-          best[k].d = d;
-          best[k].p.copy(v);
+        const d = x * dir[k][0] + z * dir[k][1];
+        if (d > best[k]) {
+          best[k] = d;
+          pts[k].set(x, y, z);
         }
       }
-      if (v.y > best[N].d) {
-        best[N].d = v.y;
-        best[N].p.copy(v);
+      if (y > best[N]) {
+        best[N] = y;
+        pts[N].set(x, y, z);
       }
-      if (-v.y > best[N + 1].d) {
-        best[N + 1].d = -v.y;
-        best[N + 1].p.copy(v);
+      if (-y > best[N + 1]) {
+        best[N + 1] = -y;
+        pts[N + 1].set(x, y, z);
       }
     }
   });
-  return best.filter((b) => b.d > -Infinity).map((b) => b.p);
+  return pts.filter((p, i) => best[i] > -Infinity);
 }
 
 /** The character id of a rig made by createCharacter ('character:<id>'). */
@@ -1064,7 +1092,8 @@ export function canWearHat(who, hatId) {
   const id = typeof who === 'string' ? who : idOf(who);
   if (!HATS.some((h) => h.id === hatId)) return false;
   const f = FIT[id];
-  if (!f) return true;
+  // a rig not made by createCharacter: going by whether it already wears a hat of its own
+  if (!f) return !(id == null && who?.props?.hat);
   if (f.no === true) return false;
   if (Array.isArray(f.no) && f.no.includes(hatId)) return false;
   if (f.only && !f.only.includes(hatId)) return false;
@@ -1102,8 +1131,10 @@ function colours(id, against) {
       const c = new THREE.Color(main);
       return { main, cuff: main, cuffRib: c.clone().multiplyScalar(0.86).getHex(), stripe: 0xfff3e0, pompom: 0xfff3e0 };
     }
-    case 'straw':
-      return { straw: 0xf2cf7e, weave: 0xd9ad55, ribbon: pick([0x4aa8ff, 0xff5a6e, 0x2fd3a3], against, 0.3), ribbonDark: 0x2a6fb8 };
+    case 'straw': {
+      const ribbon = pick([0x4aa8ff, 0xff5a6e, 0x2fd3a3], against, 0.3);
+      return { straw: 0xf2cf7e, weave: 0xd9ad55, ribbon, ribbonDark: new THREE.Color(ribbon).multiplyScalar(0.7).getHex() };
+    }
     case 'crown':
       return { gold: 0xffc533, pearl: 0xfff8ee, gems: [0xff3b5c, 0x3f8cff, 0x2fd38a] };
     case 'grad':
@@ -1235,13 +1266,13 @@ export function setHat(rig, id) {
           pts.push([Math.sin(t) * (a + o * s), -0.075 * s * (o / 0.4) ** 2 - 0.012 * s, Math.cos(t) * (c + o * s)]);
         }
       }
-      up = clearance(cast, b, pts, tweak.brimQ ?? 0.9);
+      up = clearance(cast, b, pts, tweak.brimQ ?? 0.9, 0.22 * s);
     } else if (id === 'grad') {
       // the board must clear them too: the cap grows taller
       const w = clamp(Math.max(b.A, b.B) * 2.1 + 0.08 * s, 1.05 * s, 1.35 * s);
       const pts = [];
       for (let i = 0; i <= 8; i++) for (let j = 0; j <= 8; j++) pts.push([(i / 8 - 0.5) * w, H + 0.015 * s, (j / 8 - 0.5) * w]);
-      fit.raise = clearance(cast, b, pts, tweak.boardQ ?? 0.92);
+      fit.raise = clearance(cast, b, pts, tweak.boardQ ?? 0.92, 0.2 * s);
     }
     root.position.set(0, b.y + (tweak.y ?? 0), b.zc + (tweak.z ?? 0));
     root.rotation.x = -b.tilt;
