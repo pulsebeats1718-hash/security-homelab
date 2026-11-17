@@ -2,7 +2,8 @@ import { h, icon, clear, phrase } from '../dom.js';
 import { shots } from '../../game/shots.js';
 import { getExpression, TOTAL_EXPRESSIONS, BY_STAGE, expressionsReady, whenExpressionsReady } from '../../data/expressions/index.js';
 import { STAGES } from '../../data/stages.js';
-import { HATS } from '../../characters/kit/hats.js';
+import { HATS, canWearHat } from '../../characters/kit/hats.js';
+import { getCharacter } from '../../characters/index.js';
 import { renderAchievements } from '../achievements.js';
 
 /** The three sections at the top: every expression, the sticker album, achievements. */
@@ -71,6 +72,12 @@ export function createCollection(app) {
     const p = s.total ? s.have / s.total : 0;
     return h(`div.sticker${s.earned ? '.is-earned' : ''}${big ? '.sticker--big' : ''}`, { style: { '--c': s.set.color, '--p': `${Math.round(p * 360)}deg` } }, h('span.sticker__face', icon(s.set.icon)));
   }
+  /** A note when the character on the island keeps its own headgear (a helmet, a wizard's hat …). */
+  function hatNote(hatId) {
+    const who = save.data.character;
+    if (!hatId || canWearHat(who, hatId)) return null;
+    return h('p.album__note', icon('hat'), `${getCharacter(who)?.name ?? 'Your character'} keeps their own look, so the hat waits for a character who can wear it.`);
+  }
   function hatsRow() {
     const hats = app.album?.hats() ?? [];
     if (!hats.length) return null;
@@ -78,6 +85,7 @@ export function createCollection(app) {
     return h(
       'div.album__hats',
       h('div.eyebrow', 'Your hats'),
+      hatNote(cur),
       h(
         'div.album__hat-list',
         [null, ...hats].map((id) =>
@@ -130,7 +138,8 @@ export function createCollection(app) {
           'div.album__actions',
           h('button.btn.btn--gold', { 'data-quiet': '1', onclick: () => (audio.play('select'), app.startGame({ mode: 'relax', ids: s.set.ids, label: s.set.name })) }, icon('leaf'), 'Practise this set'),
           s.earned && r?.kind === 'hat' ? h('button.btn', { onclick: () => (app.album.wear(wearing ? null : r.id), renderSet(s)) }, icon('hat'), wearing ? 'Take it off' : 'Wear it') : null
-        )
+        ),
+        wearing ? hatNote(r.id) : null
       ),
       h(
         'div.rows.album__list',

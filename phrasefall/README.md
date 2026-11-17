@@ -28,10 +28,13 @@ four options before they land.
   to start; more drop from golden cards, now and then from a right answer, and from bosses.
 - **Sticker album** (`src/data/sets.js`, `src/game/album.js`) – 16 themed sets of 16
   well-known expressions (weather, food, money, feelings, animals …) under *My Collection →
-  Stickers*. Master every expression in a set to earn its sticker and a reward: a hat that
-  every character can wear (`src/characters/kit/hats.js`) or a decoration for the memory
-  garden (`src/world/decor.js`). Any set can be practised on its own (relax mode dealing
-  only that set's cards). Check the sets with `node scripts/check-sets.mjs`.
+  Stickers*. Master every expression in a set to earn its sticker and a reward: one of eight
+  hats for the characters to wear (`src/characters/kit/hats.js`; characters with headgear of
+  their own, such as a helmet or a wizard's hat, keep it) or one of eight decorations for the
+  memory garden (`src/world/decor.js`: a bench, a fountain, bunting, a beehive …, dressed for
+  each season). Any set can be practised on its own (relax mode dealing only that set's
+  cards). Check the sets with `node scripts/check-sets.mjs`; preview the hats at
+  `dev/hats.html`.
 - **Achievements** (`src/data/achievements.js`, `src/game/achievements.js`) – 34 badges in
   eight groups (playing, streaks, learning, garden, Situations & Theatre, friends, explorer,
   and four secret ones) under *My Collection → Badges*, each with a progress bar. They

@@ -340,6 +340,7 @@ export function createTheatre(app) {
       app.env.setTheme('midday', 1.2);
       app.env.setDim(0);
       app.fx.setDizzy(false);
+      app.hero.setHat?.(null); // scenes dress the hero themselves (a nightcap, a cloud for a head …)
       app.hero.set(save.data.character, { effect: false, clip: null });
       app.hero.waves = false;
       app.hero.face();
@@ -366,6 +367,7 @@ export function createTheatre(app) {
       cur = null;
       director?.clear();
       if (prevTheme) app.env.setTheme(prevTheme, 0.9);
+      app.hero.setHat?.(app.album?.hat ?? null); // the sticker-album hat goes back on
     },
     key(e) {
       if (e.key === 'Escape') return back();

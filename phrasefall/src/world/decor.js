@@ -15,12 +15,15 @@
  * checked against the garden's own flower spots (gardenSpots), the dais, the stepping stones and
  * the path, the place's props, streets and water, the season's props (snowman, deckchair, spring
  * flowers), the island's wild flowers and the other decorations, and scored by how well the menu
- * camera sees it. Spots are worked out for all eight at once, so earning one never moves another.
- * They are the same every time in a place and season; when either changes they are worked out
- * again (like the garden), sinking and rising with the place, or hopping to their new spot.
+ * camera sees it. Where the ring is crowded a decoration may turn a little, stand further out on
+ * ground no flower can take, or, as a last resort, at the edge of the front path. Spots are worked
+ * out for all eight at once, so earning one never moves another. They are the same every time in a
+ * place and season (and remembered); when either changes they are worked out again (like the
+ * garden), sinking and rising with the place, or hopping to their new spot.
  *
  * Light: each decoration is a few merged meshes (vertex colours, shared materials that take the
- * season look: snow on top in winter, ice on the water); bees and droplets are instanced.
+ * season look: snow on top in winter, ice on the water); bees and droplets are instanced. In
+ * winter the fountain rests and the bees stay in the hive.
  */
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
@@ -49,9 +52,9 @@ const smooth = (a, b, v) => {
 
 // ── layout ───────────────────────────────────────────────────────────────
 
-/** The dais' outer edge at ground level, and how far the garden's flowers stay from it. */
+/** The dais' outer edge at ground level: decorations stand outside it. */
 const DAIS_R = 1.66;
-/** Clearance kept from a flower spot (heads and leaning stems), the stones and other things. */
+/** Room kept round every spot where a garden flower may grow (its stem, leaves and nodding head). */
 const FLOWER_GAP = 0.09;
 
 /**
@@ -606,6 +609,8 @@ export class Decor {
     this.place = null;
     this.key = '';
     this.spots = {};
+    /** place|season|max → spots */
+    this.cache = new Map();
   }
 
   /** Show these decorations (ids from DECOR) in the garden; new ones pop in, missing ones go. */
@@ -694,13 +699,17 @@ export class Decor {
       inv.copy(place.group.matrixWorld).invert();
     }
     const m = new THREE.Matrix4();
-    const a = new THREE.Vector3();
-    const b = new THREE.Vector3();
-    const c = new THREE.Vector3();
     const seen = new Set();
     // only this season's dressing counts (another season's may still be fading out)
     const dressings = env.seasons?.dressings?.get(entry);
     const skip = new Set(Object.entries(dressings ?? {}).filter(([k]) => k !== env.season).map(([, d]) => d.group));
+    const add = (x, y, z) => {
+      if (x * x + z * z > 21.16 || y > 1.33 || (y > 1.03 && y > groundY(x, z) + 1.4)) return;
+      const k = Math.round(x * 20) * 100000 + Math.round(z * 20);
+      if (seen.has(k)) return;
+      seen.add(k);
+      C.add(x, z, 0.04);
+    };
     const walk = (o) => {
       if (skip.has(o)) return;
       if (o.isMesh && o.geometry) {
@@ -720,27 +729,38 @@ export class Decor {
           // every vertex low enough to be in the way, and points across big triangles (a bench seat
           // or a slab has no vertices in its middle)
           const pos = o.geometry.attributes.position;
+          const arr = pos.array;
+          const e = m.elements;
+          const w = new Float32Array(pos.count * 3);
+          for (let i = 0; i < pos.count; i++) {
+            const x = arr[i * 3];
+            const y = arr[i * 3 + 1];
+            const z = arr[i * 3 + 2];
+            const wx = (w[i * 3] = e[0] * x + e[4] * y + e[8] * z + e[12]);
+            const wy = (w[i * 3 + 1] = e[1] * x + e[5] * y + e[9] * z + e[13]);
+            const wz = (w[i * 3 + 2] = e[2] * x + e[6] * y + e[10] * z + e[14]);
+            add(wx, wy, wz);
+          }
           const idx = o.geometry.index;
           const n = idx ? idx.count : pos.count;
-          const add = (x, y, z) => {
-            if (Math.hypot(x, z) > 4.6 || y > groundY(x, z) + 1.4) return;
-            const k = Math.round(x * 20) * 100000 + Math.round(z * 20);
-            if (seen.has(k)) return;
-            seen.add(k);
-            C.add(x, z, 0.04);
-          };
-          for (let i = 0; i + 2 < n; i += 3) {
-            a.fromBufferAttribute(pos, idx ? idx.getX(i) : i).applyMatrix4(m);
-            b.fromBufferAttribute(pos, idx ? idx.getX(i + 1) : i + 1).applyMatrix4(m);
-            c.fromBufferAttribute(pos, idx ? idx.getX(i + 2) : i + 2).applyMatrix4(m);
-            if (Math.min(a.y, b.y, c.y) > 1.4 || Math.min(Math.hypot(a.x, a.z), Math.hypot(b.x, b.z), Math.hypot(c.x, c.z)) > 4.7) continue;
-            const steps = Math.min(24, Math.ceil(Math.max(a.distanceTo(b), b.distanceTo(c), c.distanceTo(a)) / 0.08));
+          for (let t = 0; t + 2 < n; t += 3) {
+            const i0 = (idx ? idx.getX(t) : t) * 3;
+            const i1 = (idx ? idx.getX(t + 1) : t + 1) * 3;
+            const i2 = (idx ? idx.getX(t + 2) : t + 2) * 3;
+            const L2 = Math.max(
+              (w[i0] - w[i1]) ** 2 + (w[i0 + 1] - w[i1 + 1]) ** 2 + (w[i0 + 2] - w[i1 + 2]) ** 2,
+              (w[i1] - w[i2]) ** 2 + (w[i1 + 1] - w[i2 + 1]) ** 2 + (w[i1 + 2] - w[i2 + 2]) ** 2,
+              (w[i2] - w[i0]) ** 2 + (w[i2 + 1] - w[i0 + 1]) ** 2 + (w[i2 + 2] - w[i0 + 2]) ** 2
+            );
+            if (L2 < 0.0144) continue; // small: its corners are close enough together
+            if (Math.min(w[i0 + 1], w[i1 + 1], w[i2 + 1]) > 1.33) continue;
+            const steps = Math.min(24, Math.ceil(Math.sqrt(L2) / 0.08));
             for (let u = 0; u <= steps; u++) {
-              for (let w = 0; u + w <= steps; w++) {
+              for (let v2 = 0; u + v2 <= steps; v2++) {
                 const fu = u / steps;
-                const fw = w / steps;
+                const fw = v2 / steps;
                 const fv = 1 - fu - fw;
-                add(a.x * fv + b.x * fu + c.x * fw, a.y * fv + b.y * fu + c.y * fw, a.z * fv + b.z * fu + c.z * fw);
+                add(w[i0] * fv + w[i1] * fu + w[i2] * fw, w[i0 + 1] * fv + w[i1 + 1] * fu + w[i2 + 1] * fw, w[i0 + 2] * fv + w[i1 + 2] * fu + w[i2 + 2] * fw);
               }
             }
           }
@@ -846,37 +866,42 @@ export class Decor {
             const x = Math.sin(th) * r;
             const z = -Math.cos(th) * r;
             const ry0 = spec.face === 'in' ? Math.atan2(-x, -z) : Math.atan2(camXZ.x - x, camXZ.y - z);
-            for (const turn of turns) {
-              const ry = ry0 + turn;
+            // facing the dais / the camera if it fits, otherwise turned a little (the first that fits)
+            let ry = 0;
+            let turn = null;
+            for (const tr of turns) {
+              ry = ry0 + tr;
               const cs = Math.cos(ry);
               const sn = Math.sin(ry);
               let ok = true;
               for (const [fx, fz, fr] of foot) {
-                const wx = x + fx * cs + fz * sn;
-                const wz = z - fx * sn + fz * cs;
-                if (!free(wx, wz, fr)) {
+                if (!free(x + fx * cs + fz * sn, z - fx * sn + fz * cs, fr)) {
                   ok = false;
                   break;
                 }
               }
-              if (!ok) continue;
-              // seen from the menu camera (beside and behind the dais, not out front), close to the dais,
-              // apart from the others on screen and on the ground, its front towards the viewer
-              let score = 2.2 * this._seen(x, z, spec.h, R) - Math.max(0, r - (DAIS_R + R + 0.04)) * 1.4;
-              score -= 1.6 * smooth(0.15, 1.25, z);
-              const sx = this._screenX(x, z, spec.h);
-              for (const o of placed) {
-                score -= Math.max(0, 0.72 - Math.hypot(o.x - x, o.z - z)) * 1.5;
-                if (o.sx != null) score -= Math.max(0, 0.1 - Math.abs(o.sx - sx)) * 5;
+              if (ok) {
+                turn = tr;
+                break;
               }
-              if (spec.front) {
-                const tx = camXZ.x - x;
-                const tz = camXZ.y - z;
-                score += spec.front * ((Math.sin(ry) * tx + Math.cos(ry) * tz) / Math.hypot(tx, tz));
-              }
-              score -= Math.abs(deg) * 0.0006 + Math.abs(turn) * 0.25;
-              if (!best || score > best.score) best = { score, x, z, ry };
             }
+            if (turn === null) continue;
+            // seen from the menu camera (beside and behind the dais, not out front), close to the dais,
+            // apart from the others on screen and on the ground, its front towards the viewer
+            let score = 2.2 * this._seen(x, z, spec.h, R) - Math.max(0, r - (DAIS_R + R + 0.04)) * 1.4;
+            score -= 1.6 * smooth(0.15, 1.25, z);
+            const sx = this._screenX(x, z, spec.h);
+            for (const o of placed) {
+              score -= Math.max(0, 0.72 - Math.hypot(o.x - x, o.z - z)) * 1.5;
+              if (o.sx != null) score -= Math.max(0, 0.1 - Math.abs(o.sx - sx)) * 5;
+            }
+            if (spec.front) {
+              const tx = camXZ.x - x;
+              const tz = camXZ.y - z;
+              score += spec.front * ((Math.sin(ry) * tx + Math.cos(ry) * tz) / Math.hypot(tx, tz));
+            }
+            score -= Math.abs(deg) * 0.0006 + Math.abs(turn) * 0.25;
+            if (!best || score > best.score) best = { score, x, z, ry };
           }
         }
       }
@@ -919,7 +944,10 @@ export class Decor {
       const key = `${cur}|${this.env.season}|${this.garden?.max ?? MAX_FLOWERS}`;
       if (key !== this.key) {
         this.key = key;
-        const spots = this._layout();
+        // the same place and season always give the same spots: worked out once, then remembered
+        let spots = this.cache.get(key);
+        if (!spots) this.cache.set(key, (spots = this._layout()));
+        this.spots = spots;
         for (const it of this.items.values()) {
           const s = spots[it.id];
           // nowhere to stand here: it bows out (and comes back where there is room)
