@@ -46,9 +46,12 @@ export const HATS = [
 const COVERING = new Set(['top-hat', 'party', 'beanie', 'straw', 'grad', 'beret']);
 
 /**
- * Per character: `no` (true = can't wear any hat; or a list of hats it can't wear), `only` (the hats
- * it can wear), `hide(rig)` → objects tucked away under a covering hat, `tweak[hat]` = { x, y, z,
- * scale, tilt, … } nudges, `band` 'skull' (fitted hats hug the head itself, not what is around it).
+ * Per character (all optional): `no` (true: can't wear any hat; or a list of hats it can't wear),
+ * `only` (the hats it can wear), `hide(rig, hat)` → parts tucked away while that hat is on, and
+ * `tweak[hat]` nudges to the measured fit: perched hats { x, z, y, scale, tz, tx (tilts), minScale },
+ * fitted hats { lift (band higher above the brows), k (tilt), q (how much of the top the crown covers),
+ * pad (room under the crown), maxH (crown height cap), brimQ / boardQ (how much the brim / board must
+ * clear), y, z, scale }.
  * Characters missing here wear every hat with the measured fit.
  */
 const FIT = {
@@ -79,11 +82,18 @@ const FIT = {
     hide: (rig, hat) => (COVERING.has(hat) ? rig.head.children.filter((o) => o.isGroup && o.children.some((c) => c.isSprite) && o.position.y > rig.headCenter.y) : []),
   },
   ghost: { hide: (rig, hat) => (COVERING.has(hat) ? rig.head.children.filter((o) => o.isGroup && o.position.y > 0.85 && o.position.y < 1) : []) },
-  // the apple stuck on his spines comes off under a hat that covers them
-  // a mane / rainbow mane: the woolly hat sits up on top of it; the straw hat covers the unicorn's mane
-  lion: { tweak: { beanie: { maxH: 0.36 } } },
-  unicorn: { tweak: { straw: { maxH: 0.42 } } },
-  hedgehog: { hide: (rig, hat) => (['beanie', 'straw', 'grad', 'beret'].includes(hat) && rig.props.apple ? [rig.props.apple] : []) },
+  // the woolly hat sits up on top of the lion's mane; the straw hat covers the unicorn's mane
+  lion: { tweak: { beanie: { maxH: 0.36 }, straw: { q: 0.97, maxH: 0.42 } } },
+  unicorn: { tweak: { straw: { q: 0.97, maxH: 0.42 } } },
+  // the apple stuck on his spines comes off under a hat that covers them, a woolly hat flattens
+  // the spines on top of his head, and the straw hat and the cap cover every spine under them
+  hedgehog: {
+    hide: (rig, hat) => [
+      ...(['beanie', 'straw', 'grad', 'beret'].includes(hat) && rig.props.apple ? [rig.props.apple] : []),
+      ...(hat === 'beanie' ? rig.head.children.filter((o) => o.isMesh && o.geometry?.type === 'LatheGeometry' && o.position.y > rig.headCenter.y + 0.08) : []),
+    ],
+    tweak: { straw: { q: 0.99 }, grad: { q: 0.99, boardQ: 0.995 } },
+  },
 };
 
 // ── materials and parts ─────────────────────────────────────────────────
@@ -577,6 +587,8 @@ function fitBand(rig, cast, k, lift, top = faceTop(rig)) {
 /**
  * How tall a dome over the band must be (above the plane) to cover the top of the head: samples
  * the top surface inside the band and takes a high quantile (the odd ear or antenna pokes out).
+ * The domes are fuller than an ellipse (straight-ish sides, a rounded top), modelled as a
+ * superellipse: radius⁴ + (height / H)² = 1.
  */
 function domeHeight(cast, b, pad, q = 0.86) {
   const cosT = Math.cos(b.tilt);
@@ -585,26 +597,48 @@ function domeHeight(cast, b, pad, q = 0.86) {
   const B = b.B + pad;
   const from = b.y + 3;
   const need = [];
-  for (const f of [0, 0.32, 0.56, 0.74]) {
-    const n = f === 0 ? 1 : 16;
+  for (const f of [0, 0.32, 0.56, 0.74, 0.86]) {
+    const n = f === 0 ? 1 : f < 0.5 ? 12 : 18;
     for (let i = 0; i < n; i++) {
       const a = (i / n) * TAU;
       const u = Math.sin(a) * A * f;
       const v = Math.cos(a) * B * f;
       // point on the plane (v runs along the tilted plane)
-      const x = u;
-      const z = b.zc + v * cosT;
-      const y = topY(cast, x, z, from);
+      const y = topY(cast, u, b.zc + v * cosT, from);
       if (y === -Infinity) continue;
       // height above the plane, along its normal
-      const planeY = b.y + v * sinT;
-      const w = (y - planeY) * cosT;
-      const e = 1 - (u / A) ** 2 - (v / B) ** 2;
+      const w = (y - (b.y + v * sinT)) * cosT;
+      const e = 1 - ((u / A) ** 2 + (v / B) ** 2) ** 2;
       if (e <= 0.05) continue;
       need.push(w / Math.sqrt(e));
     }
   }
   return Math.max(0.12, quantile(need, q) + pad);
+}
+
+/** A point in a fitted hat's space (origin on the band, +Y its up, +Z forward) in head space. */
+function bandPoint(b, x, y, z, out = new THREE.Vector3()) {
+  const c = Math.cos(b.tilt);
+  const sn = Math.sin(b.tilt);
+  return out.set(x, b.y + y * c + z * sn, b.zc - y * sn + z * c);
+}
+
+/**
+ * How far the head (its hair, mane, spines …) rises above points of a fitted hat (hat space,
+ * [x, y, z]): the hat must go up this much for them to clear it. A high quantile, so the odd ear,
+ * horn or antenna may still poke through.
+ */
+function clearance(cast, b, pts, q = 0.88) {
+  const from = b.y + 3;
+  const c = Math.cos(b.tilt);
+  const v = new THREE.Vector3();
+  const over = [];
+  for (const [x, y, z] of pts) {
+    bandPoint(b, x, y, z, v);
+    const top = topY(cast, v.x, v.z, from);
+    over.push(top > -Infinity ? (top - v.y) * c : 0);
+  }
+  return Math.max(0, quantile(over, q));
 }
 
 /** Seat of a perched hat: the ring of radius r round (x, z) rests on the top of the head. */
@@ -916,8 +950,8 @@ function buildStraw(P, fit, col) {
 function buildGrad(P, fit, col) {
   const { A, B, H, s } = fit;
   const t = 0.025 * s;
-  // the skull cap: short, flat on top
-  const Hc = H + 0.02 * s;
+  // the skull cap: short, flat on top (taller when the board has to clear what is round the head)
+  const Hc = H + 0.02 * s + (fit.raise ?? 0);
   dome(P, 'felt', A + t, B + t, Hc, col.main, [[1, 0], [1, 0.4], [0.96, 0.8], [0.86, 0.97], [0, 1]]);
   // the board, level on top of the cap
   const w = clamp(Math.max(A, B) * 2.1 + 0.08 * s, 1.05 * s, 1.35 * s);
@@ -1171,24 +1205,47 @@ export function setHat(rig, id) {
     const ftop = faceTop(rig);
     let b = fitBand(rig, cast, k, lift, ftop);
     let H = 0;
+    const q = tweak.q ?? spec.q;
     if (b && id !== 'flowers') {
-      H = domeHeight(cast, b, spec.pad * s, spec.q);
+      const pad = (tweak.pad ?? spec.pad) * s;
+      H = domeHeight(cast, b, pad, q);
       const maxH = (tweak.maxH ?? spec.maxH) * s;
       for (let i = 0; i < 6 && H > maxH; i++) {
         lift += (H - maxH) * 0.75;
         const nb = fitBand(rig, cast, k, lift, ftop);
         if (!nb) break;
         b = nb;
-        H = domeHeight(cast, b, spec.pad * s, spec.q);
+        H = domeHeight(cast, b, pad, q);
       }
     }
     if (!b) {
       for (const o of hidden) o.visible = true;
       return false;
     }
-    fit = { ...b, H, s };
+    fit = { ...b, H, s, raise: 0 };
+    let up = 0;
+    if (id === 'straw') {
+      // the brim must clear big hair, manes and spines: the hat sits up on them instead
+      const a = b.A + 0.025 * s;
+      const c = b.B + 0.025 * s;
+      const pts = [];
+      for (const o of [0.04, 0.12, 0.2, 0.28, 0.36]) {
+        for (let i = 0; i < 24; i++) {
+          const t = (i / 24) * TAU;
+          pts.push([Math.sin(t) * (a + o * s), -0.075 * s * (o / 0.4) ** 2 - 0.012 * s, Math.cos(t) * (c + o * s)]);
+        }
+      }
+      up = clearance(cast, b, pts, tweak.brimQ ?? 0.9);
+    } else if (id === 'grad') {
+      // the board must clear them too: the cap grows taller
+      const w = clamp(Math.max(b.A, b.B) * 2.1 + 0.08 * s, 1.05 * s, 1.35 * s);
+      const pts = [];
+      for (let i = 0; i <= 8; i++) for (let j = 0; j <= 8; j++) pts.push([(i / 8 - 0.5) * w, H + 0.015 * s, (j / 8 - 0.5) * w]);
+      fit.raise = clearance(cast, b, pts, tweak.boardQ ?? 0.92);
+    }
     root.position.set(0, b.y + (tweak.y ?? 0), b.zc + (tweak.z ?? 0));
     root.rotation.x = -b.tilt;
+    root.position.add(new THREE.Vector3(0, Math.cos(b.tilt), -Math.sin(b.tilt)).multiplyScalar(up));
     if (id === 'beanie') {
       const top = buildBeanie(P, fit, col);
       const pom = new THREE.Group();
@@ -1247,6 +1304,7 @@ export function setHat(rig, id) {
     if (low < 0.005) rig.pivot.position.y += 0.005 - low;
   };
   rig.tickers.push(ticker);
+  root.visible = (rig.fx?.silhouette?.value ?? 0) < 0.5; // hidden from the start on a locked silhouette
 
   const handle = {
     id,
