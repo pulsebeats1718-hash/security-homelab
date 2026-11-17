@@ -7,6 +7,7 @@ import { formatScore } from '../../core/utils.js';
 import { ring } from './today.js';
 import { getPlace } from '../../data/places.js';
 import { loadSituations } from '../../data/situations/index.js';
+import { install } from '../install.js';
 
 /**
  * Main menu: today's strip (level, streak, daily goal, quests), Play (with Relax
@@ -70,6 +71,24 @@ export function createMenu(app) {
   // header: the account chip (added by the online module) sits next to the settings button
   const accountSlot = h('div.menu__account');
   const settingsBtn = h('button.iconbtn.menu__settings', { 'aria-label': 'Settings', onclick: () => ui.go('settings', { from: 'menu' }) }, icon('cog'));
+  // "Get the app": only while the browser can install it (it steps the logo down like the account chip)
+  const installChip = h(
+    'button.chip.chip--gold.menu__install',
+    {
+      'data-quiet': '1',
+      onclick: async () => {
+        audio.play('select');
+        if (await install.prompt()) ui.toast({ icon: 'download', title: 'Installing Phrasefall', sub: 'It will be on your home screen in a moment.', tone: 'gold' });
+      },
+    },
+    icon('download'),
+    'Get the app'
+  );
+  const syncInstall = () => {
+    if (install.state === 'ready') {
+      if (!installChip.isConnected) accountSlot.prepend(installChip);
+    } else installChip.remove();
+  };
 
   const el = h(
     'section.menu',
@@ -95,6 +114,8 @@ export function createMenu(app) {
   );
   // a wide account chip needs the logo to step down on narrow portrait screens
   new MutationObserver(() => el.classList.toggle('has-account', accountSlot.childElementCount > 0)).observe(accountSlot, { childList: true });
+  install.onChange(syncInstall);
+  syncInstall();
 
   // ── starting a game before the expressions have arrived ─────────────────
   let pressed = 'play';

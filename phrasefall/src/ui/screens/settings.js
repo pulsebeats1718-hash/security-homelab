@@ -5,6 +5,7 @@ import { SEASONS, getSeason, seasonFor } from '../../data/seasons.js';
 import { TOTAL_EXPRESSIONS, expressionsReady, whenExpressionsReady } from '../../data/expressions/index.js';
 import { CHARACTERS } from '../../characters/index.js';
 import { avatar, googleMark, signInButton, syncText } from '../account.js';
+import { install } from '../install.js';
 
 /** Settings: account (online builds), independent music and sound controls, pace, graphics and accessibility. */
 export function createSettings(app) {
@@ -167,6 +168,25 @@ export function createSettings(app) {
     if (!total) whenExpressionsReady().then(() => ui.name === 'settings' && syncAbout(), () => {});
   }
 
+  // install on the home screen: the browser's prompt (Android, desktop Chrome) or the iPhone steps
+  const installRow = h('div.set', { hidden: true });
+  function syncInstall() {
+    const state = install.state;
+    clear(installRow);
+    installRow.hidden = state === 'installed' || state === 'none';
+    if (state === 'ready') {
+      const btn = h('button.btn.btn--gold', { style: { minHeight: '44px', padding: '6px 16px 10px' }, 'data-quiet': '1' }, 'Install');
+      btn.onclick = async () => {
+        audio.play('select');
+        if (await install.prompt()) ui.toast({ icon: 'download', title: 'Installing Phrasefall', sub: 'It will be on your home screen in a moment.', tone: 'gold' });
+      };
+      installRow.append(h('span.set__ico', icon('download')), h('span.set__label', 'Install the app'), btn, h('p.set__note', 'Its own icon on your home screen, full screen, and it plays offline.'));
+    } else if (state === 'ios') {
+      installRow.append(h('span.set__ico', icon('download')), h('span.set__label', 'Install the app'), h('span'), h('p.set__note', 'In Safari, tap Share (the square with an arrow), then “Add to Home Screen”.'));
+    }
+  }
+  install.onChange(syncInstall);
+
   const resetRow = h('div.set');
   function syncReset(confirming = false) {
     clear(resetRow);
@@ -202,6 +222,7 @@ export function createSettings(app) {
       h(
         'div.settings.scroll',
         account,
+        installRow,
         music.row,
         sfx.row,
         pace.row,
@@ -228,6 +249,7 @@ export function createSettings(app) {
       season.sync();
       syncMotion();
       syncReset(false);
+      syncInstall();
       syncAccount(false);
       syncAbout();
     },

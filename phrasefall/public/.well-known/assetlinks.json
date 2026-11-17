@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "dev.workers.pulsebeats1718.phrasefall",
+      "sha256_cert_fingerprints": [
+        "CC:37:7F:4D:E4:E7:A7:39:2A:72:CB:8F:A2:BC:CE:FF:C1:DE:6A:3E:81:26:5F:B0:94:17:D2:50:18:C3:0E:5D"
+      ]
+    }
+  }
+]

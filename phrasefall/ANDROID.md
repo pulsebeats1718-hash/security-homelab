@@ -85,11 +85,21 @@ the *contents* of `dist/`. The game also works from a sub-folder address such as
 
 1. Open the address in **Chrome** on the phone and wait for the game to load. The first visit
    downloads about 1.6 MB and saves the game on the phone for offline play.
-2. Chrome may offer to install it in a banner at the bottom of the screen. If it doesn't, tap
-   **⋮** (top right) → **Install app**. On some Chrome versions the item is called
-   **Add to Home screen**: choose **Install** in the box that opens, not "Create shortcut".
+2. Tap **Get the app** at the top of the menu (or **Settings → Install the app → Install**). If
+   the button isn't there, tap **⋮** (top right) → **Install app**. On some Chrome versions the
+   item is called **Add to Home screen**: choose **Install** in the box that opens, not "Create
+   shortcut".
 3. Tap **Install**. The box shows the game's description and screenshots. Phrasefall appears on
    the home screen and in the app drawer.
+
+On an **iPhone or iPad**, open the address in Safari, tap **Share** (the square with an arrow) →
+**Add to Home Screen** (Settings in the game shows the same steps).
+
+### Or install the Android app file (APK)
+
+`android/` builds a small Android app (a Trusted Web Activity) that opens the same game full
+screen: a file you can copy to a phone and install, and the starting point for publishing on
+Google Play. How to build, sign and install it: [android/README.md](android/README.md).
 
 Open it from its icon. It starts full screen, with the status bar in the game's dark purple, and
 works without a connection. The phone's **Back** button works the way you'd expect inside the app:

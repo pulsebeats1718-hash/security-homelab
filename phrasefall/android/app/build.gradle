@@ -1,0 +1,81 @@
+/*
+ * Phrasefall for Android: a Trusted Web Activity. The app is a thin launcher that opens the live
+ * game (WEB_ORIGIN below) full screen in the phone's Chrome, so it always runs the latest version
+ * of the site, plays offline once loaded (the site's service worker), and keeps progress in the
+ * site's storage. See ../README.md.
+ *
+ * Signing: a release build is signed when `keystore.properties` (next to this project's
+ * settings.gradle) or the PHRASEFALL_KEYSTORE* environment variables name a keystore. Neither is
+ * ever committed.
+ */
+plugins {
+    id 'com.android.application'
+}
+
+def WEB_HOST = 'phrasefall.pulsebeats1718.workers.dev'
+def WEB_ORIGIN = "https://${WEB_HOST}"
+def BACKGROUND = '#17123F' // the game's dark purple: status bar, navigation bar, splash screen
+
+def keystoreProps = new Properties()
+def keystorePropsFile = rootProject.file('keystore.properties')
+if (keystorePropsFile.exists()) keystorePropsFile.withInputStream { keystoreProps.load(it) }
+def secret = { String key, String env -> keystoreProps.getProperty(key) ?: System.getenv(env) }
+def keystorePath = secret('storeFile', 'PHRASEFALL_KEYSTORE')
+
+android {
+    namespace 'dev.workers.pulsebeats1718.phrasefall'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId 'dev.workers.pulsebeats1718.phrasefall'
+        minSdk 24
+        targetSdk 36
+        versionCode 1
+        versionName '1.0.0'
+
+        resValue 'string', 'appName', 'Phrasefall'
+        resValue 'string', 'launcherName', 'Phrasefall'
+        resValue 'string', 'hostName', WEB_HOST
+        resValue 'string', 'launchUrl', "${WEB_ORIGIN}/"
+        resValue 'string', 'webManifestUrl', "${WEB_ORIGIN}/manifest.webmanifest"
+        resValue 'string', 'providerAuthority', 'dev.workers.pulsebeats1718.phrasefall.fileprovider'
+        // Digital Asset Links: the app trusts the site; the site trusts the app in
+        // public/.well-known/assetlinks.json (with this app's signing certificate)
+        resValue 'string', 'assetStatements', """[{ \\"relation\\": [\\"delegate_permission/common.handle_all_urls\\"], \\"target\\": { \\"namespace\\": \\"web\\", \\"site\\": \\"${WEB_ORIGIN}\\" } }]"""
+        resValue 'color', 'barColor', BACKGROUND
+        resValue 'color', 'splashColor', BACKGROUND
+    }
+
+    signingConfigs {
+        release {
+            if (keystorePath) {
+                storeFile file(keystorePath)
+                storePassword secret('storePassword', 'PHRASEFALL_KEYSTORE_PASSWORD')
+                keyAlias secret('keyAlias', 'PHRASEFALL_KEY_ALIAS') ?: 'phrasefall'
+                keyPassword secret('keyPassword', 'PHRASEFALL_KEY_PASSWORD') ?: secret('storePassword', 'PHRASEFALL_KEYSTORE_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (keystorePath) signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    buildFeatures {
+        resValues true
+    }
+}
+
+dependencies {
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.7.4'
+}
