@@ -104,8 +104,10 @@ four options before they land.
   ranked attempt a day (replays are practice) and a shareable emoji result.
 - **Installable and offline** – the production build is a PWA (manifest, icons,
   install screenshots, service worker); after the first visit it plays offline. On Android it
-  installs from Chrome and opens full screen, and the phone's Back button closes screens and
-  pauses games. How to publish it and install it: [ANDROID.md](ANDROID.md).
+  installs from Chrome (the menu's *Get the app* button) and opens full screen, and the phone's
+  Back button closes screens and pauses games; on iPhone, Settings shows the Add to Home Screen
+  steps. `android/` builds the same game as an Android app file (APK, a Trusted Web Activity)
+  for direct install or Google Play. How to publish it and install it: [ANDROID.md](ANDROID.md).
 - **Online, optional** – sign in with Google to keep progress in the cloud across
   devices and join live leaderboards (today's daily challenge, this week, all time).
   Guests play straight away, and their progress comes along when they sign in.

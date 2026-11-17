@@ -59,8 +59,7 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled true
-            shrinkResources true
+            minifyEnabled true // like Bubblewrap's template; resources are left as they are
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             if (keystorePath) signingConfig signingConfigs.release
         }
