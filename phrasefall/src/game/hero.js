@@ -6,6 +6,7 @@
 import * as THREE from 'three';
 import { createCharacter } from '../characters/index.js';
 import { setSummerGear } from '../characters/kit/summer.js';
+import { setHat as wearHat } from '../characters/kit/hats.js';
 import { damp } from '../core/utils.js';
 
 const _v = new THREE.Vector3();
@@ -28,6 +29,14 @@ export class Hero {
     this.waves = false;
     /** Summer: the character on the island wears sunglasses and a swim ring (portraits stay plain). */
     this.summer = false;
+    /** Sticker album hat (an id from HATS, or null), worn by every character that can wear it. */
+    this.hat = null;
+  }
+
+  /** Put a hat on the character on the island (and any shown later); null takes it off. True if this one wears it. */
+  setHat(id) {
+    this.hat = id ?? null;
+    return this.ch ? wearHat(this.ch.rig, this.hat) : false;
   }
 
   /** Turn the summer beach gear on or off for the character on the island (and any shown later). */
@@ -49,6 +58,7 @@ export class Hero {
     this.locked = locked;
     ch.rig.setSilhouette(locked);
     if (this.summer) setSummerGear(ch.rig, ch.def, true); // hidden by the kit while a locked silhouette
+    if (this.hat) wearHat(ch.rig, this.hat); // likewise
     ch.rig.root.rotation.y = this.spin;
     this.stage.scene.add(ch.rig.root);
     this.game.setCharacter(ch);

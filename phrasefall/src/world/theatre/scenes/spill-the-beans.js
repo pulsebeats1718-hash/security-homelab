@@ -4,6 +4,7 @@
  */
 import * as THREE from 'three';
 import { keys, ease, clamp, lerp } from '../../../core/utils.js';
+import { gasp } from '../actor.js';
 
 const LOOP = 6.4;
 const BEANS = 90;
@@ -48,7 +49,7 @@ function labelTexture(s) {
 export default {
   id: 'spill-the-beans',
   loop: LOOP,
-  frame: { x: 0.2, y: 1.15, z: 0.2, w: 3.9, h: 2.9 },
+  frame: { x: 0.25, y: 1.15, z: 0.25, w: 3.6, h: 2.7 },
   view: { yaw: 0.16, pitch: 0.16 },
   avoid: ['let-the-cat-out-of-the-bag', 'cry-over-spilt-milk'],
 
@@ -68,6 +69,7 @@ export default {
     const paper = new THREE.Mesh(s.own(new THREE.CylinderGeometry(0.258, 0.258, 0.4, 32, 1, true)), s.own(new THREE.MeshStandardMaterial({ map: labelTexture(s), roughness: 0.6 })));
     paper.rotation.y = -Math.PI / 2;
     tin.add(paper);
+    tin.scale.setScalar(1.2);
     s.add(tin);
 
     // the beans (one draw call) and their puddle of sauce
@@ -122,13 +124,7 @@ export default {
     };
     friend.pose = (P, t) => {
       friend.idle(P, { arms: false });
-      const gasp = keys(t, [[1.3, 0], [1.6, 1], [5.4, 1], [6.0, 0]]);
-      // hands to cheeks
-      P.armLZ += gasp * 1.15;
-      P.armRZ -= gasp * 1.15;
-      P.armLX += gasp * -0.95;
-      P.armRX += gasp * -0.95;
-      P.headX += gasp * 0.16;
+      gasp(P, keys(t, [[1.3, 0], [1.6, 1], [5.4, 1], [6.0, 0]]));
       P.sq += Math.sin(clamp((t - 1.3) / 0.3) * Math.PI) * -0.08;
     };
 
@@ -138,12 +134,12 @@ export default {
         hero.handPos('L', _a);
         hero.handPos('R', _b);
         tin.position.addVectors(_a, _b).multiplyScalar(0.5);
-        tin.position.y += 0.08;
-        tin.position.z += 0.06;
+        tin.position.y += 0.1;
+        tin.position.z += 0.1;
         const tip = keys(t, [[0.7, 0], [1.2, 1], [3.75, 1], [4.2, 0]], ease.inOutCubic);
         tin.rotation.set(0, 0, -tip * 2.0);
         tin.position.x += tip * 0.08;
-        mouth.set(0, 0.29, 0).applyEuler(tin.rotation).add(tin.position);
+        mouth.set(0, 0.35, 0).applyEuler(tin.rotation).add(tin.position);
         for (const b of starts) if (s.cue(b.at) || t < b.at) b.from.copy(mouth);
         const amount = clamp((t - POUR[0] - 0.3) / (POUR[1] - POUR[0]));
         const fade = t > LOOP - 0.55 ? clamp((LOOP - t) / 0.45) : 1;

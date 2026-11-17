@@ -109,6 +109,106 @@ export function sofa(s, { w = 2.2, color = 0x8f7bff, cushion = 0xb7a8ff } = {}) 
   return s.baked(g, { rough: 0.8 });
 }
 
+/**
+ * A cheerful toy sun (centred on its middle) with rays, a glow and a face (returned as
+ * userData.face so a scene can change its expression); userData.rays spins.
+ */
+export function sun(s, { r = 0.5, color = 0xffc83d } = {}) {
+  const { k } = s;
+  const g = k.group();
+  const body = k.mat(color, { emissive: 0xff9a1f, emissiveIntensity: 0.45, rough: 0.45 });
+  g.add(k.ball(body, r, r, r * 0.8));
+  const rays = k.group();
+  const ray = k.mat(0xffe08a, { emissive: 0xffb300, emissiveIntensity: 0.5, rough: 0.5 });
+  for (let i = 0; i < 10; i++) {
+    const a = (i / 10) * Math.PI * 2;
+    rays.add(k.at(k.cone(ray, r * 0.2, r * 0.42, 10), Math.cos(a) * r * 1.3, Math.sin(a) * r * 1.3, 0, 0, 0, a - Math.PI / 2));
+  }
+  g.add(rays, k.halo(0xffd27a, r * 5, 0.5));
+  const face = s.face({ parent: g, radii: [r, r, r * 0.8], eye: { yaw: 22, pitch: 10, size: r * 0.14 }, mouth: { pitch: -22, width: r * 0.2 }, cheeks: { color: 0xff7a5c, opacity: 0.6 }, brow: false });
+  g.userData.face = face;
+  g.userData.rays = rays;
+  return g;
+}
+
+/** A toy material with a woven hessian look (sacks, mats). */
+export function hessian(s, { color = '#d2ae72', thread = '#a9824a' } = {}) {
+  const c = document.createElement('canvas');
+  c.width = c.height = 128;
+  const g = c.getContext('2d');
+  g.fillStyle = color;
+  g.fillRect(0, 0, 128, 128);
+  g.strokeStyle = thread;
+  g.globalAlpha = 0.55;
+  g.lineWidth = 3;
+  for (let i = 0; i < 128; i += 8) {
+    g.beginPath();
+    g.moveTo(i, 0);
+    g.lineTo(i, 128);
+    g.stroke();
+    g.beginPath();
+    g.moveTo(0, i + 4);
+    g.lineTo(128, i + 4);
+    g.stroke();
+  }
+  const tex = s.own(new THREE.CanvasTexture(c));
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(5, 3);
+  const m = s.k.mat(0xffffff, { rough: 0.95, hessian: color, side: THREE.DoubleSide });
+  m.map = tex;
+  m.needsUpdate = true;
+  return m;
+}
+
+/** A lathe from a profile [[r, y], …] (smoothed), its rim rippled into soft folds: amp × sin(folds·angle). */
+export function folded(s, profile, { seg = 40, folds = 7, amp = 0.05, rise = 1 } = {}) {
+  const pts = new THREE.SplineCurve(profile.map(([r, y]) => new THREE.Vector2(r, y))).getPoints(26);
+  const geo = new THREE.LatheGeometry(pts, seg);
+  const p = geo.attributes.position;
+  const top = Math.max(...profile.map(([, y]) => y)) || 1;
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i);
+    const y = p.getY(i);
+    const z = p.getZ(i);
+    const a = Math.atan2(z, x);
+    const f = 1 + amp * Math.sin(a * folds + y * 3) * Math.pow(Math.max(0, y / top), rise) + amp * 0.4 * Math.sin(a * 3 + 1);
+    p.setXYZ(i, x * f, y, z * f);
+  }
+  geo.computeVertexNormals();
+  return s.own(geo);
+}
+
+const _up = new THREE.Vector3(0, 1, 0);
+const _dir = new THREE.Vector3();
+
+/**
+ * A rope, rein or string: a thin cylinder with `span(a, b, sag)` to stretch it between two world
+ * points each frame (sag > 0 droops it a little by bowing the middle down — drawn as two halves).
+ */
+export function rope(s, { r = 0.018, color = 0x7a4a2a } = {}) {
+  const { k } = s;
+  const m = k.mat(color, { rough: 0.7 });
+  const g = k.group();
+  const halves = [k.cyl(m, r, r, 1, 6), k.cyl(m, r, r, 1, 6)];
+  g.add(...halves);
+  const mid = new THREE.Vector3();
+  const put = (mesh, a, b) => {
+    _dir.subVectors(b, a);
+    const len = _dir.length() || 0.001;
+    mesh.position.addVectors(a, b).multiplyScalar(0.5);
+    mesh.quaternion.setFromUnitVectors(_up, _dir.multiplyScalar(1 / len));
+    mesh.scale.set(1, len, 1);
+  };
+  g.userData.span = (a, b, sag = 0) => {
+    mid.addVectors(a, b).multiplyScalar(0.5);
+    mid.y -= sag;
+    put(halves[0], a, mid);
+    put(halves[1], mid, b);
+  };
+  return g;
+}
+
 /** A little four-pointed twinkle (a flat star), for magic, ideas and "ding!" moments. */
 export function twinkle(s, { color = 0xffe08a, size = 0.18 } = {}) {
   const { k } = s;

@@ -60,6 +60,7 @@ scene.add(ground);
 
 const camera = new THREE.PerspectiveCamera(full ? 26 : 22, 1, 0.1, 60);
 const target = new THREE.Vector3();
+const box = new THREE.Box3();
 const bg = q.get('sil') ? new THREE.Color(0x1b1440) : new THREE.Color(0x9fd3f5);
 
 function pose(ch) {
@@ -118,8 +119,10 @@ ids.forEach((id, i) => {
     const R = ch.rig.headRadii;
     let span;
     if (full) {
-      target.set(0, (ch.rig.metrics.height + 0.5) / 2, 0);
-      span = ch.rig.metrics.height + 1.1;
+      // the whole character as it stands (or jumps, or lies) right now
+      box.setFromObject(ch.rig.root, true);
+      box.getCenter(target);
+      span = Math.max(box.max.y - box.min.y, (box.max.x - box.min.x) * 0.9) + 0.5;
     } else {
       ch.rig.head.localToWorld(target.copy(ch.rig.headCenter));
       target.y += R[1] * 0.55;

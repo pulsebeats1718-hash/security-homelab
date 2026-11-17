@@ -233,6 +233,39 @@ export function walk(P, t, { speed = 1, amount = 1 } = {}) {
   return P;
 }
 
+/** Both hands up to the mouth in surprise (w fades it in and out). */
+export function gasp(P, w = 1) {
+  if (w <= 0) return P;
+  P.armLX += -1.95 * w;
+  P.armRX += -1.95 * w;
+  P.armLZ += -0.62 * w;
+  P.armRZ += 0.62 * w;
+  P.headX += 0.08 * w;
+  P.torsoX += -0.04 * w;
+  return P;
+}
+
+/** Palms up and a tilt of the head: "what a fuss!" */
+export function shrug(P, w = 1) {
+  if (w <= 0) return P;
+  P.armLZ += 0.8 * w;
+  P.armRZ -= 0.8 * w;
+  P.armLX += -0.55 * w;
+  P.armRX += -0.55 * w;
+  P.headZ += 0.2 * w;
+  P.y += 0.03 * w;
+  return P;
+}
+
+/** Point with one arm ('L' or 'R'): out to the side and up by `lift` (0 = level, 1 = high). */
+export function point(P, side = 'R', w = 1, lift = 0.4) {
+  if (w <= 0) return P;
+  const s = side === 'L' ? 1 : -1;
+  P[`arm${side}Z`] += s * (1.35 + lift * 0.9) * w;
+  P[`arm${side}X`] += -0.35 * w;
+  return P;
+}
+
 /** Sitting: legs forward, body tucked down by `drop` (metres). */
 export function sit(P, { drop = 0.3, legs = 1.35, spread = 0.12 } = {}) {
   P.legLX -= legs;

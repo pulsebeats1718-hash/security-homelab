@@ -72,10 +72,18 @@ const FIT = {
   pirate: { no: true }, // tricorn
   wizard: { no: true }, // wizard's hat
   // the flame crest is her crown: only a ring of gold or flowers can go round it
-  phoenix: { only: ['crown', 'flowers'] },
+  phoenix: { only: ['crown', 'flowers'], tweak: { crown: { z: 0.1, minScale: 1, scale: 1.05, tz: -0.1, tx: 0.06 } } },
   // the antenna / wisp on top is tucked away under a hat that covers the head
-  robot: { tweak: { flowers: { lift: 0.12 }, beanie: { lift: 0.08 }, straw: { lift: 0.1 }, grad: { lift: 0.1 } }, hide: (rig) => rig.head.children.filter((o) => o.isGroup && o.children.some((c) => c.isSprite) && o.position.y > rig.headCenter.y) },
-  ghost: { hide: (rig) => rig.head.children.filter((o) => o.isGroup && o.position.y > 0.85 && o.position.y < 1) },
+  robot: {
+    tweak: { flowers: { lift: 0.2 }, beanie: { lift: 0.08 }, straw: { lift: 0.1 }, grad: { lift: 0.1 } },
+    hide: (rig, hat) => (COVERING.has(hat) ? rig.head.children.filter((o) => o.isGroup && o.children.some((c) => c.isSprite) && o.position.y > rig.headCenter.y) : []),
+  },
+  ghost: { hide: (rig, hat) => (COVERING.has(hat) ? rig.head.children.filter((o) => o.isGroup && o.position.y > 0.85 && o.position.y < 1) : []) },
+  // the apple stuck on his spines comes off under a hat that covers them
+  // a mane / rainbow mane: the woolly hat sits up on top of it; the straw hat covers the unicorn's mane
+  lion: { tweak: { beanie: { maxH: 0.36 } } },
+  unicorn: { tweak: { straw: { maxH: 0.42 } } },
+  hedgehog: { hide: (rig, hat) => (['beanie', 'straw', 'grad', 'beret'].includes(hat) && rig.props.apple ? [rig.props.apple] : []) },
 };
 
 // ── materials and parts ─────────────────────────────────────────────────
@@ -696,6 +704,7 @@ function buildTopHat(P, { r, s }, col) {
   }
   brim.computeVertexNormals();
   P.add('felt', brim, col.main);
+  underside(P, 'felt', r * 0.9, col.main, -0.008 * s);
 }
 
 function buildParty(P, { r, s }, col) {
@@ -715,11 +724,18 @@ function buildParty(P, { r, s }, col) {
       P.addM('satin', sphere(10), DOT_COLORS[n++ % DOT_COLORS.length] === col.main ? 0xffffff : DOT_COLORS[(n - 1) % DOT_COLORS.length], _m.compose(pos, _q, _s.set(d, d, d * 0.3)));
     }
   }
+  underside(P, 'satin', r, col.main);
   // frilly trim round the base
   for (let i = 0; i < 14; i++) {
     const a = (i / 14) * TAU;
     P.add('cloth', sphere(10), col.trim, Math.sin(a) * r * 1.02, 0.012 * s, Math.cos(a) * r * 1.02, 0, a, 0, 0.05 * s, 0.035 * s, 0.05 * s);
   }
+}
+
+/** A slightly domed underside closing a perched hat's opening of radius r (seen when it tilts). */
+function underside(P, finish, r, color, lift = 0) {
+  // running outwards (and a little down) the lathe faces downwards
+  P.add(finish, lathe([[0, lift + r * 0.22], [r * 0.6, lift + r * 0.16], [r, lift]], 32, 10), color);
 }
 
 /** The party hat's pompom (springy, so it is built on its own). */
@@ -773,6 +789,7 @@ function buildBeret(P, { r, s }, col) {
   const R = r * 1.72;
   const h = 0.18 * s;
   P.add('felt', lathe([[r * 0.96, 0], [R * 0.84, h * 0.1], [R, h * 0.4], [R * 0.96, h * 0.64], [R * 0.72, h * 0.9], [R * 0.32, h * 1.03], [0, h * 1.05]], 44, 30), col.main);
+  underside(P, 'felt', r * 0.96, col.dark);
   // the band where it meets the head
   P.add('felt', new THREE.TorusGeometry(r * 0.98, 0.028 * s, 8, 40), col.dark, 0, 0.014 * s, 0, Math.PI / 2, 0, 0);
   // the little stalk on top
@@ -814,7 +831,8 @@ function ellipseCord(A, B, off, y, r, seg = 48) {
  */
 function dome(P, finish, A, B, H, color, profile, bands = [], seg = 40) {
   const pts = new THREE.SplineCurve(profile.map(([r, y]) => new THREE.Vector2(r, y))).getPoints(48).map((p) => new THREE.Vector2(Math.max(0, p.x), p.y));
-  const cuts = [0, ...bands.flatMap(([a, b]) => [a, b]), 1.01].sort((a, b) => a - b);
+  const yTop = pts[pts.length - 1].y;
+  const cuts = [0, ...bands.flatMap(([a, b]) => [a, b]), yTop + 1].sort((a, b) => a - b);
   const at = (y) => {
     for (let i = 1; i < pts.length; i++) {
       if (pts[i].y >= y) {
@@ -829,7 +847,7 @@ function dome(P, finish, A, B, H, color, profile, bands = [], seg = 40) {
     const y1 = cuts[i];
     if (y1 - y0 < 1e-4) continue;
     const ring = [at(y0), ...pts.filter((p) => p.y > y0 + 1e-4 && p.y < y1 - 1e-4)];
-    if (y1 < 1.005) ring.push(at(y1));
+    if (y1 <= yTop) ring.push(at(y1));
     if (ring.length < 2) continue;
     const g = new THREE.LatheGeometry(ring, seg);
     g.scale(A, H, B);
@@ -841,7 +859,8 @@ function dome(P, finish, A, B, H, color, profile, bands = [], seg = 40) {
 
 function buildBeanie(P, fit, col) {
   const { A, B, s } = fit;
-  const H = fit.H + 0.07 * s; // a little slouch above the head
+  // a little slouch above the head, and never squashed flatter than a beanie should be (big hair)
+  const H = Math.max(fit.H + 0.07 * s, Math.max(A, B) * 0.8);
   const a = A + 0.03 * s;
   const b = B + 0.03 * s;
   // knitted dome, full and a little pointed, so it slouches; two stripes round it
@@ -943,7 +962,7 @@ function buildFlowers(P, fit, col) {
     // facing outwards and a little up
     const n = out.clone().multiplyScalar(0.8).add(new THREE.Vector3(0, 0.6, 0)).normalize();
     const c = col.flowers[i % col.flowers.length];
-    const R = 0.05 * s * size;
+    const R = 0.056 * s * size;
     const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), n);
     const right = new THREE.Vector3(1, 0, 0).applyQuaternion(q);
     const up = new THREE.Vector3(0, 1, 0).applyQuaternion(q);
@@ -968,6 +987,40 @@ function buildFlowers(P, fit, col) {
 }
 
 // ── putting it on ───────────────────────────────────────────────────────
+
+/** The outermost points of everything under `root` (in its space): a ring of directions, plus top and bottom. */
+function extremes(root, N = 24) {
+  root.updateMatrixWorld(true);
+  const inv = new THREE.Matrix4().copy(root.matrixWorld).invert();
+  const m = new THREE.Matrix4();
+  const v = new THREE.Vector3();
+  const best = Array.from({ length: N + 2 }, () => ({ d: -Infinity, p: new THREE.Vector3() }));
+  root.traverse((o) => {
+    if (!o.isMesh) return;
+    m.multiplyMatrices(inv, o.matrixWorld);
+    const pos = o.geometry.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i).applyMatrix4(m);
+      for (let k = 0; k < N; k++) {
+        const a = (k / N) * TAU;
+        const d = v.x * Math.sin(a) + v.z * Math.cos(a);
+        if (d > best[k].d) {
+          best[k].d = d;
+          best[k].p.copy(v);
+        }
+      }
+      if (v.y > best[N].d) {
+        best[N].d = v.y;
+        best[N].p.copy(v);
+      }
+      if (-v.y > best[N + 1].d) {
+        best[N + 1].d = -v.y;
+        best[N + 1].p.copy(v);
+      }
+    }
+  });
+  return best.filter((b) => b.d > -Infinity).map((b) => b.p);
+}
 
 /** The character id of a rig made by createCharacter ('character:<id>'). */
 const idOf = (rig) => (rig?.root?.name?.startsWith('character:') ? rig.root.name.slice(10) : null);
@@ -1050,8 +1103,8 @@ export function setHat(rig, id) {
 
   // things on the crown that a covering hat tucks away
   const hidden = [];
-  if (cfg.hide && COVERING.has(id)) {
-    for (const o of cfg.hide(rig) ?? []) {
+  if (cfg.hide) {
+    for (const o of cfg.hide(rig, id) ?? []) {
       if (o.visible) {
         o.visible = false;
         hidden.push(o);
@@ -1082,7 +1135,7 @@ export function setHat(rig, id) {
       crown: { r: 0.25, minScale: 0.62, q: 0.7, tz: 0.1, tx: -0.08, z: -0.02 },
       beret: { r: 0.29, minScale: 0.8, q: 0.75, tz: 0.4, tx: 0.12, z: 0.03, x: -0.06, clear: [0.12], lean: true },
     }[id];
-    fit = fitPerch(rig, cast, { ...spec, r: spec.r * s, x: (spec.x ?? 0) * s + (tweak.x ?? 0), z: (spec.z ?? 0) + (tweak.z ?? 0) });
+    fit = fitPerch(rig, cast, { ...spec, minScale: tweak.minScale ?? spec.minScale, r: spec.r * s, x: (spec.x ?? 0) * s + (tweak.x ?? 0), z: (spec.z ?? 0) + (tweak.z ?? 0) });
     let tz = spec.tz + (tweak.tz ?? 0);
     // a beret slides down the side of a round head, but lies flatter on a flat one
     if (spec.lean) tz = Math.sign(tz) * Math.min(Math.abs(tz), slope(cast, fit, -Math.sign(tz), fit.r * 1.6) * 0.9);
@@ -1120,8 +1173,9 @@ export function setHat(rig, id) {
     let H = 0;
     if (b && id !== 'flowers') {
       H = domeHeight(cast, b, spec.pad * s, spec.q);
-      for (let i = 0; i < 6 && H > spec.maxH * s; i++) {
-        lift += (H - spec.maxH * s) * 0.75;
+      const maxH = (tweak.maxH ?? spec.maxH) * s;
+      for (let i = 0; i < 6 && H > maxH; i++) {
+        lift += (H - maxH) * 0.75;
         const nb = fitBand(rig, cast, k, lift, ftop);
         if (!nb) break;
         b = nb;
@@ -1171,11 +1225,28 @@ export function setHat(rig, id) {
   if (id !== 'flowers') rig.spring(body, { axis: 'z', gain: 0.03, yawGain: 0.02, sway: 0.006, speed: 1.6, k: 110, d: 9, max: 0.08 });
   const addedSprings = rig.springs.slice(springsBefore);
 
+  // the hat's outline (its outermost points in a ring of directions, its top and its bottom): what
+  // must stay above the ground when the character topples over with a wide hat on
+  const outline = extremes(root);
+  const rootInv = new THREE.Matrix4();
+  const toRoot = new THREE.Matrix4();
+  const pt = new THREE.Vector3();
   const ticker = (t, dt, r) => {
-    root.visible = (r.fx?.silhouette?.value ?? 0) < 0.5;
+    const show = (r.fx?.silhouette?.value ?? 0) < 0.5;
+    root.visible = show;
+    if (!show) return;
+    rig.root.updateWorldMatrix(true, false);
+    root.updateWorldMatrix(true, false);
+    rootInv.copy(rig.root.matrixWorld).invert();
+    toRoot.multiplyMatrices(rootInv, root.matrixWorld);
+    let low = Infinity;
+    for (const p of outline) {
+      pt.copy(p).applyMatrix4(toRoot);
+      if (pt.y < low) low = pt.y;
+    }
+    if (low < 0.005) rig.pivot.position.y += 0.005 - low;
   };
   rig.tickers.push(ticker);
-  ticker(0, 0, rig);
 
   const handle = {
     id,

@@ -152,6 +152,46 @@ function swaying(mat, time, lift) {
   return mat;
 }
 
+/**
+ * Every spot where a garden flower may grow in the environment's current place and season, in
+ * the order the garden fills them ({ x, z, k }: k = how late it fills). The garden uses the first
+ * `max`; decorations keep clear of those (src/world/decor.js).
+ */
+export function gardenSpots(env) {
+  const places = env.places;
+  const placeId = places.current;
+  const season = env.season;
+  const place = places._entry?.(placeId)?.place ?? {};
+  const taken = (place.props ?? []).filter((p) => !p.far).map((p) => ({ x: p.x, z: p.z, r: 0.6 }));
+  for (const [x, z, s] of STEPPING_STONES) taken.push({ x, z, r: s + 0.22 });
+  for (const a of place.avoid ?? []) taken.push({ x: a.x, z: a.z, r: a.r + 0.15 });
+  const keep = place.ground?.keep;
+  const rng = mulberry32(hashString(`garden:${placeId}`));
+  const out = [];
+  const step = 0.3;
+  for (let gx = -6; gx <= 6; gx += step) {
+    for (let gz = -5; gz <= 5; gz += step) {
+      const x = gx + (rng() - 0.5) * step * 0.7;
+      const z = gz + (rng() - 0.5) * step * 0.7;
+      if (islandR(x, z) > 0.85 || Math.hypot(x, z) < 2.2) continue;
+      if (Math.abs(x) < 1.15 && z > 1.4) continue; // the path to the front of the dais
+      // off the place's own ground (streets, pavements…); on a beach island the sand takes the overflow
+      const offTurf = keep && !keep(x, z);
+      if (offTurf && !SAND_OVERFLOW.has(placeId)) continue;
+      if (place.free && !place.free(x, z)) continue;
+      if (season === 'summer' && sandEdge(x, z) <= 0.12) continue;
+      if (taken.some((t) => Math.hypot(t.x - x, t.z - z) < t.r)) continue;
+      // the sides of the dais first (on screen beside the character, above the menu's buttons),
+      // then outwards; the far front hides behind the interface and straight behind the character
+      // behind the character itself, so those fill last
+      const side = Math.abs(Math.hypot(x, z) - 2.6);
+      out.push({ x, z, k: side + (z > 1.3 ? 1.6 + (z - 1.3) * 0.8 : 0) + (Math.abs(x) < 1.6 && z < -1.2 ? 0.9 : 0) + rng() * 0.3 + (offTurf ? 100 : 0) });
+    }
+  }
+  out.sort((a, b) => a.k - b.k);
+  return out;
+}
+
 const _m = new THREE.Matrix4();
 const _q = new THREE.Quaternion();
 const _e = new THREE.Euler();
@@ -198,38 +238,7 @@ export class Garden {
 
   /** Free spots for the current place and season, nearest the front of the dais first. */
   _spots() {
-    const places = this.env.places;
-    const placeId = places.current;
-    const season = this.env.season;
-    const place = places._entry?.(placeId)?.place ?? {};
-    const taken = (place.props ?? []).filter((p) => !p.far).map((p) => ({ x: p.x, z: p.z, r: 0.6 }));
-    for (const [x, z, s] of STEPPING_STONES) taken.push({ x, z, r: s + 0.22 });
-    for (const a of place.avoid ?? []) taken.push({ x: a.x, z: a.z, r: a.r + 0.15 });
-    const keep = place.ground?.keep;
-    const rng = mulberry32(hashString(`garden:${placeId}`));
-    const out = [];
-    const step = 0.3;
-    for (let gx = -6; gx <= 6; gx += step) {
-      for (let gz = -5; gz <= 5; gz += step) {
-        const x = gx + (rng() - 0.5) * step * 0.7;
-        const z = gz + (rng() - 0.5) * step * 0.7;
-        if (islandR(x, z) > 0.85 || Math.hypot(x, z) < 2.2) continue;
-        if (Math.abs(x) < 1.15 && z > 1.4) continue; // the path to the front of the dais
-        // off the place's own ground (streets, pavements…); on a beach island the sand takes the overflow
-        const offTurf = keep && !keep(x, z);
-        if (offTurf && !SAND_OVERFLOW.has(placeId)) continue;
-        if (place.free && !place.free(x, z)) continue;
-        if (season === 'summer' && sandEdge(x, z) <= 0.12) continue;
-        if (taken.some((t) => Math.hypot(t.x - x, t.z - z) < t.r)) continue;
-        // the sides of the dais first (on screen beside the character, above the menu's buttons),
-        // then outwards; the far front hides behind the interface and straight behind the character
-        // behind the character itself, so those fill last
-        const side = Math.abs(Math.hypot(x, z) - 2.6);
-        out.push({ x, z, k: side + (z > 1.3 ? 1.6 + (z - 1.3) * 0.8 : 0) + (Math.abs(x) < 1.6 && z < -1.2 ? 0.9 : 0) + rng() * 0.3 + (offTurf ? 100 : 0) });
-      }
-    }
-    out.sort((a, b) => a.k - b.k);
-    return out.slice(0, this.max);
+    return gardenSpots(this.env).slice(0, this.max);
   }
 
   /**
