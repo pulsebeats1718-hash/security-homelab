@@ -44,7 +44,7 @@ export function createMenu(app) {
   const dailyBtn = h('button.daily', { 'data-quiet': '1', title: 'The same cards for everyone today', onclick: () => start('daily') }, h('span.daily__ico', icon('calendar')), h('span.daily__text', dailyTitle, dailySub), dailyTag);
   // Situations sit beside the daily challenge, as Relax and Challenge sit beside Play
   const talkBadge = h('span.tile__badge.mode-btn__badge', { hidden: true });
-  const talkBtn = h('button.mode-btn.mode-btn--talk', { 'data-quiet': '1', title: 'Situations: chat with the characters', onclick: () => (audio.play('select'), ui.go('talk', { from: 'menu' })) }, h('span.mode-btn__ico', icon('chat'), talkBadge), h('span.mode-btn__label', 'Situations'));
+  const talkBtn = h('button.mode-btn.mode-btn--talk', { 'data-quiet': '1', title: 'Situations and Literal Theatre', onclick: () => (audio.play('select'), ui.go('talk', { from: 'menu' })) }, h('span.mode-btn__ico', icon('chat'), talkBadge), h('span.mode-btn__label', 'Situations'));
   const dailyRow = h('div.menu__dailyrow', dailyBtn, talkBtn);
   const status = h('div.menu__status', { hidden: true, role: 'status' });
 

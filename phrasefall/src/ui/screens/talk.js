@@ -71,6 +71,14 @@ export function createTalk(app) {
     clear(body).append(
       h('p.talk__intro', 'Chat with the island’s characters. At each turn, pick the most natural thing to say, and find out when each expression fits.'),
       h('div.talk__count', icon('chat'), `${done} of ${list.length} situations done`),
+      // Literal Theatre lives here too: the characters act out idioms word for word
+      h(
+        'button.talk__theatre',
+        { 'data-quiet': '1', onclick: () => (audio.play('select'), ui.go('theatre', { from: 'talk' })) },
+        h('span.talk__theatre-ico', icon('masks')),
+        h('span.talk__theatre-text', h('b', 'Literal Theatre'), h('span', 'The characters act out idioms word for word. Can you guess which one?')),
+        h('span.talk__theatre-go', icon('play'))
+      ),
       ...groups.map((g) => {
         const open = level >= g.place.level;
         return h(

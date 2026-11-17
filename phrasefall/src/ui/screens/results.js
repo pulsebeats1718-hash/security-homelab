@@ -217,6 +217,7 @@ export function createResults(app) {
     const text = duelShareText({ name, score: r.score, correct: r.correct, total: d.total, marks: d.marks, reply: opp ? { score: opp.score, correct: opp.correct } : null });
     const pre = h('pre.share__text', url ? `${text}\n${url}` : text);
     const label = h('span', opp ? `Send your result to ${opp.name || 'your friend'}` : 'Send these cards to a friend');
+    let sent = false;
     const shareBtn = h(
       'button.btn.btn--gold.share__send',
       {
@@ -224,6 +225,11 @@ export function createResults(app) {
         onclick: async () => {
           audio.play('tap');
           const how = await shareOrCopy({ title: 'Phrasefall challenge', text, url }, pre);
+          // counted once per challenge (achievements), however many times it is sent
+          if ((how === 'shared' || how === 'copied') && !sent) {
+            sent = true;
+            app.events.emit('duel:shared', { seed: d.seed, reply: !!opp });
+          }
           if (how === 'copied' || how === 'selected') {
             clear(label).append(how === 'copied' ? 'Link copied: paste it to your friend' : 'Selected: copy it now');
             later(2600, () => clear(label).append(opp ? `Send your result to ${opp.name || 'your friend'}` : 'Send these cards to a friend'));

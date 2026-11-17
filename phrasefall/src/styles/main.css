@@ -6005,3 +6005,53 @@ svg.ico.fill {
   color: var(--ink);
   background: var(--gold);
 }
+
+/* Literal Theatre's door, at the top of Situations */
+.talk__theatre {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 12px 13px;
+  border-radius: 18px;
+  text-align: left;
+  color: var(--cream);
+  background: linear-gradient(120deg, #6b2d8f, #b8336a);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.16), inset 0 -4px 0 rgba(0, 0, 0, 0.22), 0 6px 16px rgba(10, 6, 44, 0.3);
+  transition: transform 0.1s;
+}
+.talk__theatre:active {
+  transform: scale(0.98);
+}
+.talk__theatre-ico {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 15px;
+  font-size: 1.5rem;
+  color: var(--ink);
+  background: var(--gold);
+  box-shadow: inset 0 -3px 0 var(--gold-2);
+}
+.talk__theatre-text b {
+  display: block;
+  font: 600 1.05rem/1.1 var(--display);
+}
+.talk__theatre-text span {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.84rem;
+  line-height: 1.3;
+  color: rgba(255, 246, 227, 0.82);
+}
+.talk__theatre-go {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: var(--ink);
+  background: var(--cream);
+}
