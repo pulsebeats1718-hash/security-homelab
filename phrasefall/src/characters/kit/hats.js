@@ -85,14 +85,14 @@ const FIT = {
   // the woolly hat sits up on top of the lion's mane; the straw hat covers the unicorn's mane
   lion: { tweak: { beanie: { maxH: 0.36 }, straw: { q: 0.97, maxH: 0.42 } } },
   unicorn: { tweak: { straw: { q: 0.97, maxH: 0.42 } } },
-  // the apple stuck on his spines comes off under a hat that covers them, a woolly hat flattens
-  // the spines on top of his head, and the straw hat and the cap cover every spine under them
+  // the apple stuck on his spines comes off under a hat that covers them, the woolly and straw hats
+  // flatten the spines on top of his head, and the cap's board clears every spine under it
   hedgehog: {
     hide: (rig, hat) => [
       ...(['beanie', 'straw', 'grad', 'beret'].includes(hat) && rig.props.apple ? [rig.props.apple] : []),
-      ...(hat === 'beanie' ? rig.head.children.filter((o) => o.isMesh && o.geometry?.type === 'LatheGeometry' && o.position.y > rig.headCenter.y + 0.08) : []),
+      ...(hat === 'beanie' || hat === 'straw' ? rig.head.children.filter((o) => o.isMesh && o.geometry?.type === 'LatheGeometry' && o.position.y > rig.headCenter.y + 0.08) : []),
     ],
-    tweak: { straw: { q: 0.99 }, grad: { q: 0.99, boardQ: 0.995 } },
+    tweak: { grad: { q: 0.99, boardQ: 0.995 } },
   },
 };
 

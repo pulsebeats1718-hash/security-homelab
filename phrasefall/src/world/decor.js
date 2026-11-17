@@ -300,7 +300,11 @@ function fountain(P, g, mats, quality) {
   const s = new THREE.Vector3();
   const p = new THREE.Vector3();
   return (t) => {
-    jet.scale.set(0.026 + Math.sin(t * 9) * 0.003, 0.03 + Math.sin(t * 7.3) * 0.006, 0.026 + Math.cos(t * 9) * 0.003);
+    // winter: the water ices over and the fountain rests
+    const run = 1 - SEASON_U.uSeason.value.w;
+    jet.visible = drops.visible = run > 0.02;
+    if (!jet.visible) return;
+    jet.scale.set((0.026 + Math.sin(t * 9) * 0.003) * run, (0.03 + Math.sin(t * 7.3) * 0.006) * run, (0.026 + Math.cos(t * 9) * 0.003) * run);
     for (let a = 0; a < ARCS; a++) {
       const ang = (a / ARCS) * TAU + 0.3;
       const ca = Math.cos(ang);
@@ -311,7 +315,7 @@ function fountain(P, g, mats, quality) {
         const r = 0.118 + 0.07 * u;
         const y = 0.35 + 0.02 * Math.sin(u * Math.PI) - 0.23 * u * u;
         p.set(ca * r, y, sa * r);
-        const sz = 0.011 * (1 - u * 0.35);
+        const sz = 0.011 * (1 - u * 0.35) * run;
         m.compose(p, q, s.set(sz, sz * (1 + u * 0.8), sz));
         drops.setMatrixAt(a * PER + k, m);
       }
@@ -468,8 +472,11 @@ function beehive(P, g, mats, quality) {
   const q = new THREE.Quaternion();
   const e = new THREE.Euler();
   const p = new THREE.Vector3();
-  const one = new THREE.Vector3(1, 1, 1);
   return (t) => {
+    // in winter the bees stay inside the hive
+    const out = 1 - SEASON_U.uSeason.value.w;
+    bees.visible = out > 0.02;
+    if (!bees.visible) return;
     for (let i = 0; i < n; i++) {
       const ph = i * 2.1;
       const w = 1.5 + i * 0.35;
@@ -479,7 +486,7 @@ function beehive(P, g, mats, quality) {
       // facing along its path
       e.set(0.15 * Math.sin(t * 3 + ph), -a, 0.2 * Math.sin(t * 23 + ph));
       q.setFromEuler(e);
-      m.compose(p, q, one);
+      m.compose(p, q, _s.setScalar(out));
       bees.setMatrixAt(i, m);
     }
     bees.instanceMatrix.needsUpdate = true;
@@ -542,7 +549,7 @@ function materials(time) {
         `#include <color_fragment>
         float pfR = length(vPfLocal);
         float pfW = sin(pfR * 64.0 - uTime * 2.4);
-        diffuseColor.rgb += vec3(0.2, 0.22, 0.24) * smoothstep(0.75, 1.0, pfW) * smoothstep(0.012, 0.05, pfR);`
+        diffuseColor.rgb += vec3(0.2, 0.22, 0.24) * smoothstep(0.75, 1.0, pfW) * smoothstep(0.012, 0.05, pfR) * (1.0 - uSeason.w);`
       );
   };
   // flags flutter along the string
