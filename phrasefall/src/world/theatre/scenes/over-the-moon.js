@@ -12,31 +12,31 @@ const HALF = LOOP / 2;
 const LEAP = [0.75, 1.75]; // within each half: take-off and landing
 const FROM = 1.7;
 
-/** A plump crescent moon standing on its back, opening to the right, its face on the inside curve. */
+/** A plump crescent moon standing on its back, opening to the right, with a sleepy smiling face. */
 function moon(s) {
   const { k } = s;
-  const gold = k.mat(0xffd23f, { emissive: 0xffb300, emissiveIntensity: 0.28, rough: 0.45 });
+  const R = 0.95;
+  const shape = new THREE.Shape();
+  shape.absarc(0, 0, R, Math.PI * 0.5, Math.PI * 1.5, false);
+  // the inner curve: a wider, shallower arc back to the top, which leaves a fat crescent
+  shape.absarc(0.52, 0, Math.hypot(0.52, R), Math.PI + Math.atan2(R, 0.52), Math.PI - Math.atan2(R, 0.52), true);
+  const geo = s.own(new THREE.ExtrudeGeometry(shape, { depth: 0.3, bevelEnabled: true, bevelThickness: 0.16, bevelSize: 0.13, bevelSegments: 5, curveSegments: 28 }));
+  geo.translate(0, 0, -0.15);
+  const gold = k.mat(0xffe27a, { emissive: 0xffc23d, emissiveIntensity: 0.32, rough: 0.5 });
   const g = k.group();
-  const R = 0.62;
-  const n = 15;
-  for (let i = 0; i < n; i++) {
-    const u = i / (n - 1);
-    const a = THREE.MathUtils.lerp(-2.25, 2.25, u);
-    const r = 0.06 + Math.sin(u * Math.PI) * 0.3;
-    g.add(k.at(k.ball(gold, r, r, r * 0.85), -Math.cos(a) * R * 0.85, Math.sin(a) * R + R + 0.05, 0));
-  }
-  // a few darker craters
-  const crater = k.mat(0xf0b52a, { rough: 0.6 });
-  [[-0.72, 0.85, 0.2, 0.07], [-0.6, 1.25, 0.21, 0.05], [-0.62, 0.45, 0.2, 0.05]].forEach(([x, y, z, r]) => g.add(k.at(k.ball(crater, r, r, r * 0.4), x, y, z)));
-  const body = s.baked(g, { rough: 0.45 });
-  const out = k.group(body);
-  // the face, on the fattest part of the crescent, looking out at the audience
-  const C = new THREE.Vector3(-0.62 * 0.85, 0.67, 0);
-  const face = s.face({ parent: out, radii: [0.36, 0.36, 0.31], center: C, eye: { yaw: 26, pitch: 8, size: 0.05 }, mouth: { pitch: -16, width: 0.07 }, cheeks: { color: 0xff8f5c, opacity: 0.55 }, brow: { color: 0xc27a08, thick: 0.009 } });
+  const body = k.mesh(geo, gold);
+  body.position.set(0.25, R + 0.15, 0);
+  g.add(body);
+  // craters, and the face on the fattest part, looking out at the audience
+  const crater = k.mat(0xf2c54f, { rough: 0.7 });
+  [[-0.62, 1.75, 0.07], [-0.45, 0.42, 0.06], [-0.75, 0.95, 0.05]].forEach(([x, y, r]) => g.add(k.at(k.ball(crater, r, r, r * 0.35), x + 0.25, y, 0.31)));
+  const C = new THREE.Vector3(-0.45 + 0.25, R + 0.2, 0.05);
+  const face = s.face({ parent: g, radii: [0.3, 0.3, 0.26], center: C, eye: { yaw: 24, pitch: 10, size: 0.055 }, mouth: { pitch: -18, width: 0.075 }, cheeks: { color: 0xff8f5c, opacity: 0.6 }, brow: { color: 0xc27a08, thick: 0.01 } });
   face.set('happy', 1e9);
-  out.add(k.halo(0xffe7a0, 2.6, 0.35));
-  out.children[out.children.length - 1].position.set(-0.2, 0.7, -0.2);
-  return out;
+  const glow = k.halo(0xffe7a0, 3.2, 0.32);
+  glow.position.set(-0.1, R + 0.1, -0.3);
+  g.add(glow);
+  return g;
 }
 
 export default {
@@ -44,12 +44,13 @@ export default {
   loop: LOOP,
   frame: { x: 0, y: 1.45, z: 0.1, w: 4.4, h: 3.5 },
   view: { yaw: 0.06, pitch: 0.12 },
+  theme: 'twilight',
 
   build(s) {
     const hero = s.hero();
     hero.mood('happy');
     const m = s.add(moon(s));
-    m.position.set(0.12, 0, -0.05);
+    m.position.set(0.05, 0, -0.05);
     const stars = Array.from({ length: 7 }, (_, i) => {
       const st = s.add(twinkle(s, { size: 0.12 + (i % 3) * 0.04 }));
       st.position.set(Math.cos(i * 1.9) * 1.8, 1.4 + ((i * 0.37) % 1) * 1.7, -0.6 - (i % 2) * 0.4);
@@ -106,12 +107,10 @@ export default {
           st.rotation.z = t * 1.5 + i;
           st.scale.setScalar(0.65 + 0.35 * Math.sin(t * 4 + i * 1.3) ** 2);
         });
-        const { u } = phase(t);
         if (s.cue(LEAP[0] + 0.5) || s.cue(HALF + LEAP[0] + 0.5)) {
           _v.set(xAt(t), yAt(t) + 1.2, 0.6);
           s.fx.burst(_v, { count: 16, color: 0xffe08a, color2: 0xffffff, speed: 3, size: 0.45, life: 0.6, gravity: 1, up: 0.5 });
         }
-        void u;
       },
     };
   },
