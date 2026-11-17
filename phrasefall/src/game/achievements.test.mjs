@@ -29,7 +29,7 @@ Date.now = () => now;
 const setClock = (day, hour, minute = 0) => (now = new Date(2026, 10, day, hour, minute).getTime());
 
 /** A small app: a save, the event bus, levels and streak (Progress) and a UI and audio that record what they are asked to do. */
-function fresh({ save = new Save(), screen = 'menu' } = {}) {
+function fresh({ save = new Save(), screen = 'menu', writeDelay } = {}) {
   const events = new Events();
   const progress = new Progress({ save, events });
   const sounds = [];
@@ -37,7 +37,7 @@ function fresh({ save = new Save(), screen = 'menu' } = {}) {
   const unlocked = [];
   const ui = { name: screen, toast: (t) => toasts.push(t) };
   events.on('achievement:unlocked', ({ id }) => unlocked.push(id));
-  const ach = createAchievements({ save, events, progress, ui, audio: { play: (name) => sounds.push(name) } });
+  const ach = createAchievements({ save, events, progress, ui, audio: { play: (name) => sounds.push(name) } }, { writeDelay });
   return { save, events, progress, ach, sounds, toasts, unlocked, ui };
 }
 const stat = (save, k) => save.data.stats[k] ?? 0;
@@ -86,7 +86,7 @@ await test('a fresh save: nothing unlocked, every badge listed with its goal and
     assert.equal(a.unlocked, false);
     assert.equal(a.at, null);
     assert.equal(a.have, a.count === 'level' ? 1 : 0, `${a.id} starts at the beginning`);
-    assert.equal(a.goal, a.goal > 1 ? ACHIEVEMENTS.find((d) => d.id === a.id).goal : 1);
+    assert.equal(a.goal, ACHIEVEMENTS.find((d) => d.id === a.id).goal ?? 1, `${a.id}: once is a goal of 1`);
   }
   const golden = badge(ach, 'golden-touch');
   assert.deepEqual([golden.name, golden.icon, golden.group, golden.goal], ['Golden touch', 'coin', 'Playing', 10]);
@@ -97,11 +97,11 @@ await test('a fresh save: nothing unlocked, every badge listed with its goal and
 await test('counters: golden cards count up; the badge unlocks once, saved, announced, with a sound and a toast', () => {
   const { ach, events, save, toasts, sounds, unlocked } = fresh();
   events.emit('game:intro', { mode: 'classic' });
-  for (let i = 1; i <= 9; i++) right(events, { golden: true, streak: i });
+  for (let i = 1; i <= 9; i++) right(events, { golden: true });
   assert.equal(stat(save, 'golden'), 9);
   assert.equal(badge(ach, 'golden-touch').have, 9);
   assert.equal(ach.isUnlocked('golden-touch'), false);
-  right(events, { golden: true, streak: 10 });
+  right(events, { golden: true });
   assert.equal(ach.isUnlocked('golden-touch'), true);
   assert.equal(save.data.ach['golden-touch'], now);
   assert.deepEqual(unlocked, ['golden-touch']);
@@ -128,14 +128,15 @@ await test('a badge is never celebrated twice: not after a restart, nor when its
   assert.equal(stat(again.save, 'games'), 2);
 });
 
-await test('in a game: fever, streaks, twist cards, jackpots, bosses and power-ups', () => {
+await test('in a game: streaks (ten start fever mode), twist cards, jackpots, bosses and power-ups', () => {
   const { ach, events, save } = fresh();
   events.emit('game:intro', { mode: 'classic' });
-  events.emit('game:fever', { on: false, quiet: true }); // a fever ending is not a fever
+  for (let i = 1; i <= 9; i++) right(events, { streak: i, twist: 'flip' });
+  assert.equal(badge(ach, 'on-fire').have, 9);
   assert.equal(ach.isUnlocked('on-fire'), false);
-  events.emit('game:fever', { on: true, streak: 10, quiet: false });
+  right(events, { streak: 10 });
   assert.ok(ach.isUnlocked('on-fire'));
-  for (let i = 1; i <= 19; i++) right(events, { streak: i, twist: i <= 9 ? 'flip' : null });
+  for (let i = 11; i <= 19; i++) right(events, { streak: i });
   assert.equal(badge(ach, 'unstoppable').have, 19);
   right(events, { streak: 20, golden: true, fever: true });
   assert.ok(ach.isUnlocked('unstoppable'));
@@ -175,7 +176,7 @@ await test('party games count for nothing but the party itself', () => {
   const { ach, events, save, unlocked } = fresh();
   events.emit('game:intro', { mode: 'party' });
   for (let i = 1; i <= 25; i++) right(events, { mode: 'party', golden: true, fever: i > 10, twist: 'flip', streak: i });
-  events.emit('game:fever', { on: true, quiet: false }); // no mode on this one: the game's mode decides
+  events.emit('boss:end', { won: true, hits: 3, stage: 0 }); // no mode on this one: the game's mode decides
   setClock(18, 23, 30);
   events.emit('game:ending', { mode: 'party', reason: 'complete', score: 2500, correct: 25, answered: 25, streak: 25, party: { turn: 0, of: 2 } });
   assert.deepEqual(save.data.stats, {});
@@ -244,7 +245,7 @@ await test('badges the save already earned unlock at start-up, celebrated once t
   save.data.best.streak = 25;
   save.data.streak = { ...save.data.streak, best: 7 };
   const { ach, events, toasts, sounds, unlocked, ui } = fresh({ save, screen: null });
-  const expected = ['first-steps', 'ten-game-test', 'unstoppable', 'hat-trick', 'creature-of-habit', 'wordsmith', 'budding-gardener', 'green-fingers', 'rising-star'];
+  const expected = ['first-steps', 'ten-game-test', 'on-fire', 'unstoppable', 'hat-trick', 'creature-of-habit', 'wordsmith', 'budding-gardener', 'green-fingers', 'rising-star'];
   assert.deepEqual(unlocked, expected, 'announced straight away, in order');
   assert.equal(ach.count(), expected.length);
   assert.equal(badge(ach, 'treasure-hunter').have, 100);
@@ -259,7 +260,7 @@ await test('badges the save already earned unlock at start-up, celebrated once t
   events.emit('ui:screen', 'menu');
   assert.deepEqual(sounds, ['unlock'], 'one sound for the lot');
   assert.deepEqual(toasts.map((t) => t.sub), ['First steps', 'Ten-game test', 'See them all in My Collection']);
-  assert.equal(toasts[2].title, '7 more achievements unlocked');
+  assert.equal(toasts[2].title, '8 more achievements unlocked');
   events.emit('ui:screen', 'collection');
   assert.equal(toasts.length, 3, 'celebrated once');
 });
@@ -372,6 +373,15 @@ await test('perfect daily: all 20 right on the day’s first go, from the event 
   assert.ok(fresh({ save }).ach.isUnlocked('perfect-daily'));
 });
 
+await test('sticker album: a completed set, announced or already in the save (another device, an earlier build)', () => {
+  const { ach, events } = fresh();
+  events.emit('album:complete', { set: 'weather' });
+  assert.ok(ach.isUnlocked('sticker-collector'));
+  const save = new Save();
+  save.data.album = { food: now - 1000 };
+  assert.ok(fresh({ save }).ach.isUnlocked('sticker-collector'));
+});
+
 await test('which runs count as games', () => {
   assert.equal(isOwnGame({ mode: 'classic', answered: 1 }), true);
   assert.equal(isOwnGame({ mode: 'duel', answered: 20 }), true);
@@ -400,24 +410,61 @@ await test('a malformed save is repaired; a cloud sync brings badges and counter
   assert.equal(badge(ach, 'twister').have, 0);
 });
 
-await test('counters reach storage: at the end of a game, and soon after things done outside one', async () => {
+await test('counters reach storage: when a game ends, on the next screen, and soon after anything else', async () => {
   const store = new Map();
   globalThis.localStorage = { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, String(v)), removeItem: (k) => store.delete(k) };
+  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const pageEvents = {};
+  globalThis.document = { hidden: false, addEventListener: (type, fn) => (pageEvents[type] = fn) };
   try {
     const stored = () => JSON.parse(store.get('phrasefall.save.v1') ?? '{}').stats ?? {};
-    const { events } = fresh();
+    const { events, save } = fresh({ writeDelay: 30 });
+    // mid-game counters wait for the end of the game
     events.emit('game:intro', { mode: 'classic' });
     right(events, { golden: true });
+    await wait(60);
+    assert.equal(stored().golden, undefined);
     events.emit('game:ending', { mode: 'classic', reason: 'ko', score: 300, correct: 3, answered: 6, streak: 3 });
-    assert.equal(stored().golden, 1);
-    assert.equal(stored().games, 1);
-    events.emit('cards:review', { id: 'break-the-ice', knew: true }); // flashcards write first; the count follows shortly
+    assert.deepEqual([stored().golden, stored().games], [1, 1]);
+    // a game left part-way (no results): written when the next screen opens
+    events.emit('game:intro', { mode: 'classic' });
+    right(events, { golden: true });
+    events.emit('ui:screen', 'menu');
+    assert.equal(stored().golden, 2);
+    // flashcards write the save before the count moves: it follows shortly after
+    events.emit('cards:review', { id: 'break-the-ice', knew: true });
     assert.equal(stored().reviews, undefined);
-    await new Promise((resolve) => setTimeout(resolve, 1400));
+    await wait(60);
     assert.equal(stored().reviews, 1);
+    // when something else writes first, the waiting write has nothing left to do, and the next one still comes
+    events.emit('cards:review', { id: 'break-the-ice', knew: true });
+    save.write();
+    assert.equal(stored().reviews, 2);
+    await wait(60);
+    events.emit('cards:review', { id: 'break-the-ice', knew: true });
+    await wait(60);
+    assert.equal(stored().reviews, 3);
+    // the player leaves the app mid-game: what is waiting is written anyway
+    events.emit('game:intro', { mode: 'classic' });
+    right(events, { golden: true });
+    globalThis.document.hidden = true;
+    pageEvents.visibilitychange();
+    assert.equal(stored().golden, 3);
   } finally {
     delete globalThis.localStorage;
+    delete globalThis.document;
   }
+});
+
+await test('after Settings → reset progress, badges can be won (and celebrated) again from scratch', () => {
+  const { ach, events, save, toasts } = fresh();
+  events.emit('talk:done', { id: 'home-rainy-fete', first: 3, of: 3 }); // its record is not in the save: counted from the event
+  assert.ok(ach.isUnlocked('spot-on'));
+  save.reset();
+  assert.equal(ach.count(), 0);
+  assert.equal(badge(ach, 'chatterbox').have, 0, 'the situations finished before the reset are forgotten');
+  game(events);
+  assert.deepEqual(toasts.map((t) => t.sub), ['Spot on', 'First steps']);
 });
 
 Date.now = realNow;

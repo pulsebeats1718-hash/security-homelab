@@ -39,14 +39,13 @@ function group(name, items) {
   return h(
     `section.ach__group.ach--${tone(name)}`,
     h('header.ach__head', h('h3.eyebrow', name), h(`span.ach__tally${won === items.length ? '.is-full' : ''}`, `${won}/${items.length}`)),
-    h('ul.ach__grid', items.map(badge))
+    h('ul.ach__grid', { role: 'list' }, items.map(badge))
   );
 }
 
 function badge(a) {
   const hidden = a.secret && !a.unlocked;
   const counting = !a.unlocked && !hidden && a.goal > 1;
-  const state = a.unlocked ? `unlocked ${date(a.at)}` : hidden ? 'secret, not unlocked yet' : counting ? `${fmt(a.have)} of ${fmt(a.goal)}` : 'not unlocked yet';
   let foot = null;
   if (a.unlocked) foot = h('span.ach__date', icon('check'), date(a.at));
   else if (counting)
@@ -57,10 +56,11 @@ function badge(a) {
     );
   return h(
     `li.ach__badge${a.unlocked ? '.is-on' : ''}${hidden ? '.is-secret' : ''}`,
-    { 'aria-label': `${a.name}: ${hidden ? 'secret achievement' : a.text}, ${state}` },
-    h('span.ach__medal', hidden ? h('span.ach__q', '?') : icon(a.icon), a.unlocked ? null : h('span.ach__lock', icon('lock'))),
+    h('span.ach__medal', { 'aria-hidden': 'true' }, hidden ? h('span.ach__q', '?') : icon(a.icon), a.unlocked ? null : h('span.ach__lock', icon('lock'))),
     h('span.ach__name', a.name),
-    h('span.ach__text', hidden ? '???' : a.text),
+    // for screen readers: the state the colours and the padlock show
+    h('span.ach__sr', a.unlocked ? 'Unlocked.' : hidden ? 'A secret badge, still locked.' : 'Locked.'),
+    h('span.ach__text', hidden ? { 'aria-hidden': 'true' } : null, hidden ? '???' : a.text),
     foot
   );
 }

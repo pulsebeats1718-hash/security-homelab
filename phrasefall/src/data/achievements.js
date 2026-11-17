@@ -24,7 +24,7 @@ export const ACHIEVEMENTS = [
   // ── Playing ─────────────────────────────────────────────────────────────
   { id: 'first-steps', name: 'First steps', text: 'Finish your first game', icon: 'play', group: 'Playing', count: 'games' },
   { id: 'ten-game-test', name: 'Ten-game test', text: 'Finish 10 games', icon: 'repeat', group: 'Playing', count: 'games', goal: 10 },
-  { id: 'on-fire', name: 'On fire', text: 'Get 10 right in a row to start fever mode', icon: 'bolt', group: 'Playing', count: 'fevers' },
+  { id: 'on-fire', name: 'On fire', text: 'Get 10 right in a row to start fever mode', icon: 'bolt', group: 'Playing', count: 'bestStreak', goal: 10 },
   { id: 'golden-touch', name: 'Golden touch', text: 'Catch 10 golden cards', icon: 'coin', group: 'Playing', count: 'golden', goal: 10 },
   { id: 'unstoppable', name: 'Unstoppable', text: 'Reach a ×20 streak in one game', icon: 'gauge', group: 'Playing', count: 'bestStreak', goal: 20 },
   { id: 'twister', name: 'Twister', text: 'Get 50 twist cards right', icon: 'layers', group: 'Playing', count: 'twists', goal: 50 },
@@ -66,7 +66,7 @@ export const ACHIEVEMENTS = [
   { id: 'sticker-collector', name: 'Sticker collector', text: 'Complete a set in your sticker album', icon: 'sticker', group: 'Explorer', count: 'setsDone' },
 
   // ── Secret ──────────────────────────────────────────────────────────────
-  { id: 'night-owl', name: 'Night owl', text: 'Finish a game between 10 pm and 4 am', icon: 'clock', group: 'Secret', count: 'nightGames', secret: true },
+  { id: 'night-owl', name: 'Night owl', text: 'Finish a game between 10\u00a0pm and 4\u00a0am', icon: 'clock', group: 'Secret', count: 'nightGames', secret: true },
   { id: 'early-bird', name: 'Early bird', text: 'Finish a game between 5 and 8 in the morning', icon: 'sun', group: 'Secret', count: 'earlyGames', secret: true },
   { id: 'weekend-warrior', name: 'Weekend warrior', text: 'Finish games on both days of a weekend', icon: 'ball', group: 'Secret', count: 'weekends', secret: true },
   { id: 'jackpot', name: 'Jackpot!', text: 'Catch a golden card in fever mode', icon: 'chest', group: 'Secret', count: 'jackpots', secret: true },

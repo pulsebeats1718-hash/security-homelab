@@ -75,10 +75,9 @@ function perfectDailyRecords(daily) {
 /** Counters kept in save.data.stats, moved on by events. */
 export const COUNTERS = [
   'games', // the player's own games finished (isOwnGame)
-  'fevers', // times fever mode started
   'golden', // golden cards caught
   'jackpots', // golden cards caught in fever mode
-  'bestStreak', // the longest run of right answers in a game with lives to lose
+  'bestStreak', // the longest run of right answers in a game with lives to lose (ten start fever mode)
   'twists', // twist cards answered right
   'perfectDailies', // ranked daily challenges with every card right
   'bosses', // boss storm clouds beaten
@@ -105,6 +104,7 @@ export const MEASURES = {
   games: (m) => Math.max(m.stat('games'), num(m.data.totals?.games)),
   bestStreak: (m) => Math.max(m.stat('bestStreak'), num(m.data.best?.streak)),
   perfectDailies: (m) => Math.max(m.stat('perfectDailies'), perfectDailyRecords(m.data.daily)),
+  setsDone: (m) => Math.max(m.stat('setsDone'), isObj(m.data.album) ? Object.values(m.data.album).filter((t) => num(t) > 0).length : 0), // album.js: { [setId]: completedAtMs }
   // straight from the save
   mastered: (m) => m.save.masteredCount,
   flowers: (m) => m.save.plantedIds().length,
@@ -117,23 +117,23 @@ export const MEASURES = {
   weekends: (m) => weekendsPlayed(m.data.days),
 };
 
-export function createAchievements(app) {
+/**
+ * Start listening (once, at start-up). `app` needs events, save, progress, ui (toast, name)
+ * and audio. `writeDelay`: how long counters that moved outside a game wait to be written.
+ */
+export function createAchievements(app, { writeDelay = WRITE_DELAY } = {}) {
   const { events, save } = app;
   let mode = 'classic'; // the game being played: party games don't count
   let playing = false; // mid-game, counters wait for the game's end to be written
   let dirty = false; // counters changed since the save was last written
   let timer = null;
-  let seen = null; // the save data last read: a reset or a cloud sync swaps the whole object
+  let current = save.data; // a reset or a cloud sync swaps the save's whole data object
   const toasts = []; // badges won, waiting for a screen to be celebrated on
   const talked = new Map(); // situations finished this session: id → { best, of }
 
   /** The save's achievement data, repaired if it is missing or malformed (never kept: a reset or a cloud sync replaces it). */
   function data() {
     const d = save.data;
-    if (d !== seen) {
-      seen = d;
-      talked.clear(); // a reset forgets them; a cloud sync's save has their records
-    }
     if (!isObj(d.stats)) d.stats = {};
     if (!isObj(d.ach)) d.ach = {};
     return d;
@@ -219,24 +219,32 @@ export function createAchievements(app) {
     if (more) app.ui.toast({ icon: 'trophy', title: `${more} more achievements unlocked`, sub: 'See them all in My Collection', tone: 'gold', ms: 3600 });
   }
 
-  /** Write counters that moved: soon (or with whatever writes the save next), and mid-game only when it ends. */
-  function persist(now = false) {
-    if (!dirty || playing) return;
-    if (!now) {
-      if (!timer) {
-        timer = setTimeout(() => persist(true), WRITE_DELAY);
-        timer.unref?.(); // Node (tests): never keeps the process alive
-      }
-      return;
-    }
+  /**
+   * Counters that moved are written soon after (or go out with whatever writes the save first);
+   * mid-game they wait for the game's end, like the rest of the game's progress.
+   */
+  function persistSoon() {
+    if (!dirty || playing || timer) return;
+    timer = setTimeout(flush, writeDelay);
+    timer.unref?.(); // Node (tests): never keeps the process alive
+  }
+  /** Write the counters that moved now (mid-game only when `force`d). */
+  function flush(force = false) {
     clearTimeout(timer);
     timer = null;
+    if (!dirty || (playing && !force)) return;
     dirty = false;
     save.write();
   }
   save.onChange?.(() => {
     dirty = false; // the counters went out with that write
+    if (save.data !== current) {
+      current = save.data;
+      talked.clear(); // a reset forgets them; a cloud sync's merged save has their records
+    }
   });
+  // the player leaving the app (even mid-game, while nothing is on screen): write what is waiting
+  globalThis.document?.addEventListener?.('visibilitychange', () => document.hidden && flush(true));
 
   // ── games ───────────────────────────────────────────────────────────────
   events.on('game:intro', (p) => {
@@ -264,11 +272,6 @@ export function createAchievements(app) {
     if (p.mastered) moved.push('mastered', 'flowers');
     if (moved.length) check(moved);
   });
-  events.on('game:fever', (p) => {
-    if (!p?.on || mode === 'party') return;
-    add('fevers');
-    check(['fevers']);
-  });
   events.on('boss:end', (p) => {
     if (!p?.won || mode === 'party') return;
     add('bosses');
@@ -293,14 +296,14 @@ export function createAchievements(app) {
       if (isObj(them) && duelOutcome({ score: num(r.score), correct: num(r.correct) }, { score: num(them.score), correct: num(them.correct) }) === 'win') add('challengesWon');
     }
     check(); // everything: mastery, flowers, level, the streak and the day log move during games too
-    persist(true);
+    flush();
   });
 
   // ── learning outside games ──────────────────────────────────────────────
   events.on('cards:review', () => {
     add('reviews');
     check(['reviews']);
-    persist();
+    persistSoon();
   });
   // a reply or a line right first time counts as a right answer, which can master an expression
   const answeredRight = (p) => p?.correct && check(['mastered', 'flowers']);
@@ -309,12 +312,12 @@ export function createAchievements(app) {
   events.on('talk:done', (p) => {
     if (typeof p?.id === 'string') talked.set(p.id, { best: num(p.first), of: num(p.of) });
     check();
-    persist();
+    persistSoon();
   });
   events.on('theatre:done', (p) => {
     if (num(p?.n) > 0 && num(p?.right) >= p.n) add('perfectShows');
     check();
-    persist();
+    persistSoon();
   });
 
   // ── progress, friends, the album ────────────────────────────────────────
@@ -323,7 +326,7 @@ export function createAchievements(app) {
   const counted = (k) => () => {
     add(k);
     check([k]);
-    persist();
+    persistSoon();
   };
   events.on('duel:shared', counted('challenges'));
   events.on('party:done', counted('parties'));
@@ -332,8 +335,8 @@ export function createAchievements(app) {
   // ── the app ─────────────────────────────────────────────────────────────
   events.on('save:replaced', () => check()); // a cloud sync: progress from another device
   events.on('ui:screen', (name) => {
-    playing = name === 'play';
-    persist();
+    playing = name === 'play'; // also notices a game left part-way (it has no 'game:ending')
+    flush();
     celebrate();
   });
 
