@@ -29,6 +29,9 @@ import { createToday } from './ui/screens/today.js';
 import { createJourney } from './ui/screens/journey.js';
 import { createDuel } from './ui/screens/duel.js';
 import { createTalk } from './ui/screens/talk.js';
+import { createTheatre } from './ui/screens/theatre.js';
+import { createAchievements } from './game/achievements.js';
+import { Decor } from './world/decor.js';
 import { decodeDuel } from './game/duel.js';
 import { warmUpSpeech } from './audio/speech.js';
 import { createGarden } from './game/garden.js';
@@ -130,6 +133,7 @@ async function boot() {
   });
   app.online = createOnline(app); // Google sign-in, cloud save, leaderboards — inert unless Firebase is configured
   app.garden = createGarden(app); // the memory garden: a flower on the island for every mastered expression
+  app.decor = new Decor(env, app.garden.world); // garden decorations won in the sticker album
   whenExpressionsReady().then(() => app.garden.refresh(), () => {});
   window.__pf = app; // handy for testing from the console
   progress(0.3);
@@ -139,6 +143,7 @@ async function boot() {
   stage.onUpdate((dt, t) => {
     env.update(dt, t);
     app.garden.world.update(t, dt);
+    app.decor.update(t, dt);
     game.update(dt);
     hero.update(dt);
     fx.update(dt, t, game.dizzyAnchor);
@@ -193,8 +198,10 @@ async function boot() {
   s.journey = ui.add('journey', createJourney(app));
   s.duel = ui.add('duel', createDuel(app));
   s.talk = ui.add('talk', createTalk(app));
+  s.theatre = ui.add('theatre', createTheatre(app));
   ui.finish();
   createNotifier(app); // toasts for quests, goals and level-ups
+  app.achievements = createAchievements(app); // badges for milestones, unlocked from game events
   app.account = createAccount(app); // header chip, account sheet, nickname dialog (online builds only)
 
   // ── global input ────────────────────────────────────────────────────────
