@@ -30,6 +30,7 @@ import { createJourney } from './ui/screens/journey.js';
 import { createDuel } from './ui/screens/duel.js';
 import { createTalk } from './ui/screens/talk.js';
 import { createTheatre } from './ui/screens/theatre.js';
+import { createParty } from './ui/screens/party.js';
 import { createAchievements } from './game/achievements.js';
 import { Decor } from './world/decor.js';
 import { decodeDuel } from './game/duel.js';
@@ -170,7 +171,8 @@ async function boot() {
     hero.waves = false;
     hero.face();
     hero.spin = 0;
-    hero.set(save.data.character, { effect: false, clip: null });
+    // a party turn plays as that player's character
+    hero.set(opts.party?.player?.character ?? save.data.character, { effect: false, clip: null });
     ui.go('play');
     game.start(opts);
   };
@@ -199,6 +201,7 @@ async function boot() {
   s.duel = ui.add('duel', createDuel(app));
   s.talk = ui.add('talk', createTalk(app));
   s.theatre = ui.add('theatre', createTheatre(app));
+  s.party = ui.add('party', createParty(app));
   ui.finish();
   createNotifier(app); // toasts for quests, goals and level-ups
   app.achievements = createAchievements(app); // badges for milestones, unlocked from game events

@@ -584,7 +584,8 @@ export function createHud(app) {
     clearTimeout(speakTimer);
   });
 
-  events.on('game:over', (results) => ui.go('results', results));
+  // a party turn goes back to the party screen (the next player, or the scoreboard)
+  events.on('game:over', (results) => (results.mode === 'party' ? ui.go('party', { result: results }) : ui.go('results', results)));
 
   events.on('game:pause', (on) => {
     pause.classList.toggle('is-on', on);

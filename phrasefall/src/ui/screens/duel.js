@@ -22,7 +22,7 @@ export function createDuel(app) {
   const back = () => ui.go(from === 'results' ? 'menu' : from);
   const el = h(
     'section.sheet.sheet--narrow',
-    h('div.panel.sheet__panel', h('header.bar', h('button.iconbtn', { 'aria-label': 'Back', 'data-sound': 'back', onclick: back }, icon('back')), h('div.bar__title', 'Challenge a friend')), body)
+    h('div.panel.sheet__panel', h('header.bar', h('button.iconbtn', { 'aria-label': 'Back', 'data-sound': 'back', onclick: back }, icon('back')), h('div.bar__title', 'Friends')), body)
   );
 
   /** The name your friend sees: what you typed last time, or your nickname if you are signed in. */
@@ -86,10 +86,22 @@ export function createDuel(app) {
     );
   }
 
+  /** Play together on this phone: the party (src/ui/screens/party.js). */
+  function partyCard() {
+    return h(
+      'div.card.duel__party',
+      h('span.duel__party-ico', icon('friends')),
+      h('div.duel__party-text', h('b', 'Party on this phone'), h('span', '2–4 players take turns with the same cards')),
+      h('button.btn.btn--mint', { 'data-quiet': '1', onclick: () => (audio.play('select'), ui.go('party', { from: 'duel', fresh: true })) }, 'Play')
+    );
+  }
+
   function intro() {
     const field = nameField();
     const startBtn = h('button.btn.btn--gold.btn--wide', { 'data-quiet': '1', onclick: () => play(startBtn, { mode: 'duel' }, field.input.value) }, icon('play'), h('span', 'Start a challenge'));
     return [
+      partyCard(),
+      h('div.eyebrow', 'Or challenge a friend by link'),
       h(
         'div.card.duel__how',
         h('div.duel__steps', step('1', 'Play', `${DUEL_CARDS} cards, mixed from every stage`), step('2', 'Send', 'Share the link with a friend'), step('3', 'Compare', 'They get the same cards. Who wins?'))

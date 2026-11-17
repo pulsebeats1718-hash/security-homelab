@@ -36,7 +36,7 @@ export function createMenu(app) {
   const playBtn = h('button.btn.btn--gold.btn--xl.menu__play', { 'data-quiet': '1', onclick: () => start('play') }, icon('play'), playLabel);
   // two more ways to play, beside Play so the menu stays the same height
   const relaxBtn = h('button.mode-btn.mode-btn--relax', { 'data-quiet': '1', title: 'Relax: no lives, no rush', onclick: () => start('relax') }, h('span.mode-btn__ico', icon('leaf')), h('span.mode-btn__label', 'Relax'));
-  const duelBtn = h('button.mode-btn.mode-btn--duel', { 'data-quiet': '1', title: 'Challenge a friend', onclick: () => (audio.play('select'), ui.go('duel', { from: 'menu', challenge: null })) }, h('span.mode-btn__ico', icon('friends')), h('span.mode-btn__label', 'Challenge'));
+  const duelBtn = h('button.mode-btn.mode-btn--duel', { 'data-quiet': '1', title: 'Friends: challenge a friend by link, or play a party game on this phone', onclick: () => (audio.play('select'), ui.go('duel', { from: 'menu', challenge: null })) }, h('span.mode-btn__ico', icon('friends')), h('span.mode-btn__label', 'Friends'));
   const playRow = h('div.menu__playrow', playBtn, relaxBtn, duelBtn);
   const dailyTitle = h('span.daily__title');
   const dailySub = h('span.daily__sub');
