@@ -32,6 +32,12 @@ four options before they land.
   every character can wear (`src/characters/kit/hats.js`) or a decoration for the memory
   garden (`src/world/decor.js`). Any set can be practised on its own (relax mode dealing
   only that set's cards). Check the sets with `node scripts/check-sets.mjs`.
+- **Achievements** (`src/data/achievements.js`, `src/game/achievements.js`) – 34 badges in
+  eight groups (playing, streaks, learning, garden, Situations & Theatre, friends, explorer,
+  and four secret ones) under *My Collection → Badges*, each with a progress bar. They
+  unlock from game events and from what the save already records, so a returning player
+  gets the ones already earned; party games, second chances and watering rounds don't
+  count as games.
 - **Memory garden** (`src/world/garden.js`, `src/game/garden.js`) – every expression you
   master plants a flower on the island: daisies for everyday phrases, tulips for phrasal
   verbs, sunflowers for idioms, bluebells for set phrases, lavender for collocations, roses
@@ -119,8 +125,9 @@ Requires Node 18+. The runtime dependencies are [three.js](https://threejs.org) 
 only in builds with a Firebase config (`.env.local`, see [DEPLOY.md](DEPLOY.md)), the
 Firebase SDK, fetched on demand; fonts (Fredoka, Nunito — both OFL) are bundled, so the
 built game works offline. `node src/online/merge.test.mjs` runs the cloud-save tests,
-`node src/game/progress.test.mjs` the level, streak and quest tests and
-`node src/game/twists.test.mjs` the twist-card and friend-challenge tests.
+`node src/game/progress.test.mjs` the level, streak and quest tests,
+`node src/game/twists.test.mjs` the twist-card and friend-challenge tests and
+`node src/game/achievements.test.mjs` the achievement tests.
 
 ## Controls
 
