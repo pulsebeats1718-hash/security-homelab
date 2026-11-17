@@ -68,6 +68,25 @@ for (const s of SETS ?? []) {
   if (new Set(ids).size !== ids.length) err('an expression is listed twice');
   if (hard > 4) warnings.push(`${at}: ${hard} level-3 expressions; sets should be mostly well-known ones`);
 }
+// every set has a reward (src/game/album.js): a hat or a garden decoration that exists, each used once
+const { REWARDS } = await import(pathToFileURL(join(root, 'src/game/album.js')).href);
+const { HATS } = await import(pathToFileURL(join(root, 'src/characters/kit/hats.js')).href);
+const { DECOR } = await import(pathToFileURL(join(root, 'src/world/decor.js')).href);
+const used = new Map();
+for (const s of SETS ?? []) {
+  const r = REWARDS[s.id];
+  if (!r) {
+    errors.push(`${s.id}: no reward in src/game/album.js REWARDS`);
+    continue;
+  }
+  const list = r.kind === 'hat' ? HATS : r.kind === 'decor' ? DECOR : null;
+  if (!list) errors.push(`${s.id}: reward kind must be 'hat' or 'decor'`);
+  else if (!list.some((x) => x.id === r.id)) errors.push(`${s.id}: reward ${r.kind} "${r.id}" does not exist`);
+  const key = `${r.kind}:${r.id}`;
+  if (used.has(key)) errors.push(`${s.id}: reward ${key} is already the reward for "${used.get(key)}"`);
+  used.set(key, s.id);
+}
+for (const id of Object.keys(REWARDS)) if (!seenSet.has(id)) errors.push(`REWARDS has "${id}", which is not a set`);
 for (const w of warnings) console.warn(`⚠ ${w}`);
 for (const e of errors) console.error(`✗ ${e}`);
 if (errors.length) {
