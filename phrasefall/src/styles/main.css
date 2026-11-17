@@ -5764,3 +5764,244 @@ svg.ico.fill {
   display: grid;
   gap: 8px;
 }
+
+/* collection sections: Expressions · Stickers · Badges */
+.sheet--coll .sheet__panel {
+  grid-template-rows: auto auto 1fr;
+}
+.coll__sections {
+  grid-column: auto;
+}
+.coll__sections button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+}
+.coll__sections button svg {
+  font-size: 0.95em;
+}
+@media (max-width: 380px) {
+  .coll__sections button svg {
+    display: none;
+  }
+}
+
+/* the sticker album */
+.album {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  padding-bottom: 8px;
+}
+.album__head {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px 14px;
+  border-radius: 18px;
+  background: rgba(0, 0, 0, 0.24);
+}
+.album__head b {
+  display: block;
+  font: 600 1.05rem/1.1 var(--display);
+}
+.album__head span {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.86rem;
+  line-height: 1.3;
+  color: var(--text-dim);
+}
+.album__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 12px 8px;
+}
+.album__tile {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 6px;
+  padding: 10px 4px 8px;
+  border-radius: 18px;
+  text-align: center;
+  transition: background 0.15s, transform 0.1s;
+}
+.album__tile:hover {
+  background: rgba(0, 0, 0, 0.18);
+}
+.album__tile:active {
+  transform: scale(0.97);
+}
+.album__name {
+  font: 600 0.8rem/1.15 var(--display);
+  color: var(--cream);
+}
+.album__n {
+  font: 600 0.72rem/1 var(--display);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+.album__tile.is-earned .album__n {
+  color: var(--gold);
+}
+/* a sticker: a progress ring in the set's colour round a face; earned ones are die-cut, glossy and tilted */
+.sticker {
+  --c: var(--gold);
+  --p: 0deg;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: conic-gradient(var(--c) var(--p), rgba(255, 255, 255, 0.12) var(--p));
+}
+.sticker__face {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  font-size: 1.7rem;
+  color: rgba(255, 246, 227, 0.42);
+  background: var(--ink-2);
+  box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.35);
+}
+.sticker.is-earned {
+  background: #fff;
+  transform: rotate(-6deg);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
+}
+.album__tile:nth-child(even) .sticker.is-earned {
+  transform: rotate(5deg);
+}
+.sticker.is-earned .sticker__face {
+  width: 62px;
+  height: 62px;
+  color: #fff;
+  background: radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 42%), var(--c);
+  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.18);
+}
+.sticker.is-earned .sticker__face svg {
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.2));
+}
+.sticker--big {
+  width: 112px;
+  height: 112px;
+}
+.sticker--big .sticker__face {
+  width: 94px;
+  height: 94px;
+  font-size: 2.7rem;
+}
+.sticker--big.is-earned .sticker__face {
+  width: 100px;
+  height: 100px;
+}
+.album__back {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px 8px 8px;
+  border-radius: 99px;
+  font: 600 0.88rem/1 var(--display);
+  color: var(--text-dim);
+  background: rgba(0, 0, 0, 0.22);
+}
+.album__detail {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 16px 14px;
+  border-radius: 20px;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.24);
+}
+.album__detail h3 {
+  margin: 4px 0 0;
+  font: 600 1.35rem/1.15 var(--display);
+}
+.album__detail p {
+  margin: 0;
+  color: var(--text-dim);
+  line-height: 1.35;
+}
+.album__detail .meter {
+  width: min(100%, 300px);
+}
+.album__prog {
+  font: 600 0.9rem/1 var(--display);
+  color: var(--gold);
+}
+.album__reward {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  font: 600 0.86rem/1.2 var(--display);
+  color: var(--cream);
+  background: rgba(255, 255, 255, 0.08);
+}
+.album__reward svg {
+  color: var(--gold);
+}
+.album__reward.is-earned {
+  color: var(--ink);
+  background: var(--gold);
+}
+.album__reward.is-earned svg {
+  color: var(--ink);
+}
+.album__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+.album__row {
+  border-left-color: rgba(255, 255, 255, 0.16);
+  cursor: pointer;
+}
+.album__row.is-mastered {
+  border-left-color: var(--mint);
+}
+.album__row.is-seen {
+  border-left-color: var(--sky);
+}
+.album__state {
+  grid-row: span 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding-right: 6px;
+  font: 600 0.74rem/1 var(--display);
+  color: var(--text-dim);
+}
+.album__row.is-mastered .album__state {
+  color: var(--mint);
+}
+.album__row.is-seen .album__state {
+  color: var(--sky);
+}
+.album__hats {
+  display: grid;
+  gap: 8px;
+}
+.album__hat-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.album__hat-list .chip {
+  cursor: pointer;
+}
+.album__hat-list .chip.is-on {
+  color: var(--ink);
+  background: var(--gold);
+}

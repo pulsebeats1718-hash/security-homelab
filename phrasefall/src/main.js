@@ -32,6 +32,7 @@ import { createTalk } from './ui/screens/talk.js';
 import { createTheatre } from './ui/screens/theatre.js';
 import { createParty } from './ui/screens/party.js';
 import { createAchievements } from './game/achievements.js';
+import { createAlbum } from './game/album.js';
 import { Decor } from './world/decor.js';
 import { decodeDuel } from './game/duel.js';
 import { warmUpSpeech } from './audio/speech.js';
@@ -128,6 +129,7 @@ async function boot() {
       player.touch();
       if (env.place && env.place !== player.place && ui.name !== 'play') env.setPlace?.(player.place);
       if (ui.name !== 'play') app.garden?.refresh(); // flowers mastered or reviewed on another device
+      if (ui.name !== 'play' && expressionsReady()) app.album?.apply(); // a hat or decoration earned on another device
     } finally {
       catchingUp = false;
     }
@@ -135,7 +137,10 @@ async function boot() {
   app.online = createOnline(app); // Google sign-in, cloud save, leaderboards — inert unless Firebase is configured
   app.garden = createGarden(app); // the memory garden: a flower on the island for every mastered expression
   app.decor = new Decor(env, app.garden.world); // garden decorations won in the sticker album
-  whenExpressionsReady().then(() => app.garden.refresh(), () => {});
+  app.album = createAlbum(app); // themed sticker sets: hats and garden decorations to earn
+  whenExpressionsReady().then(() => (app.garden.refresh(), app.album.apply()), () => {});
+  // a finished set is noticed on the way back to the menu, on the results and in the album
+  events.on('ui:screen', (name) => (name === 'menu' || name === 'results') && expressionsReady() && app.album.check());
   window.__pf = app; // handy for testing from the console
   progress(0.3);
 

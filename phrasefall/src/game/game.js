@@ -220,7 +220,9 @@ export class Game {
    *   opts.mode      one of MODES (default 'classic')
    *   opts.seed      duel: the challenge seed (a new one if missing)
    *   opts.opponent  duel: the friend's result being answered, or null
-   *   opts.ids       retry: the expression ids to try again
+   *   opts.ids       retry / water: the expression ids to go through;
+   *                  relax: a themed set to practise (the deck cycles through just these)
+   *   opts.label     relax with ids: the set's name, for the banner
    */
   start(opts = {}) {
     this._settleDaily();
@@ -231,6 +233,7 @@ export class Game {
     this.fixed = null;
     this.duel = null;
     this.party = null;
+    this.focus = null;
     this.boss3d.hide();
     // power-ups: one of each to try, the first time a classic game starts
     this.giftGiven = this.mode === 'classic' && welcomeGift(this.save);
@@ -252,6 +255,10 @@ export class Game {
       this.fixed = { cards, index: 0, total: cards.length, requeued: new Set() };
       this.duel = { seed, opponent: null };
       this.party = opts.party ?? { player: { name: 'Player 1' }, turn: 0, of: 1 };
+    } else if (this.mode === 'relax' && opts.ids?.length) {
+      // practise one sticker set: the deck draws only from its expressions
+      const exprs = [...new Set(opts.ids)].map(getExpression).filter(Boolean);
+      if (exprs.length) this.focus = { exprs, label: String(opts.label ?? '').slice(0, 40) };
     } else if (REVIEW.includes(this.mode)) {
       const exprs = [...new Set(opts.ids ?? [])].map(getExpression).filter(Boolean).slice(0, RETRY_MAX);
       const cards = shuffle(exprs.map((expr) => ({ expr, options: this._options(expr) })));
@@ -270,7 +277,7 @@ export class Game {
     this.audio.music?.set('game', REVIEW.includes(this.mode) ? 3 : 1);
     this.applyShot(1.0);
     this._set('intro');
-    this.events.emit('game:intro', { stage: this.stageDef, lives: this.lives, mode: this.mode, daily: this.dailyInfo, fixed: this.fixedInfo, duel: this.duel, party: this.party, gift: this.giftGiven });
+    this.events.emit('game:intro', { stage: this.stageDef, lives: this.lives, mode: this.mode, daily: this.dailyInfo, fixed: this.fixedInfo, duel: this.duel, party: this.party, gift: this.giftGiven, focus: this.focus ? { label: this.focus.label, total: this.focus.exprs.length } : null });
     this.audio.play('start');
     this.after(0.55, () => {
       this.audio.play('ready');
@@ -353,6 +360,20 @@ export class Game {
       return 1.2 * due;
     };
     // harder expressions (level 2, then 3) join the mix as the player discovers more of the stage
+    if (this.focus) {
+      // a sticker set: every expression in it, round and round, the ones that need work first
+      let pool = this.focus.exprs.filter((e) => !this.used.has(e.id));
+      if (!pool.length) {
+        for (const e of this.focus.exprs) this.used.delete(e.id);
+        pool = this.focus.exprs.filter((e) => e.id !== this.question?.expr.id);
+        if (!pool.length) pool = this.focus.exprs.slice();
+      }
+      this.deck = pool
+        .map((e) => ({ e, k: Math.pow(Math.random(), 1 / weigh(e)) }))
+        .sort((a, b) => a.k - b.k)
+        .map((x) => x.e);
+      return;
+    }
     const stageList = BY_STAGE[this.stageIndex];
     const found = stageList.reduce((n, e) => n + (save.stat(e.id)?.seen ? 1 : 0), 0);
     const levelFactor = [1, 1, clamp(0.25 + found / 40, 0.25, 1), clamp(0.1 + found / 100, 0.1, 1)];
@@ -647,7 +668,8 @@ export class Game {
     }
     if (!this.safe && !this.fever && this.streak >= FEVER_AT) this.after(0.35, () => this.streak >= FEVER_AT && this._setFever(true));
 
-    const stages = this.mode === 'classic' || this.mode === 'relax';
+    // a sticker-set practice stays on one stage: its cards are the set, not the stage's
+    const stages = this.mode === 'classic' || (this.mode === 'relax' && !this.focus);
     const last = this.stageIndex >= STAGES.length - 1;
     const cleared = stages && !this.boss && (last ? this.mode === 'classic' && this.correctInStage > 0 && this.correctInStage % BOSS_EVERY_FINAL === 0 : this.correctInStage >= this.stageDef.goal);
     if (cleared && this.mode === 'classic') this.after(0.75, () => this._bossStart());

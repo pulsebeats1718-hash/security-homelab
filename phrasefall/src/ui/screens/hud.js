@@ -259,8 +259,14 @@ export function createHud(app) {
 
   function setStage(stage, done) {
     stageChip.classList.remove('is-boss');
-    stageName.textContent = `Stage ${stage.n} · ${stage.short}`;
     clear(pips);
+    if (game.focus) {
+      // practising a sticker set: its name instead of the stage
+      stageName.textContent = game.focus.label || 'Sticker set';
+      pips.append(icon('sticker'));
+      return;
+    }
+    stageName.textContent = `Stage ${stage.n} · ${stage.short}`;
     if (Number.isFinite(stage.goal)) for (let i = 0; i < stage.goal; i++) pips.append(h(`i${i < done ? '.is-on' : ''}`));
     else pips.append(icon('sparkle'));
   }
@@ -355,7 +361,7 @@ export function createHud(app) {
   }
 
   // ── game events ─────────────────────────────────────────────────────────
-  events.on('game:intro', ({ stage, daily, mode, fixed, duel, party, gift }) => {
+  events.on('game:intro', ({ stage, daily, mode, fixed, duel, party, gift, focus }) => {
     const safe = mode === 'relax' || mode === 'retry' || mode === 'water';
     el.classList.toggle('is-safe', safe);
     el.dataset.mode = mode;
@@ -386,6 +392,7 @@ export function createHud(app) {
     measure();
     if (daily) showBanner(`Daily challenge #${daily.n}`, 'Ready?', daily.ranked ? `${daily.total} expressions · one ranked go` : 'Practice run');
     else if (mode === 'duel') showBanner('Challenge', 'Ready?', duel?.opponent ? `Beat ${duel.opponent.name || 'your friend'}'s ${formatScore(duel.opponent.score)}` : `${fixed.total} cards · then send them to a friend`);
+    else if (mode === 'relax' && focus) showBanner('Sticker set', focus.label || 'Practise this set', `${focus.total} expressions · no lives, no rush`);
     else if (mode === 'relax') showBanner('Relax mode', 'Take your time', 'No lives, no rush. Finish whenever you like.');
     else if (mode === 'retry') showBanner('Second chance', 'Fix them!', `${fixed.unique} ${fixed.unique === 1 ? 'expression' : 'expressions'} to put right`);
     else if (mode === 'water') showBanner('Memory garden', 'Watering time', `${fixed.unique} thirsty ${fixed.unique === 1 ? 'flower' : 'flowers'}: get each one right`);
