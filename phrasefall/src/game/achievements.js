@@ -28,8 +28,8 @@ import { duelOutcome } from './duel.js';
 
 /** At most this many toasts at once (the toast stack holds three); more become one "N more". */
 const TOAST_MAX = 3;
-/** Counters that moved outside a game are written after this long (or with the next save). */
-const WRITE_DELAY = 1200;
+/** Counters that moved outside a game are written after this long, unless something else writes the save first. */
+export const WRITE_DELAY = 2000;
 
 const isObj = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
 /** A count read from the save: a finite number above 0, anything else is 0. */
@@ -123,12 +123,17 @@ export function createAchievements(app) {
   let playing = false; // mid-game, counters wait for the game's end to be written
   let dirty = false; // counters changed since the save was last written
   let timer = null;
+  let seen = null; // the save data last read: a reset or a cloud sync swaps the whole object
   const toasts = []; // badges won, waiting for a screen to be celebrated on
   const talked = new Map(); // situations finished this session: id → { best, of }
 
-  /** The save's achievement data, repaired if it is missing or malformed (data is replaced by cloud syncs, so never kept). */
+  /** The save's achievement data, repaired if it is missing or malformed (never kept: a reset or a cloud sync replaces it). */
   function data() {
     const d = save.data;
+    if (d !== seen) {
+      seen = d;
+      talked.clear(); // a reset forgets them; a cloud sync's save has their records
+    }
     if (!isObj(d.stats)) d.stats = {};
     if (!isObj(d.ach)) d.ach = {};
     return d;
