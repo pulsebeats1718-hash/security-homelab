@@ -1,0 +1,307 @@
+/* Achievements in My Collection (src/ui/achievements.js): a summary, then the badges group by
+   group. Every group has its own colour, set as tokens on .ach--<group>:
+     --c / --hi / --lo   the medal's middle, highlight and shadow    --rgb  --c as "r, g, b"
+     --on                the icon on the medal                                                */
+
+.ach {
+  display: grid;
+  gap: 18px;
+  align-content: start;
+  padding-bottom: 8px;
+}
+
+/* ── summary ─────────────────────────────────────────────────────────── */
+.ach__summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px 14px;
+  padding: 14px 16px 16px;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.24);
+}
+.ach__summary .meter {
+  grid-column: 1 / -1;
+  height: 12px;
+}
+.ach__trophy {
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 16px;
+  font-size: 1.45rem;
+  color: var(--ink);
+  background: radial-gradient(circle at 35% 30%, #ffe9a8, var(--gold) 55%, var(--gold-2));
+  box-shadow: inset 0 -4px 0 var(--gold-3), inset 0 2px 0 rgba(255, 255, 255, 0.45), 0 6px 16px rgba(255, 178, 30, 0.28);
+}
+.ach__sum-text {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.ach__sum-text b {
+  font: 700 1.2rem/1.1 var(--display);
+  font-variant-numeric: tabular-nums;
+}
+.ach__sum-text span {
+  font-size: 0.82rem;
+  line-height: 1.3;
+  color: var(--text-dim);
+}
+
+/* ── a group ─────────────────────────────────────────────────────────── */
+.ach__group {
+  display: grid;
+  gap: 9px;
+}
+.ach__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 4px;
+}
+.ach__head h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+.ach__head h3::before {
+  content: '';
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow: 0 0 10px rgba(var(--rgb), 0.6);
+}
+.ach__tally {
+  padding: 4px 9px 5px;
+  border-radius: 99px;
+  font: 600 0.74rem/1 var(--display);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+  background: rgba(0, 0, 0, 0.26);
+}
+.ach__tally.is-full {
+  color: var(--ink);
+  background: var(--gold);
+}
+/* two columns on a phone, up to four on a wide panel */
+.ach__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(146px, calc(50% - 4px)), 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ── a badge ─────────────────────────────────────────────────────────── */
+.ach__badge {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  justify-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 14px 10px 12px;
+  border-radius: 18px;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.22);
+}
+.ach__badge.is-on {
+  background: linear-gradient(170deg, rgba(var(--rgb), 0.22), rgba(var(--rgb), 0.05) 62%), rgba(0, 0, 0, 0.14);
+  box-shadow: inset 0 0 0 1.5px rgba(var(--rgb), 0.4);
+}
+.ach__medal {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  margin: 2px 0 5px;
+  border-radius: 50%;
+  font-size: 1.35rem;
+  color: var(--on);
+  background: radial-gradient(circle at 34% 28%, var(--hi), var(--c) 56%, var(--lo));
+  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.16), inset 0 2px 0 rgba(255, 255, 255, 0.45), 0 0 0 4px rgba(var(--rgb), 0.16), 0 8px 20px rgba(var(--rgb), 0.28);
+}
+.ach__medal .ico {
+  stroke-width: 2.3;
+}
+.ach__name {
+  font: 600 0.98rem/1.15 var(--display);
+  overflow-wrap: anywhere;
+}
+.ach__text {
+  font-size: 0.78rem;
+  line-height: 1.3;
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+}
+.ach__date {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+  padding: 4px 9px 5px;
+  border-radius: 99px;
+  font: 600 0.72rem/1 var(--display);
+  white-space: nowrap;
+  color: var(--hi);
+  background: rgba(var(--rgb), 0.16);
+}
+.ach__date .ico {
+  width: 1em;
+  height: 1em;
+  stroke-width: 3.2;
+}
+.ach__progress {
+  display: grid;
+  gap: 5px;
+  width: 100%;
+  margin-top: 5px;
+}
+.ach__progress .minimeter {
+  height: 6px;
+}
+.ach__progress .minimeter i {
+  background: var(--c);
+}
+.ach__n {
+  font: 600 0.72rem/1 var(--display);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+
+/* locked: greyed, with a little padlock on the medal */
+.ach__badge:not(.is-on) .ach__medal {
+  color: rgba(255, 246, 227, 0.32);
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.22), inset 0 2px 0 rgba(255, 255, 255, 0.06);
+}
+.ach__badge:not(.is-on) .ach__name {
+  color: rgba(255, 246, 227, 0.8);
+}
+.ach__badge:not(.is-on) .ach__text {
+  color: rgba(255, 246, 227, 0.52);
+}
+.ach__lock {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  font-size: 0.66rem;
+  color: rgba(255, 246, 227, 0.8);
+  background: var(--ink-3);
+  box-shadow: 0 2px 6px rgba(8, 4, 40, 0.45);
+}
+.ach__lock .ico {
+  stroke-width: 2.8;
+}
+/* secret and still locked: a question mark, and the text stays a mystery */
+.ach__badge.is-secret .ach__medal {
+  background: none;
+  box-shadow: inset 0 0 0 2px rgba(255, 246, 227, 0.16);
+}
+.ach__badge.is-secret .ach__medal::before {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  border: 2px dashed rgba(255, 246, 227, 0.2);
+}
+.ach__q {
+  font: 700 1.6rem/1 var(--display);
+  color: rgba(255, 246, 227, 0.42);
+}
+.ach__badge.is-secret .ach__text {
+  letter-spacing: 0.3em;
+}
+
+/* ── group colours ───────────────────────────────────────────────────── */
+.ach--playing {
+  --c: #ffc83d;
+  --hi: #ffe9a8;
+  --lo: #f0a31b;
+  --rgb: 255, 200, 61;
+  --on: var(--ink);
+}
+.ach--streaks {
+  --c: #ff7a3d;
+  --hi: #ffc98a;
+  --lo: #e8452f;
+  --rgb: 255, 122, 61;
+  --on: #fff;
+}
+.ach--learning {
+  --c: #8f7bff;
+  --hi: #d2c9ff;
+  --lo: #5c46df;
+  --rgb: 143, 123, 255;
+  --on: #fff;
+}
+.ach--garden {
+  --c: #3ddbb4;
+  --hi: #b8f7e4;
+  --lo: #1cae8b;
+  --rgb: 61, 219, 180;
+  --on: var(--ink);
+}
+.ach--situations {
+  --c: #e07bf0;
+  --hi: #f6cdfc;
+  --lo: #b14fd0;
+  --rgb: 224, 123, 240;
+  --on: var(--ink);
+}
+.ach--friends {
+  --c: #ff5d73;
+  --hi: #ffbac4;
+  --lo: #dc3a59;
+  --rgb: 255, 93, 115;
+  --on: #fff;
+}
+.ach--explorer {
+  --c: #5cc8ff;
+  --hi: #c8eeff;
+  --lo: #2a96dc;
+  --rgb: 92, 200, 255;
+  --on: var(--ink);
+}
+/* a night sky with a gold icon */
+.ach--secret {
+  --c: #5743c9;
+  --hi: #a597ff;
+  --lo: #261c66;
+  --rgb: 143, 123, 255;
+  --on: var(--gold);
+}
+.ach--secret .ach__badge.is-on .ach__date {
+  color: var(--gold);
+}
+
+/* the groups float in when the section opens (switched off for reduced motion in main.css) */
+.ach > * {
+  animation: ach-in 0.38s var(--ease-out) both;
+}
+.ach > :nth-child(2) {
+  animation-delay: 0.04s;
+}
+.ach > :nth-child(3) {
+  animation-delay: 0.08s;
+}
+.ach > :nth-child(n + 4) {
+  animation-delay: 0.12s;
+}
+@keyframes ach-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
