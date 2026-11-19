@@ -4,7 +4,8 @@
  *
  *   distance  the theme's exponential fog, as before
  *   depth     haze gathers below the island, so the cloud sea and the undersides of the far
- *             islands sink softly into it and the island floats over a deep, airy drop
+ *             islands sink softly into it and the island floats over a deep, airy drop; it
+ *             follows each theme's fog density (mistier at dawn and dusk than at noon)
  *
  * Custom shaders that do their own fog (halos, weather) are untouched.
  */
@@ -49,8 +50,14 @@ export function patchAtmosphere() {
   #else
     float fogFactor = smoothstep( fogNear, fogFar, vFogDepth );
   #endif
-  // haze below the island: thicker the deeper and the farther away
-  float fogLow = max( - 2.0 - vFogY, 0.0 ) * 0.065 * smoothstep( 8.0, 32.0, vFogDepth );
+  // haze below the island: thicker the deeper and the farther away (and, through the theme's fog
+  // density, mistier at dawn and dusk than at noon)
+  #ifdef FOG_EXP2
+    float fogLowK = fogDensity * 5.6;
+  #else
+    float fogLowK = 0.06;
+  #endif
+  float fogLow = max( - 2.0 - vFogY, 0.0 ) * fogLowK * smoothstep( 8.0, 32.0, vFogDepth );
   fogFactor = 1.0 - ( 1.0 - fogFactor ) * exp( - fogLow );
   gl_FragColor.rgb = mix( gl_FragColor.rgb, fogColor, fogFactor );
 #endif
