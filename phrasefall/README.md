@@ -158,7 +158,8 @@ built game works offline. `node src/online/merge.test.mjs` runs the cloud-save t
 src/
   main.js                 boot and wiring
   core/                   stage (renderer, camera shots, frame loop), post (the high / medium finish:
-                          MSAA HDR target, bloom, grade, menu tilt-shift), save data, events, maths
+                          MSAA HDR target, contact shadows, depth of field, sun shafts, bloom, grade),
+                          save data, events, maths
   data/
     expressions/          stage1/ … stage5/ — the expression database, one folder per stage
     stages.js             pace, goals and scoring rules
@@ -171,8 +172,11 @@ src/
     models/               one file per character (auto-discovered)
     thumbnails.js         portrait renderer for the collection strip
   world/                  sky, sky light (image-based light from the theme's sky), atmosphere (haze),
-                          lighting themes, island, clouds, particle effects, the memory garden and
-                          its decorations, boss storm clouds; places/ (Home, London, New York, Sydney),
+                          lighting themes, island, the grass lawn (grass.js), birds and butterflies
+                          (wildlife.js), clouds, particle effects and the answer / fever / boss flourishes
+                          (effects.js, juice.js), the memory garden and its decorations, boss storm clouds,
+                          the phrase signs (signs.js); places/ (Home, London, New York, Sydney; city/ holds
+                          the shared building parts, surface patterns, traffic and Home's village),
                           seasons/, theatre/ (Literal Theatre's scenes)
   data/situations/        the Situations, one file per place
   data/sets.js            the sticker album's themed sets

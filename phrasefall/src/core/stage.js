@@ -33,7 +33,8 @@ const QUALITY = {
     maxPixelRatio: 1.5,
     shadow: 1024,
     shadowRadius: 1.6,
-    post: { samples: 4, bloomDiv: 4, bloomLevels: 4, ao: { div: 4, samples: 8, joint: false, maxPx: 9 }, dof: { div: 4, taps: 12 }, rays: { div: 8, taps: 10 } },
+    // two samples: half the multisample bandwidth of high; a phone's dense screen hides the difference
+    post: { samples: 2, bloomDiv: 4, bloomLevels: 4, ao: { div: 4, samples: 8, joint: false, maxPx: 9 }, dof: { div: 4, taps: 12 }, rays: { div: 8, taps: 10 } },
   },
   low: { maxPixelRatio: 1, shadow: 0, shadowRadius: 1, post: null },
 };
@@ -41,17 +42,31 @@ const QUALITY = {
 const SHOT_KEYS = ['fx', 'fy', 'fz', 'yaw', 'pitch', 'span', 'ox', 'oy', 'drift', 'tilt'];
 const FOV = 32;
 
+const TIERS = ['low', 'medium', 'high'];
+const CAP_KEY = 'phrasefall:auto-tier';
+
+/** The tier Auto starts on: a guess from the device, capped by what it had to step down to before. */
 export function autoQuality() {
   const coarse = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
   const cores = navigator.hardwareConcurrency ?? 4;
   const small = Math.min(screen.width, screen.height) < 500;
-  if (coarse) return cores <= 4 && small ? 'low' : 'medium';
-  return cores <= 2 ? 'medium' : 'high';
+  const guess = coarse ? (cores <= 4 && small ? 'low' : 'medium') : cores <= 2 ? 'medium' : 'high';
+  let cap = null;
+  try {
+    cap = localStorage.getItem(CAP_KEY);
+  } catch {
+    /* no storage: just the guess */
+  }
+  return TIERS.includes(cap) && TIERS.indexOf(cap) < TIERS.indexOf(guess) ? cap : guess;
 }
 
 export class Stage {
   constructor(canvas, { quality = 'auto', adaptive = true, resScale = 1 } = {}) {
     this.canvas = canvas;
+    /** Auto quality: the stage may step down a tier by itself on a device that cannot keep up. */
+    this.autoTier = quality === 'auto';
+    /** Called with the new tier after an automatic step down (the app re-tunes the world). */
+    this.onStepDown = null;
     this.qualityName = quality === 'auto' ? autoQuality() : quality;
     this.quality = QUALITY[this.qualityName] ?? QUALITY.medium;
     this.adaptive = adaptive;
@@ -91,6 +106,7 @@ export class Stage {
 
     this._frameMs = 16;
     this._adaptT = 0;
+    this._struggle = 0;
     this._last = 0;
     this._loop = this._loop.bind(this);
 
@@ -107,8 +123,14 @@ export class Stage {
   }
 
   setQuality(name) {
-    this.qualityName = name === 'auto' ? autoQuality() : name;
+    this.autoTier = name === 'auto';
+    this._setTier(name === 'auto' ? autoQuality() : name);
+  }
+
+  _setTier(tier) {
+    this.qualityName = tier;
     this.quality = QUALITY[this.qualityName] ?? QUALITY.medium;
+    this._struggle = 0;
     if (this.adaptive) this.resScale = 1;
     this._syncPost();
     this.resize();
@@ -303,7 +325,21 @@ export class Stage {
       if (this._adaptT > 1.5) {
         this._adaptT = 0;
         const before = this.resScale;
-        if (this._frameMs > 24 && this.resScale > 0.55) this.resScale = Math.max(0.55, this.resScale - 0.12);
+        // Auto quality's last resort: still slow at the lowest resolution for several checks in a
+        // row (and past start-up, when shaders compile and portraits render) → one tier down
+        this._struggle = this._frameMs > 26 && this.resScale <= 0.56 && this.time > 20 ? this._struggle + 1 : 0;
+        if (this._struggle >= 4 && this.autoTier && this.qualityName !== 'low') {
+          const next = TIERS[TIERS.indexOf(this.qualityName) - 1];
+          try {
+            localStorage.setItem(CAP_KEY, next);
+          } catch {
+            /* not remembered */
+          }
+          this._setTier(next);
+          this.onStepDown?.(next);
+          return;
+        }
+        if (this._frameMs > 22 && this.resScale > 0.55) this.resScale = Math.max(0.55, this.resScale - 0.12);
         else if (this._frameMs < 13.5 && this.resScale < 1) this.resScale = Math.min(1, this.resScale + 0.06);
         if (before !== this.resScale) {
           this.pixelRatio = Math.min(window.devicePixelRatio || 1, this.quality.maxPixelRatio) * this.resScale;

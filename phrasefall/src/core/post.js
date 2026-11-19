@@ -485,14 +485,17 @@ export function postSupported(renderer) {
   return renderer.capabilities.isWebGL2 && (renderer.extensions.has('EXT_color_buffer_float') || renderer.extensions.has('EXT_color_buffer_half_float'));
 }
 
-/** The MSAA sample count this device allows on a half-float target, at most `want`. */
+/**
+ * The MSAA sample count to use on a half-float target: the most this device allows up to `want`,
+ * or, where it only offers more than that (many drivers start at 4), the fewest it has.
+ */
 function msaaSamples(renderer, want) {
   const gl = renderer.getContext();
   try {
-    const list = gl.getInternalformatParameter(gl.RENDERBUFFER, gl.RGBA16F, gl.SAMPLES);
-    let best = 0;
-    for (const s of list ?? []) if (s <= want && s > best) best = s;
-    return best;
+    const list = [...(gl.getInternalformatParameter(gl.RENDERBUFFER, gl.RGBA16F, gl.SAMPLES) ?? [])].filter((s) => s > 1);
+    const within = list.filter((s) => s <= want);
+    if (within.length) return Math.max(...within);
+    return list.length ? Math.min(...list) : 0;
   } catch {
     return 0;
   }

@@ -186,6 +186,11 @@ async function boot() {
     game.quit();
     ui.go('menu');
   };
+  // Auto quality stepped down a tier by itself (a device that could not keep up): re-tune the world
+  stage.onStepDown = () => {
+    env.setQuality();
+    if (!game.active) hero.refresh();
+  };
   app.setQuality = (q) => {
     stage.setQuality(q);
     env.setQuality();

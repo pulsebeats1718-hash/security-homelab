@@ -72,7 +72,8 @@ export class Village extends Diorama {
     };
 
     // close behind the island (inside the menu's sharp band), the tea room just left of the character
-    b.chunk(0.6, -0.45, -7.7, 0.04, 1, { delay: 0.66, phase: 0.9, amp: 0.04 }, () => {
+    // (not on low quality, which keeps to the two boards on the island below)
+    if (!this.low) b.chunk(0.6, -0.45, -7.7, 0.04, 1, { delay: 0.66, phase: 0.9, amp: 0.04 }, () => {
       addLand(b, 3.9, { depthScale: 0.42, top });
       // the cottages, left to right: the village shop, the tea room, the bakery
       cottage(-2.05, 1.25, {
