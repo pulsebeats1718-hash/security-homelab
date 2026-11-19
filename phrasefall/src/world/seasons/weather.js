@@ -3,7 +3,7 @@
  *
  *   Weather      autumn leaves tumbling, winter snow, spring petals — all in one Points cloud;
  *                each kind fades in with its season's weight
- *   Butterflies  a few butterflies fluttering behind the dais in spring
+ *   Butterflies  a few butterflies fluttering behind the dais in spring and summer
  *
  * Everything stays behind the falling card (z < −1.4), apart from a thin fringe far out to the
  * sides in front, so it never covers the card or the character.
@@ -165,7 +165,9 @@ attribute vec4 aRange;  // radius x, y, z, speed
 uniform float uTime;
 uniform float uAmount;
 varying vec3 vColor;
+varying vec2 vWing;
 void main() {
+  vWing = vec2(abs(position.x), position.z) * aWing * aWing;
   float t = uTime * aRange.w + aPath.w;
   vec3 c = aPath.xyz + vec3(sin(t) * aRange.x, sin(t * 2.3 + 1.0) * aRange.y, sin(t * 0.7 + 2.0) * aRange.z);
   vec3 v = vec3(cos(t) * aRange.x, 2.3 * cos(t * 2.3 + 1.0) * aRange.y, 0.7 * cos(t * 0.7 + 2.0) * aRange.z);
@@ -182,8 +184,21 @@ void main() {
 const FLY_FRAG = /* glsl */ `
 uniform vec3 uLight;
 varying vec3 vColor;
+varying vec2 vWing;
 void main() {
-  gl_FragColor = vec4(vColor * uLight, 1.0);
+  vec3 col = vColor;
+  #ifdef PF_WINGS
+  // real wing markings: a dark border with a row of pale spots, darker veins near the body
+  if (dot(vWing, vWing) > 0.0) {
+    float r = length(vWing * vec2(1.0, 1.25));
+    float border = smoothstep(0.31, 0.37, r);
+    float spots = border * step(0.6, fract(atan(vWing.y, vWing.x) * 4.5)) * smoothstep(0.42, 0.38, r);
+    col = mix(col, vec3(0.07, 0.06, 0.06), border * 0.85);
+    col = mix(col, vec3(0.95, 0.93, 0.86), spots * 0.8);
+    col *= 0.72 + 0.28 * smoothstep(0.02, 0.14, r);
+  }
+  #endif
+  gl_FragColor = vec4(col * uLight, 1.0);
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
 }`;
@@ -224,7 +239,9 @@ export class Butterflies {
     geo.setAttribute('aPath', new THREE.InstancedBufferAttribute(new Float32Array(paths.flatMap((p) => p.slice(0, 4))), 4));
     geo.setAttribute('aRange', new THREE.InstancedBufferAttribute(new Float32Array(paths.flatMap((p) => p.slice(4))), 4));
     this.uniforms = { uTime: { value: 0 }, uAmount: { value: 0 }, uLight: { value: new THREE.Color(1, 1, 1) } };
-    this.mesh = new THREE.InstancedMesh(geo, new THREE.ShaderMaterial({ uniforms: this.uniforms, vertexShader: FLY_VERT, fragmentShader: FLY_FRAG, side: THREE.DoubleSide }), n);
+    // wing markings on medium and high quality
+    const defines = quality === 'low' ? {} : { PF_WINGS: '' };
+    this.mesh = new THREE.InstancedMesh(geo, new THREE.ShaderMaterial({ uniforms: this.uniforms, vertexShader: FLY_VERT, fragmentShader: FLY_FRAG, side: THREE.DoubleSide, defines }), n);
     const cols = [0xffd23f, 0xffffff, 0x6ec6ff, 0xff9a3c];
     const c = new THREE.Color();
     for (let i = 0; i < n; i++) {

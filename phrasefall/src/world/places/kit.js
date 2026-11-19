@@ -17,7 +17,7 @@ import * as THREE from 'three';
 import { mergeGeometries, mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { makeGlowTexture } from '../sky.js';
-import { KIND, seasonShader, seasonKey } from '../seasons/shader.js';
+import { KIND, seasonShader, seasonKey, trackSeasonMaterial } from '../seasons/shader.js';
 
 // ── floating land ─────────────────────────────────────────────────────────
 export const rim = (theta) => 1 + 0.07 * Math.sin(theta * 3 + 0.6) + 0.045 * Math.sin(theta * 5 + 2.1) + 0.03 * Math.sin(theta * 8 + 4.0);
@@ -382,6 +382,8 @@ if (aGlow.a < -1.5) transformed = aAxis + (transformed - aAxis) * smoothstep(0.3
  */
 export function popMaterial(mat, u, { anim = false, glow = false, season = false } = {}) {
   const defines = `${anim ? '#define PF_ANIM\n' : ''}${glow ? '#define PF_GLOW\n' : ''}`;
+  // the Batch flags a material whose geometry carries baked foliage occlusion (aPfOcc)
+  const opts = () => ({ kindAttr: true, occ: !!mat.userData.pfOcc });
   mat.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, u);
     shader.vertexShader = shader.vertexShader
@@ -393,9 +395,10 @@ export function popMaterial(mat, u, { anim = false, glow = false, season = false
         .replace('#include <common>', '#include <common>\nvarying vec3 vPfGlow;\nuniform float uGlowGain;')
         .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance = vPfGlow * uGlowGain;');
     }
-    if (season) seasonShader(shader, { kindAttr: true });
+    if (season) seasonShader(shader, opts());
   };
-  mat.customProgramCacheKey = () => `pf-place-${anim ? 1 : 0}${glow ? 1 : 0}${season ? seasonKey({ kindAttr: true }) : ''}`;
+  mat.customProgramCacheKey = () => `pf-place-${anim ? 1 : 0}${glow ? 1 : 0}${season ? seasonKey(opts()) : ''}`;
+  if (season) trackSeasonMaterial(mat);
   return mat;
 }
 
@@ -419,6 +422,149 @@ const _w = new THREE.Vector3();
 const _inv = new THREE.Matrix4();
 const _rot = new THREE.Matrix3();
 const ID = new THREE.Matrix4();
+
+// ── foliage clumps ────────────────────────────────────────────────────────
+const LEAFY = new Set([KIND.FOLIAGE, KIND.BLOSSOM]);
+
+/** Integer lattice hash → 0…1. */
+function hash3(x, y, z) {
+  let h = Math.imul(x, 374761393) + Math.imul(y, 668265263) + Math.imul(z, 1440662683);
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+}
+
+/** 3D value noise and its gradient into out: [value 0…1, d/dx, d/dy, d/dz]. */
+function noised3(x, y, z, out) {
+  const ix = Math.floor(x);
+  const iy = Math.floor(y);
+  const iz = Math.floor(z);
+  const wx = x - ix;
+  const wy = y - iy;
+  const wz = z - iz;
+  const ux = wx * wx * (3 - 2 * wx);
+  const uy = wy * wy * (3 - 2 * wy);
+  const uz = wz * wz * (3 - 2 * wz);
+  const a = hash3(ix, iy, iz);
+  const b = hash3(ix + 1, iy, iz);
+  const c = hash3(ix, iy + 1, iz);
+  const d = hash3(ix + 1, iy + 1, iz);
+  const e = hash3(ix, iy, iz + 1);
+  const f = hash3(ix + 1, iy, iz + 1);
+  const g = hash3(ix, iy + 1, iz + 1);
+  const h = hash3(ix + 1, iy + 1, iz + 1);
+  const k1 = b - a;
+  const k2 = c - a;
+  const k3 = e - a;
+  const k4 = a - b - c + d;
+  const k5 = a - c - e + g;
+  const k6 = a - b - e + f;
+  const k7 = -a + b + c - d + e - f - g + h;
+  out[0] = a + k1 * ux + k2 * uy + k3 * uz + k4 * ux * uy + k5 * uy * uz + k6 * uz * ux + k7 * ux * uy * uz;
+  out[1] = 6 * wx * (1 - wx) * (k1 + k4 * uy + k6 * uz + k7 * uy * uz);
+  out[2] = 6 * wy * (1 - wy) * (k2 + k5 * uz + k4 * ux + k7 * uz * ux);
+  out[3] = 6 * wz * (1 - wz) * (k3 + k6 * ux + k5 * uy + k7 * ux * uy);
+  return out;
+}
+
+/** How lumpy the clumps are (a share of each ball's radius) and how big the lumps (per world unit). */
+const LUMP = { amp: 0.085, freq: 1.3 };
+const _nd = [0, 0, 0, 0];
+
+/**
+ * Leaf balls, grouped by prop: each is pushed in and out a little so it reads as a clump of
+ * leaves rather than a perfect ball (normals follow the lumps), and the occlusion of its
+ * neighbours is baked per vertex (aPfOcc, 0 open … 1 deep inside): the creases between clumps,
+ * the inner foliage and the canopy's underside come out darker.
+ */
+function clumps(blobs) {
+  const groups = new Map();
+  for (const g of blobs) {
+    const k = g.userData.pfBlob.group;
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(g);
+  }
+  for (const list of groups.values()) {
+    let y0 = Infinity;
+    let y1 = -Infinity;
+    for (const g of list) {
+      const { c, r } = g.userData.pfBlob;
+      y0 = Math.min(y0, c[1] - r);
+      y1 = Math.max(y1, c[1] + r);
+    }
+    for (const g of list) {
+      const { r } = g.userData.pfBlob;
+      const p = g.attributes.position.array;
+      const nrm = g.attributes.normal.array;
+      const occ = new Float32Array(p.length / 3);
+      const A = LUMP.amp * r;
+      const F = LUMP.freq;
+      for (let i = 0, v = 0; i < p.length; i += 3, v++) {
+        let nx = nrm[i];
+        let ny = nrm[i + 1];
+        let nz = nrm[i + 2];
+        noised3(p[i] * F + 13.1, p[i + 1] * F + 7.7, p[i + 2] * F + 3.3, _nd);
+        const s = (_nd[0] - 0.5) * 2;
+        const x = p[i] + nx * A * s;
+        const y = p[i + 1] + ny * A * s;
+        const z = p[i + 2] + nz * A * s;
+        // tilt the normal with the lumps: minus the tangential part of the displacement's gradient
+        const k = A * 2 * F;
+        const gx = _nd[1] * k;
+        const gy = _nd[2] * k;
+        const gz = _nd[3] * k;
+        const gn = gx * nx + gy * ny + gz * nz;
+        nx -= gx - gn * nx;
+        ny -= gy - gn * ny;
+        nz -= gz - gn * nz;
+        const l = Math.hypot(nx, ny, nz) || 1;
+        nx /= l;
+        ny /= l;
+        nz /= l;
+        p[i] = x;
+        p[i + 1] = y;
+        p[i + 2] = z;
+        nrm[i] = nx;
+        nrm[i + 1] = ny;
+        nrm[i + 2] = nz;
+        // the other clumps of this tree (analytic sphere occlusion; inside one: hidden)
+        let o = 0;
+        for (const h of list) {
+          if (h === g) continue;
+          const b = h.userData.pfBlob;
+          const dx = b.c[0] - x;
+          const dy = b.c[1] - y;
+          const dz = b.c[2] - z;
+          const d2 = dx * dx + dy * dy + dz * dz;
+          const d = Math.sqrt(d2);
+          if (d < b.r * 0.97) {
+            o += 1.4;
+            continue;
+          }
+          const cos = (dx * nx + dy * ny + dz * nz) / d;
+          if (cos > 0) o += (cos * b.r * b.r) / d2;
+        }
+        // lower in the canopy, and facing down, is darker
+        const t = Math.min(1, Math.max(0, (y - y0) / Math.max(1e-3, y1 - y0)));
+        o += 0.55 * (1 - t) * (1 - t) * (0.5 - 0.5 * ny) + 0.12 * (1 - t);
+        occ[v] = 1 - Math.exp(-o * 1.15);
+      }
+      g.setAttribute('aPfOcc', new THREE.BufferAttribute(occ, 1));
+    }
+  }
+}
+
+/** Batch geometries built per material (so a material that starts reading the occlusion can give them all the attribute). */
+const BUILT = new WeakMap();
+function builtWith(mat, geo) {
+  let list = BUILT.get(mat);
+  if (!list) BUILT.set(mat, (list = []));
+  list.push(geo);
+}
+function readsOcclusion(mat) {
+  mat.userData.pfOcc = true;
+  mat.needsUpdate = true;
+  for (const g of BUILT.get(mat) ?? []) if (!g.attributes.aPfOcc) g.setAttribute('aPfOcc', new THREE.BufferAttribute(new Float32Array(g.attributes.position.count), 1));
+}
 
 /**
  * Collects transformed geometries per material key and merges them at the end.
@@ -460,6 +606,12 @@ export class Batch {
     const keepColor = this.anim && color === null && g.attributes.color;
     for (const name of Object.keys(g.attributes)) if (name !== 'position' && name !== 'normal' && !(keepColor && name === 'color')) g.deleteAttribute(name);
     const n = g.attributes.position.count;
+    if (geo.type === 'SphereGeometry') {
+      // a ball that may be a clump of leaves (decided in build, from its kind or its material's)
+      const e = this._m.elements;
+      const r = (geo.parameters?.radius ?? 1) * (Math.hypot(e[0], e[1], e[2]) + Math.hypot(e[4], e[5], e[6]) + Math.hypot(e[8], e[9], e[10])) / 3;
+      g.userData.pfBlob = { c: [e[12], e[13], e[14]], r, kind: this.kinds?.[key] ?? s.kind, group: s.anchor ? s.anchor.join() : '' };
+    }
 
     if (this.pop) {
       const a = s.anchor ?? [this._m.elements[12], this._m.elements[13], this._m.elements[14]];
@@ -596,12 +748,41 @@ export class Batch {
     return this._scope(fn, null, { glow: [_c.r, _c.g, _c.b, threshold === 'night' ? -2 : threshold] });
   }
 
+  /**
+   * Foliage: leaf-kind balls (FOLIAGE or BLOSSOM, from the part's kind or its material's) become
+   * lumpy clumps with their occlusion baked (aPfOcc). Every geometry of a material that reads the
+   * occlusion carries the attribute (zero where there is no foliage).
+   */
+  _foliage(materials) {
+    const blobs = [];
+    const keys = new Set();
+    for (const [key, list] of this.items) {
+      const mk = materials[key]?.userData?.pfKind;
+      for (const g of list) {
+        const b = g.userData.pfBlob;
+        if (b && (LEAFY.has(b.kind) || LEAFY.has(mk))) {
+          blobs.push(g);
+          keys.add(key);
+        }
+      }
+    }
+    if (blobs.length) clumps(blobs);
+    for (const [key, list] of this.items) {
+      const mat = materials[key];
+      if (!keys.has(key) && !mat?.userData?.pfOcc) continue;
+      for (const g of list) if (!g.attributes.aPfOcc) g.setAttribute('aPfOcc', new THREE.BufferAttribute(new Float32Array(g.attributes.position.count), 1));
+      if (mat && !mat.userData.pfOcc) readsOcclusion(mat);
+    }
+  }
+
   build(materials, parent, shadows = true) {
     const out = {};
+    this._foliage(materials);
     for (const [key, list] of this.items) {
       const merged = mergeGeometries(list, false);
       list.forEach((g) => g.dispose());
       const mat = materials[key];
+      if (mat) builtWith(mat, merged);
       const mesh = new THREE.Mesh(merged, mat);
       const sh = typeof shadows === 'function' ? shadows(key) : shadows;
       mesh.castShadow = sh;

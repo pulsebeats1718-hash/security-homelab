@@ -21,9 +21,9 @@ export default {
   shot: 'ball',
 
   build(k) {
-    const navy = k.mat(0x2c3c6e);
-    const navyDark = k.mat(0x23305a);
-    const white = k.mat(0xfbf7ee, { rough: 0.7 });
+    const navy = k.mat(0x2c3c6e, { finish: 'plush' });
+    const navyDark = k.mat(0x23305a, { finish: 'plush' });
+    const white = k.mat(0xfbf7ee, { rough: 0.7, finish: 'plush' });
     const orange = k.mat(0xffa22e, { rough: 0.45 });
     const orangeDark = k.mat(0xef7f1e, { rough: 0.5 });
     const wool = k.mat(0xef5361, { rough: 0.92, rim: 0.3 });

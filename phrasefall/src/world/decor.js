@@ -615,6 +615,7 @@ export class Decor {
 
   /** Show these decorations (ids from DECOR) in the garden; new ones pop in, missing ones go. */
   set(ids = []) {
+    this._lawnDue = true;
     const want = new Set((ids ?? []).filter((id) => BUILD[id]));
     let delay = 0;
     for (const id of want) {
@@ -671,6 +672,7 @@ export class Decor {
 
   _place(it, spot) {
     this._build(it, spot);
+    this._lawnDue = true;
     it.spot = spot;
     it.group.position.set(spot.x, groundY(spot.x, spot.z) - 0.005, spot.z);
     it.group.rotation.set(0, spot.ry, 0);
@@ -917,6 +919,28 @@ export class Decor {
     return spots;
   }
 
+  /** Keep the island's lawn (medium and high quality) off the footprints of the decorations standing on it. */
+  _lawn() {
+    this._lawnDue = false;
+    const island = this.env?.island;
+    if (!island?.setClearings) return;
+    const list = [];
+    for (const it of this.items.values()) {
+      const spot = it.pending ?? it.spot;
+      if (!it.want || it.homeless || !spot) continue;
+      const spec = SPEC[it.id];
+      const len = spot.len ?? 0;
+      const foot = spec.poles && len ? [[-len / 2, 0, 0.08], [len / 2, 0, 0.08]] : spec.foot ?? spec.fallback?.foot ?? [];
+      const c = Math.cos(spot.ry);
+      const sn = Math.sin(spot.ry);
+      for (const [fx, fz, r] of foot) list.push({ x: spot.x + fx * c + fz * sn, z: spot.z - fx * sn + fz * c, r });
+    }
+    const key = list.map((q) => `${q.x.toFixed(2)},${q.z.toFixed(2)},${q.r}`).join('|');
+    if (key === this._lawnKey) return;
+    this._lawnKey = key;
+    island.setClearings(list);
+  }
+
   // ── every frame ───────────────────────────────────────────────────────
 
   /** Is the season's dressing for the current place built yet (it may have props to keep clear of)? */
@@ -959,6 +983,7 @@ export class Decor {
         }
       }
     }
+    if (this._lawnDue) this._lawn();
     const e = places.entries.get(this.place);
     const rise = e ? popK(popU(e.p, 0.22)) : 1;
     const ready = this.key !== '';

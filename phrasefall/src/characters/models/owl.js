@@ -62,10 +62,10 @@ export default {
   shot: 'star',
 
   build(k) {
-    const brown = k.mat(0x8f5c3c);
+    const brown = k.mat(0x8f5c3c, { finish: 'plush' });
     const umber = k.mat(0x5e3927, { rough: 0.6 });
-    const cream = k.mat(0xf8e9cf, { rough: 0.75 });
-    const speck = k.mat(0xc08b5e, { rough: 0.75 });
+    const cream = k.mat(0xf8e9cf, { rough: 0.75, finish: 'plush' });
+    const speck = k.mat(0xc08b5e, { rough: 0.75, finish: 'plush' });
     const gold = k.mat(0xffbd44, { rough: 0.4 });
     const iris = k.mat(0xff8a24, { rough: 0.25, rim: 0.2 });
     const navy = k.mat(0x2d2f55, { rough: 0.62 });

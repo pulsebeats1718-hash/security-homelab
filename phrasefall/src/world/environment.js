@@ -97,7 +97,9 @@ export class Environment {
 
   _blobLook() {
     const shadows = this.stage.quality.shadow > 0;
-    this.blob.material.opacity = shadows ? 0.2 : 0.38;
+    // with contact shadows from the post finish, the blob is only a faint grounding touch
+    const ao = !!this.stage.quality.post?.ao;
+    this.blob.material.opacity = shadows ? (ao ? 0.13 : 0.2) : 0.38;
     this.blob.scale.setScalar(shadows ? 0.82 : 1);
   }
 
@@ -240,21 +242,37 @@ export class Environment {
     this._envDue = false;
   }
 
-  /** The post finish's grade follows the time of day: warmer at golden hour, cooler and deeper at night. */
+  /**
+   * The post finish's lens and grade follow the time of day (each theme's wb, saturation, contrast,
+   * bloom, rays and haze, blended with everything else): a photographic look — white balance,
+   * gentle contrast, natural colour — with sun shafts and a warm haze when a low sun is on screen.
+   */
   _grade() {
     const post = this.stage.post;
     if (!post) return;
     const v = this.vs;
     const night = Math.min(1, v.stars ?? 0);
-    const warm = Math.max(0, (v.cloudGlowAmt ?? 0) - 0.12) * (1 - night);
     const u = post.uFinal;
-    u.uHighTint.value.set(0.026 + warm * 0.03, 0.01 + warm * 0.008, -0.018 - warm * 0.02);
-    u.uShadowTint.value.set(-0.014 - night * 0.004, 0.0, 0.03 + night * 0.012);
-    u.uVibrance.value = 0.24 + warm * 0.12 - night * 0.05;
-    u.uContrast.value = 0.22 - night * 0.13;
-    u.uLift.value.set(0.012, 0.008 + night * 0.008, 0.024 + night * 0.02);
-    u.uVignette.value.x = 0.26 + night * 0.08;
-    post.bloom.strength = 0.7 + night * 0.25;
+    // white balance: only the hue counts (normalised so it never changes the brightness)
+    const wb = v.wb;
+    const l = Math.max(1e-3, lum(wb));
+    u.uWB.value.set(wb.r / l, wb.g / l, wb.b / l);
+    u.uSaturation.value = v.saturation;
+    u.uVibrance.value = 0.1 - night * 0.05;
+    u.uContrast.value = v.contrast;
+    // film-like split toning, kept faint: shadows a touch cool, highlights a touch warm
+    u.uHighTint.value.set(0.012, 0.005, -0.01).multiplyScalar(1 - night * 0.6);
+    u.uShadowTint.value.set(-0.006, 0.0, 0.014 + night * 0.008);
+    u.uLift.value.set(0.006, 0.006 + night * 0.004, 0.012 + night * 0.012);
+    u.uVignette.value.x = 0.3 + night * 0.08;
+    post.bloom.strength = v.bloom;
+    // sun shafts and the haze round the sun: in the colour of the sun, a little paler in the haze
+    const r = post.rays;
+    r.amount = v.rays * Math.min(1, v.sunDisc * 1.5);
+    r.haze = v.haze;
+    r.dir.copy(this._skySun);
+    r.color.copy(v.sunColor);
+    r.hazeColor.copy(v.sunColor).lerp(v.skyHorizon, 0.35).multiplyScalar(0.55);
   }
 
   _apply() {

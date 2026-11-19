@@ -368,5 +368,8 @@ export class Animator {
       this._flash = Math.max(0, this._flash - dt * 4.5);
       rig.fx.flash.value = this._flash * this._flash;
     }
+    if (rig.fx.auraT) rig.fx.auraT.value = t;
+    // contact occlusion follows the pose (head, body and hands as occluder spheres)
+    rig.updateOcclusion();
   }
 }

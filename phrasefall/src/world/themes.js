@@ -5,6 +5,14 @@
  *
  * sun: [azimuth°, elevation°] of the key light — azimuth 0 = towards the camera, 90 = to the right.
  * skySun: where the visible sun / moon glow sits in the sky (also the rim-light direction).
+ *
+ * The lens and the grade (high and medium quality, core/post.js) follow the time of day too:
+ * wb          white balance (a colour; only its hue counts)
+ * saturation  overall colour saturation after tone mapping (1 = as rendered)
+ * contrast    the gentle S-curve
+ * bloom       the glow round very bright things
+ * rays        sun shafts streaming past clouds, trees and the island (a low sun on screen)
+ * haze        the warm light scattered by the air round a low sun, on distant things
  */
 export const THEMES = {
   sunrise: {
@@ -36,6 +44,12 @@ export const THEMES = {
     env: 0.4,
     grassTint: 0xffffff,
     accent: 0xffc83d,
+    wb: 0xfff8f0,
+    saturation: 1.0,
+    contrast: 0.14,
+    bloom: 0.7,
+    rays: 0.85,
+    haze: 0.55,
   },
   midday: {
     label: 'Midday',
@@ -66,6 +80,12 @@ export const THEMES = {
     env: 0.45,
     grassTint: 0xffffff,
     accent: 0x3ddbb4,
+    wb: 0xffffff,
+    saturation: 1.02,
+    contrast: 0.16,
+    bloom: 0.6,
+    rays: 0.35,
+    haze: 0.15,
   },
   golden: {
     label: 'Golden Hour',
@@ -96,36 +116,48 @@ export const THEMES = {
     env: 0.36,
     grassTint: 0xffe2b8,
     accent: 0xff9f43,
+    wb: 0xfff4e6,
+    saturation: 1.02,
+    contrast: 0.15,
+    bloom: 0.75,
+    rays: 1.0,
+    haze: 0.7,
   },
   twilight: {
     label: 'Twilight',
-    skyTop: 0x151450,
-    skyHorizon: 0xff6f9c,
-    skyBottom: 0x7a3f9e,
-    sunColor: 0xff8fb1,
-    sunLight: 0xd9a6ff,
+    skyTop: 0x17204f,
+    skyHorizon: 0xff9478,
+    skyBottom: 0x4c3f80,
+    sunColor: 0xffa07a,
+    sunLight: 0xd8c6ee,
     sunIntensity: 1.7,
     sun: [-70, 12],
     skySun: [-171, 0.5],
     sunDisc: 0.25,
-    hemiSky: 0x8f8cff,
-    hemiGround: 0x7a3f8a,
+    hemiSky: 0x8f9ae6,
+    hemiGround: 0x5e4c80,
     hemiIntensity: 0.85,
-    rim: 0xff9ad1,
+    rim: 0xffae94,
     rimIntensity: 1.7,
-    fog: 0x8a4fa8,
+    fog: 0x6c5c9c,
     fogDensity: 0.013,
-    cloud: 0xc9b3f5,
-    cloudGlow: 0xff5f9e,
-    cloudGlowAmt: 0.36,
+    cloud: 0xbcb6e8,
+    cloudGlow: 0xff7f6c,
+    cloudGlowAmt: 0.32,
     stars: 0.65,
     aurora: 0.15,
     moon: 0.4,
     lamps: 1,
     exposure: 1.05,
     env: 0.3,
-    grassTint: 0xc9c2ff,
+    grassTint: 0xc3c6f2,
     accent: 0xff7ab8,
+    wb: 0xfdfbff,
+    saturation: 0.9,
+    contrast: 0.1,
+    bloom: 0.85,
+    rays: 0.5,
+    haze: 0.5,
   },
   starlight: {
     label: 'Starlight',
@@ -156,11 +188,17 @@ export const THEMES = {
     env: 0.28,
     grassTint: 0x9fb4ff,
     accent: 0x7df4ff,
+    wb: 0xf8f9ff,
+    saturation: 0.9,
+    contrast: 0.08,
+    bloom: 0.95,
+    rays: 0,
+    haze: 0,
   },
 };
 
 export const THEME_ORDER = ['sunrise', 'midday', 'golden', 'twilight', 'starlight'];
 
 /** Keys holding colours (interpolated in linear RGB) vs plain numbers. */
-export const COLOR_KEYS = ['skyTop', 'skyHorizon', 'skyBottom', 'sunColor', 'sunLight', 'hemiSky', 'hemiGround', 'rim', 'fog', 'cloud', 'cloudGlow', 'grassTint', 'accent'];
-export const NUMBER_KEYS = ['sunIntensity', 'sunDisc', 'hemiIntensity', 'rimIntensity', 'fogDensity', 'cloudGlowAmt', 'stars', 'aurora', 'moon', 'lamps', 'exposure', 'env'];
+export const COLOR_KEYS = ['skyTop', 'skyHorizon', 'skyBottom', 'sunColor', 'sunLight', 'hemiSky', 'hemiGround', 'rim', 'fog', 'cloud', 'cloudGlow', 'grassTint', 'accent', 'wb'];
+export const NUMBER_KEYS = ['sunIntensity', 'sunDisc', 'hemiIntensity', 'rimIntensity', 'fogDensity', 'cloudGlowAmt', 'stars', 'aurora', 'moon', 'lamps', 'exposure', 'env', 'saturation', 'contrast', 'bloom', 'rays', 'haze'];

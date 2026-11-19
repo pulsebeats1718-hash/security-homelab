@@ -16,8 +16,8 @@ export default {
   shot: 'orb',
 
   build(k) {
-    const fur = k.mat(0xa5613a);
-    const tan = k.mat(0xf2d2a4, { rough: 0.7 });
+    const fur = k.mat(0xa5613a, { finish: 'plush' });
+    const tan = k.mat(0xf2d2a4, { rough: 0.7, finish: 'plush' });
     const nose = k.mat(0x3a2320, { rough: 0.22 });
     const knit = k.mat(0x2f8556, { rough: 0.9, rim: 0.3 });
     const knitDark = k.mat(0x236a45, { rough: 0.9, rim: 0.3 });

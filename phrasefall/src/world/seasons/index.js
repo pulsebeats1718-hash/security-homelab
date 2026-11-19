@@ -6,7 +6,7 @@
  *   look       the scenery shader (seasons/shader.js): autumn colours, spring greens and blossom,
  *              winter snow on everything facing up, summer sand around the dais
  *   light      a per-season tint of the time-of-day theme (warm summer sun, frosty winter …)
- *   particles  falling leaves, snow and petals; butterflies in spring (seasons/weather.js)
+ *   particles  falling leaves, snow and petals; butterflies in spring and summer (seasons/weather.js)
  *   dressing   leaf litter, sprouting flowers, a snowman, a beach set (seasons/dressing.js)
  *
  * Changing season blends everything over SEASON_TIME seconds. The season survives place changes:
@@ -74,7 +74,8 @@ export class Seasons {
     const w = this.w;
     SEASON_U.uSeason.value.set(w.spring, w.summer, w.autumn, w.winter);
     this.weather.setAmounts(w.autumn, w.winter, w.spring);
-    this.butterflies.setAmount(w.spring);
+    // butterflies through spring and summer (a few less in the summer heat)
+    this.butterflies.setAmount(Math.min(1, w.spring + w.summer * 0.8));
   }
 
   update(t, dt, stage) {

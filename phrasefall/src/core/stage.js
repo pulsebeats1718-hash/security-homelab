@@ -7,21 +7,34 @@
  *   pitch   elevation angle
  *   span    world units visible across the full viewport height (zoom)
  *   ox, oy  where the focus sits on screen, in CSS px from the centre (+x right, +y down)
- *   tilt    (optional, 0…1) how much tilt-shift blur the shot wants — menus use it for a
- *           miniature look; high quality only, and a shot that leaves it out gets none
+ *   tilt    (optional, 0…1) how wide the lens opens for the tilt-shift miniature look — menus use
+ *           it; a shot that leaves it out gets the play lens (only the far background soft)
  * Screens ask for a shot and the stage glides between them, so moving through
  * the menus feels like one continuous camera move rather than page changes.
  *
- * Quality tiers: high and medium render through PostFX (core/post.js: MSAA HDR target, bloom,
- * grading; tilt-shift on high); low renders straight to the screen as it always has.
+ * Quality tiers: high and medium render through PostFX (core/post.js: MSAA HDR target, contact
+ * shadows, depth of field, sun shafts, bloom, grading); low renders straight to the screen as it
+ * always has. The depth of field follows the shot: in play only the far background softens (the
+ * character, the falling card and a boss stay sharp); a shot's `tilt` opens the lens for the
+ * tilt-shift miniature look on the menus.
  */
 import * as THREE from 'three';
 import { clamp, ease, lerp } from './utils.js';
 import { PostFX, postSupported } from './post.js';
 
 const QUALITY = {
-  high: { maxPixelRatio: 2, shadow: 2048, shadowRadius: 3.2, post: { samples: 4, bloomDiv: 2, bloomLevels: 5, tilt: true } },
-  medium: { maxPixelRatio: 1.5, shadow: 1024, shadowRadius: 1.6, post: { samples: 4, bloomDiv: 4, bloomLevels: 4, tilt: false } },
+  high: {
+    maxPixelRatio: 2,
+    shadow: 2048,
+    shadowRadius: 3.2,
+    post: { samples: 4, bloomDiv: 2, bloomLevels: 5, ao: { div: 2, samples: 12, joint: true, maxPx: 22 }, dof: { div: 4, taps: 24 }, rays: { div: 4, taps: 16 } },
+  },
+  medium: {
+    maxPixelRatio: 1.5,
+    shadow: 1024,
+    shadowRadius: 1.6,
+    post: { samples: 4, bloomDiv: 4, bloomLevels: 4, ao: { div: 4, samples: 8, joint: false, maxPx: 9 }, dof: { div: 4, taps: 12 }, rays: { div: 8, taps: 10 } },
+  },
   low: { maxPixelRatio: 1, shadow: 0, shadowRadius: 1, post: null },
 };
 
@@ -74,6 +87,7 @@ export class Stage {
     this._shakeAmt = 0;
     this.reduceMotion = false;
     this._focus = new THREE.Vector3();
+    this._focusDist = 12;
 
     this._frameMs = 16;
     this._adaptT = 0;
@@ -136,14 +150,9 @@ export class Stage {
   renderFrame() {
     const post = this.post;
     if (post?.ok) {
-      post.tilt.amount = this.shot.tilt;
-      if (post.tilt.amount > 0.004) {
-        // keep the focus band on the shot's subject wherever the shot puts it on screen
-        const p = _v.copy(this._focus).project(this.camera);
-        post.tilt.focus = clamp(p.y * 0.5 + 0.5, 0.15, 0.85);
-        // the sharp band covers the character (about 2.6 units tall) whatever the zoom
-        post.tilt.band = clamp(1.3 / this.shot.span, 0.1, 0.4);
-      }
+      // the lens focuses on the shot's subject; menus open it wide for the miniature look
+      post.dof.focus = this._focusDist;
+      post.dof.tilt = this.shot.tilt;
       post.render(this.scene, this.camera);
       if (!this._postChecked) {
         // a device that cannot multisample a half-float target falls back to the direct path
@@ -221,9 +230,14 @@ export class Stage {
     const s = this.shot;
     const t = this.time;
     const drift = this.reduceMotion ? 0 : s.drift;
-    const yaw = s.yaw + Math.sin(t * 0.21) * 0.07 * drift;
-    const pitch = s.pitch + Math.sin(t * 0.17 + 1) * 0.015 * drift;
-    const dist = s.span / (2 * Math.tan((FOV * Math.PI) / 360));
+    // a slow sway round the subject, and on the menus a little life on top: the camera breathes in
+    // and out (about 1 %, over ten seconds) and floats as if held very steadily by hand — slow and
+    // small enough never to swim; none at all with reduced motion
+    const yaw = s.yaw + Math.sin(t * 0.21) * 0.07 * drift + (Math.sin(t * 0.53 + 2) * 0.6 + Math.sin(t * 0.87)) * 0.0022 * drift;
+    const pitch = s.pitch + Math.sin(t * 0.17 + 1) * 0.015 * drift + (Math.sin(t * 0.61 + 4) * 0.6 + Math.sin(t * 0.97 + 1)) * 0.0015 * drift;
+    const breathe = 1 + Math.sin(t * 0.6) * 0.008 * drift;
+    const dist = (s.span / (2 * Math.tan((FOV * Math.PI) / 360))) * breathe;
+    this._focusDist = dist;
     const f = this._focus.set(s.fx, s.fy + Math.sin(t * 0.33) * 0.03 * drift, s.fz);
     this.camera.position.set(f.x + Math.sin(yaw) * Math.cos(pitch) * dist, f.y + Math.sin(pitch) * dist, f.z + Math.cos(yaw) * Math.cos(pitch) * dist);
     this.camera.lookAt(f);

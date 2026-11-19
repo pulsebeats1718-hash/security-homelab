@@ -52,10 +52,10 @@ export default {
   shot: 'orb',
 
   build(k) {
-    const fur = k.mat(0xf5bd3c, { rough: 0.65 });
-    const maneA = k.mat(0xd0702e, { rough: 0.85 });
-    const maneB = k.mat(0xb95c26, { rough: 0.85 });
-    const cream = k.mat(0xfff0d2, { rough: 0.7 });
+    const fur = k.mat(0xf5bd3c, { rough: 0.65, finish: 'plush' });
+    const maneA = k.mat(0xd0702e, { rough: 0.85, finish: 'plush' });
+    const maneB = k.mat(0xb95c26, { rough: 0.85, finish: 'plush' });
+    const cream = k.mat(0xfff0d2, { rough: 0.7, finish: 'plush' });
     const nose = k.mat(0x8a4a3c, { rough: 0.3 });
     const red = k.mat(0xdc3a3a, { rough: 0.5 });
     const redDark = k.mat(0xa82830, { rough: 0.5 });

@@ -136,9 +136,12 @@ export function buildFace(k, o = {}) {
   const center = o.center ?? rig.headCenter;
 
   const E = { yaw: 21, pitch: 2, size: 0.083, tall: 1.32, color: 0x1e1828, highlights: true, shape: 'oval', tilt: 0, lift: 0, ...(o.eye ?? {}) };
-  const eyeMat = E.mat ?? k.mat(E.color, { rough: 0.16, rim: 0.2 });
+  // glass-bead eyes: a wet clear coat over a painted iris (see materials.js); pill eyes stay plain gloss
+  const eyeMat = E.mat ?? k.mat(E.color, E.shape === 'pill' ? { rough: 0.14, rim: 0.2, finish: 'gloss' } : { rough: 0.1, rim: 0.2, finish: 'gloss', eye: true });
   const lineMat = o.line ?? E.mat ?? k.mat(o.lineColor ?? 0x2a1c24, { rough: 0.5, rim: 0.1 });
-  const hiMat = k.mat(0x222222, { emissive: 0xffffff, emissiveIntensity: 1.15, rough: 0.3, rim: 0 });
+  // catchlights: the window of light the bead reflects, and a small second one (bright enough for a
+  // whisper of bloom on the high and medium finish, never a glow)
+  const hiMat = k.mat(0x222222, { emissive: 0xffffff, emissiveIntensity: 1.55, rough: 0.3, rim: 0 });
   const s = E.size;
 
   // ── eyes ──────────────────────────────────────────────────────────────
@@ -158,12 +161,14 @@ export function buildFace(k, o = {}) {
       open.children[0].scale.set(s, s * E.tall, s * 0.5);
     }
     if (E.highlights) {
-      const h1 = k.mesh(k.G.sphere(12), hiMat, false);
-      h1.scale.set(s * 0.3, s * 0.34, s * 0.12);
-      h1.position.set(s * 0.27, s * E.tall * 0.4, s * 0.42);
+      // a softly rounded window, tilted a little as it wraps round the bead, and a small round glint
+      const h1 = k.mesh(k.G.box(1, 1, 1, 0.42, 3), hiMat, false);
+      h1.scale.set(s * 0.62, s * 0.56, s * 0.16);
+      h1.position.set(s * 0.27, s * E.tall * 0.4, s * 0.4);
+      h1.rotation.set(-0.35, 0.3, -0.22);
       const h2 = k.mesh(k.G.sphere(12), hiMat, false);
-      h2.scale.set(s * 0.15, s * 0.16, s * 0.08);
-      h2.position.set(-s * 0.3, -s * E.tall * 0.34, s * 0.42);
+      h2.scale.set(s * 0.14, s * 0.15, s * 0.08);
+      h2.position.set(-s * 0.3, -s * E.tall * 0.36, s * 0.42);
       open.add(h1, h2);
     }
 
@@ -244,7 +249,8 @@ export function buildFace(k, o = {}) {
   // ── cheeks ────────────────────────────────────────────────────────────
   if (o.cheeks !== false) {
     const C = { color: 0xff8f8f, yaw: E.yaw + 15, pitch: E.pitch - 13, size: 0.075, opacity: 0.5, ...(o.cheeks ?? {}) };
-    const cMat = k.mat(C.color, { rough: 0.9, rim: 0, transparent: true, opacity: C.opacity, depthWrite: false });
+    // airbrushed blush on medium and high: soft edges that fade into the paint (materials.js)
+    const cMat = k.mat(C.color, { rough: 0.9, rim: 0, transparent: true, opacity: C.opacity, depthWrite: false, blush: true });
     k.both((side) => {
       const blush = k.mesh(k.G.sphere(14), cMat, false);
       blush.scale.set(C.size, C.size * 0.62, 0.012);

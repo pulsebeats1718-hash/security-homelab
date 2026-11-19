@@ -1,13 +1,16 @@
 /**
  * Hero — the one live character standing on the island. Handles swapping
  * characters (with a puff of sparkles), the turntable on the collection screen
- * and the little idle waves on the menu.
+ * and the little idle waves on the menu. Its Juice (world/juice.js) answers the
+ * game's events with light and particles: right and wrong answers, streaks,
+ * fever, golden cards, level-ups and new characters.
  */
 import * as THREE from 'three';
 import { createCharacter } from '../characters/index.js';
 import { setSummerGear } from '../characters/kit/summer.js';
 import { setHat as wearHat } from '../characters/kit/hats.js';
 import { damp } from '../core/utils.js';
+import { Juice } from '../world/juice.js';
 
 const _v = new THREE.Vector3();
 
@@ -31,6 +34,7 @@ export class Hero {
     this.summer = false;
     /** Sticker album hat (an id from HATS, or null), worn by every character that can wear it. */
     this.hat = null;
+    this.juice = new Juice({ stage, fx, game, hero: this });
   }
 
   /** Put a hat on the character on the island (and any shown later); null takes it off. True if this one wears it. */
@@ -65,9 +69,11 @@ export class Hero {
     if (clip) ch.animator.play(clip);
     if (locked) ch.rig.face?.set('neutral');
     if (effect) {
+      const col = locked ? 0x8f7bff : ch.def.accent;
       _v.set(0, 1.1, 0);
-      this.fx.burst(_v, { count: 26, color: locked ? 0x8f7bff : ch.def.accent, color2: 0xffffff, speed: 3.6, size: 0.55, life: 0.6, gravity: 0, spread: 0.8, up: 0.5 });
-      this.fx.ring(_v.set(0, 0.06, 0), { color: locked ? 0x8f7bff : ch.def.accent, from: 0.4, to: 2.6, life: 0.5, flat: true, opacity: 0.7 });
+      this.fx.burst(_v, { count: 26, color: col, color2: 0xffffff, speed: 3.6, size: 0.55, life: 0.6, gravity: 0, spread: 0.8, up: 0.5, stars: 0.3 });
+      this.fx.ring(_v.set(0, 0.06, 0), { color: col, from: 0.4, to: 2.6, life: 0.5, flat: true, opacity: 0.7 });
+      if (!locked) this.fx.swirl(_v.set(0, 0.2, 0), { count: this.fx.n(10), color: 0xffffff, color2: col, size: 0.6, height: 1.8, radius: 0.8 });
     }
     return ch;
   }
@@ -91,6 +97,7 @@ export class Hero {
   }
 
   update(dt) {
+    this.juice.update(dt);
     const ch = this.ch;
     if (!ch) return;
     if (!this.dragging) {

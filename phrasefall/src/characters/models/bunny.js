@@ -39,8 +39,8 @@ export default {
   shot: 'orb',
 
   build(k) {
-    const fur = k.mat(0xfbf3e6, { rough: 0.72 });
-    const pink = k.mat(0xffa3bd, { rough: 0.6 });
+    const fur = k.mat(0xfbf3e6, { rough: 0.72, finish: 'plush' });
+    const pink = k.mat(0xffa3bd, { rough: 0.6, finish: 'plush' });
     const nosePink = k.mat(0xff7fa6, { rough: 0.3 });
     const mint = k.mat(0x97e3c4, { rough: 0.78 });
     const mintDark = k.mat(0x6ccaa6, { rough: 0.78 });

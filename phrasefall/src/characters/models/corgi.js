@@ -26,8 +26,8 @@ export default {
   shot: 'orb',
 
   build(k) {
-    const fur = k.mat(0xf5a046, { rough: 0.72 });
-    const white = k.mat(0xfff8ee, { rough: 0.75 });
+    const fur = k.mat(0xf5a046, { rough: 0.72, finish: 'plush' });
+    const white = k.mat(0xfff8ee, { rough: 0.75, finish: 'plush' });
     const blue = k.mat(0x2350c0, { rough: 0.65, rim: 0.18 });
     const nose = k.mat(0x2b1a1f, { rough: 0.22 });
     const pink = k.mat(0xff9fa4, { rough: 0.6 });

@@ -29,8 +29,8 @@ export default {
   shot: 'orb',
 
   build(k) {
-    const white = k.mat(0xf8f3ea, { rough: 0.7 });
-    const ink = k.mat(0x2e3148);
+    const white = k.mat(0xf8f3ea, { rough: 0.7, finish: 'plush' });
+    const ink = k.mat(0x2e3148, { finish: 'plush' });
     const nose = k.mat(0x1d1e2c, { rough: 0.22 });
     const iris = k.mat(0x9c6130, { rough: 0.28, rim: 0.2 });
     const light = k.mat(0xfff6e6, { rough: 0.5, rim: 0.1 });

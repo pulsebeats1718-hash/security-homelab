@@ -3,12 +3,19 @@
  * stepping stones, the streak ring with its gems, grass, flowers and the crystals underneath.
  * Everything that changes from place to place (trees, lamps, buildings, distant islands …)
  * lives in src/world/places/; a place can also reshape the turf with `setGround`.
+ *
+ * On medium and high quality the island is a living miniature: a lawn of grass blades swaying in
+ * the wind (grass.js), turf with natural variation and a worn path, flagstones with real stone in
+ * them, cloud shadows drifting over it all, and birds and butterflies about (wildlife.js). Low
+ * draws it as it always has.
  */
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { mulberry32 } from '../core/utils.js';
 import { Batch, UNIT, ISLAND, makeLand, rim, popK, std } from './places/kit.js';
-import { KIND, seasonMaterial } from './seasons/shader.js';
+import { KIND, SEASON_U, NOISE_GLSL, WIND_GLSL, CLOUD_GLSL, seasonMaterial, detailFor, setSeasonDetail, setTurfFeatures } from './seasons/shader.js';
+import { Grass } from './grass.js';
+import { Wildlife } from './wildlife.js';
 
 /**
  * The island's random stream (seed 42) is shared with the Home Island dressing, which takes the
@@ -19,16 +26,104 @@ export const HOME_DRAWS = 40;
 
 /** [x, z, size] of the stepping stones leading to the dais (seasonal props keep clear of them). */
 export const STEPPING_STONES = [[0.2, 2.3, 0.42], [-0.3, 3.1, 0.36], [0.35, 3.85, 0.32], [-2.3, 0.9, 0.3], [2.4, 1.1, 0.34]];
+/** The worn path from the front of the dais over the stepping stones ([x, z] points): the turf and the grass follow it. */
+export const PATH = [[0, 1.62], [0.2, 2.3], [-0.3, 3.1], [0.35, 3.85], [0.28, 4.75]];
 
 const GROUND_TIME = 0.9;
 const _m = new THREE.Matrix4();
 const _s = new THREE.Vector3();
+
+/**
+ * A flagstone (medium and high): an irregular, hand-cut outline with a softly rounded top edge,
+ * in the unit size of UNIT.cyl (radius ≈ 1, height 1, centred), so it takes the same transform.
+ */
+function flagstone(seed) {
+  const r = mulberry32(seed * 7919 + 13);
+  const p1 = r() * 6.28;
+  const p2 = r() * 6.28;
+  const p3 = r() * 6.28;
+  const pts = [];
+  for (let i = 0; i < 26; i++) {
+    const a = (i / 26) * Math.PI * 2;
+    const rad = 0.93 + 0.06 * Math.sin(a * 3 + p1) + 0.035 * Math.sin(a * 5 + p2) + 0.02 * Math.sin(a * 9 + p3);
+    pts.push(new THREE.Vector2(Math.cos(a) * rad, Math.sin(a) * rad));
+  }
+  const geo = new THREE.ExtrudeGeometry(new THREE.Shape(pts), { depth: 0.55, bevelEnabled: true, bevelThickness: 0.22, bevelSize: 0.08, bevelSegments: 2, curveSegments: 1 });
+  geo.rotateX(-Math.PI / 2);
+  geo.translate(0, -0.33, 0);
+  geo.deleteAttribute('uv');
+  return geo;
+}
+
+/**
+ * Real stone for the dais and the stepping stones (medium and high): grain, weathered blotches,
+ * the dais laid as a round centre stone and two rings of flagstones (the streak ring hides the
+ * outer joint), each slab its own shade, dark joints, dirt and a little moss low down where the
+ * stone meets the lawn, a polished middle where the characters stand, and the cloud shadows.
+ */
+const STONE_GLSL = /* glsl */ `
+{
+  vec2 sp = vStoneW.xz;
+  float r = length(sp);
+  float sn = pfNoise(sp * 11.0 + 4.0);
+  float sm = pfNoise(sp * 2.7 + 1.3);
+  vec3 sc = diffuseColor.rgb;
+  float joint = 0.0;
+  float outer = 0.0;
+  if (r < 1.75) {
+    float a = atan(sp.y, sp.x);
+    float ring = r < 0.56 ? 0.0 : r < 1.22 ? 1.0 : 2.0;
+    float nSl = ring < 0.5 ? 1.0 : ring < 1.5 ? 7.0 : 13.0;
+    float u = (a / 6.2831853 + 0.5) * nSl + ring * 0.37;
+    float slab = fract(sin((floor(u) + ring * 17.0) * 12.9898) * 43758.5453);
+    float dj = ring < 0.5 ? 9.0 : (0.5 - abs(fract(u) - 0.5)) * 6.2831853 * r / nSl;
+    float d = min(dj, min(abs(r - 0.56), abs(r - 1.22))) + (sn - 0.5) * 0.008;
+    joint = 1.0 - smoothstep(0.004, 0.013, d);
+    sc *= mix(0.92, 1.06, slab) * mix(vec3(1.02, 0.99, 0.95), vec3(0.97, 0.99, 1.03), fract(slab * 7.31));
+    // the slabs' arrises are a touch paler, worn by feet
+    sc *= 1.0 + 0.06 * (1.0 - smoothstep(0.012, 0.045, d)) * (1.0 - joint);
+    outer = smoothstep(1.3, 1.68, r);
+  }
+  sc *= 0.9 + 0.13 * sm;
+  sc *= 0.93 + 0.12 * sn;
+  // dirt and a little moss low down, where the stone meets the lawn
+  float low = clamp(smoothstep(-0.03, -0.17, vStoneW.y) * 0.85 + outer * 0.3, 0.0, 1.0) * (0.55 + 0.45 * sm);
+  sc = mix(sc, sc * ${'${MOSS}'}, low);
+  sc = mix(sc, sc * 0.5, joint);
+  diffuseColor.rgb = sc;
+  roughnessFactor = mix(roughnessFactor, 0.62, (1.0 - smoothstep(0.2, 1.1, r)) * (1.0 - joint));
+  pfCloud = pfCloudLight(vStoneW, uPfTime, uPfCloud);
+}
+`;
+
+function stoneMaterial(mat, detailRef) {
+  const moss = new THREE.Color(0xb7c29a);
+  const glsl = STONE_GLSL.replace('${MOSS}', `vec3(${moss.r.toFixed(4)}, ${moss.g.toFixed(4)}, ${moss.b.toFixed(4)})`);
+  mat.onBeforeCompile = (shader) => {
+    if (!detailRef.value) return;
+    Object.assign(shader.uniforms, SEASON_U);
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vStoneW;')
+      .replace('#include <project_vertex>', '#include <project_vertex>\nvStoneW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>', `#include <common>\nvarying vec3 vStoneW;\nuniform float uPfTime;\nuniform float uPfCloud;\nfloat pfCloud = 1.0;\n${NOISE_GLSL}\n${CLOUD_GLSL}`)
+      .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>\n${glsl}`)
+      .replace('#include <lights_fragment_end>', '#include <lights_fragment_end>\nreflectedLight.directDiffuse *= pfCloud;\nreflectedLight.directSpecular *= pfCloud;');
+  };
+  mat.customProgramCacheKey = () => `pf-stone-${detailRef.value}`;
+  return mat;
+}
 
 export class Island {
   constructor(scene, { quality = 'high' } = {}) {
     this.group = new THREE.Group();
     this.group.name = 'island';
     scene.add(this.group);
+    this.quality = quality;
+    // the surface detail of every scenery material (turf, foliage, cloud shadows …) follows the tier
+    this.detail = { value: detailFor(quality) };
+    setSeasonDetail(this.detail.value);
+    setTurfFeatures(STEPPING_STONES, PATH);
     const seeded = mulberry32(42);
     let draws = 0;
     const rng = () => (draws++, seeded());
@@ -38,7 +133,7 @@ export class Island {
       // the turf takes the season look: warmer in autumn, fresher in spring, sand round the dais in summer, snow in winter
       grass: seasonMaterial(std(0xffffff, { vertexColors: true, roughness: 1 }), { kind: KIND.TURF, sand: true, grassAttr: true }),
       rock: std(0xffffff, { vertexColors: true, flatShading: true }),
-      stone: std(0xdcd3c3, { roughness: 0.85 }),
+      stone: stoneMaterial(std(0xdcd3c3, { roughness: 0.85 }), this.detail),
     });
 
     const { radius: RADIUS, depth: DEPTH } = ISLAND;
@@ -48,6 +143,8 @@ export class Island {
     this.land = land;
     const turfGeo = land.children[0].geometry;
     turfGeo.setAttribute('aGrass', new THREE.BufferAttribute(new Float32Array(turfGeo.attributes.position.count).fill(1), 1));
+    // the turf is drawn after everything standing on it, so whatever covers it is never shaded twice
+    land.children[0].renderOrder = 1;
 
     const onLand = (x, z) => Math.hypot(x, z / DEPTH) < RADIUS * rim(Math.atan2(z / DEPTH, x)) * 0.9;
 
@@ -56,7 +153,8 @@ export class Island {
     const dais = new THREE.Mesh(new THREE.LatheGeometry([[1.68, -0.2], [1.66, -0.09], [1.6, -0.025], [1.5, 0], [0, 0]].map(([r, y]) => new THREE.Vector2(r, y)), 48), mats.stone);
     dais.receiveShadow = true;
     this.group.add(dais);
-    STEPPING_STONES.forEach(([x, z, s]) => b.add('stone', UNIT.cyl, x, -0.07, z, s, 0.08, s * 0.82, 0, rng() * 3, 0));
+    const cut = this.detail.value > 0;
+    STEPPING_STONES.forEach(([x, z, s], i) => b.add('stone', cut ? flagstone(i) : UNIT.cyl, x, -0.07, z, s, 0.08, s * 0.82, 0, rng() * 3, 0));
     b.build(mats, this.group, true);
 
     // ── streak ring set into the dais ─────────────────────────────────────
@@ -79,7 +177,8 @@ export class Island {
     this.ringTarget = 0;
     this.ringPulse = 0;
 
-    // ── grass tufts with wind ─────────────────────────────────────────────
+    // ── grass tufts with wind (low quality; on medium and high the lawn replaces them, and their
+    //    spots grow taller tussocks in it) ─────────────────────────────────────────────────────
     const blade = new THREE.ConeGeometry(0.04, 0.3, 4);
     blade.translate(0, 0.15, 0);
     const tuftGeo = mergeGeometries([blade, blade.clone().rotateZ(0.45).translate(0.05, 0, 0), blade.clone().rotateZ(-0.4).translate(-0.05, 0, 0.02)], false);
@@ -98,6 +197,7 @@ export class Island {
     const tufts = new THREE.InstancedMesh(tuftGeo, tuftMat, tuftCount);
     const dummy = new THREE.Object3D();
     const col = new THREE.Color();
+    const tussocks = [];
     let placed = 0;
     let guard = 0;
     while (placed < tuftCount && guard++ < 4000) {
@@ -111,11 +211,14 @@ export class Island {
       dummy.updateMatrix();
       tufts.setMatrixAt(placed, dummy.matrix);
       tufts.setColorAt(placed, col.setHSL(0.31 + rng() * 0.05, 0.62, 0.3 + rng() * 0.1));
+      tussocks.push([x, z, s]);
       placed++;
     }
     tufts.count = placed;
     tufts.receiveShadow = true;
     this.group.add(tufts);
+    this.tufts = tufts;
+    this.tussocks = tussocks;
 
     // ── flowers ───────────────────────────────────────────────────────────
     const flowerCount = quality === 'low' ? 24 : 54;
@@ -124,22 +227,26 @@ export class Island {
     const headGeo = new THREE.SphereGeometry(0.065, 8, 6);
     headGeo.scale(1, 0.7, 1);
     headGeo.translate(0, 0.21, 0);
-    // the wild flowers nod in the same breeze as the grass (stems and heads share the motion)
+    // the wild flowers nod in the same breeze as the grass (stems and heads share the motion; with
+    // detail, the gusts rolling over the lawn bow them too)
+    const detail = this.detail;
     const flowerWind = (mat, key) => {
       mat.onBeforeCompile = (shader) => {
         shader.uniforms.uWind = this.windUniform;
-        shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nuniform float uWind;').replace(
+        shader.vertexShader = shader.vertexShader.replace('#include <common>', `#include <common>\nuniform float uWind;\n${detail.value ? WIND_GLSL : ''}`).replace(
           '#include <begin_vertex>',
           `#include <begin_vertex>
           float sway = sin(uWind * 1.7 + instanceMatrix[3].x * 1.1 + instanceMatrix[3].z * 0.8) * 0.07 + sin(uWind * 2.9 + instanceMatrix[3].z * 1.9) * 0.03;
-          transformed.x += sway * position.y * 1.6;`
+          transformed.x += sway * position.y * 1.6;
+          ${detail.value ? 'transformed.xz += PF_WIND * (pfGust(instanceMatrix[3].xz, uWind) * 0.22 * position.y);' : ''}`
         );
       };
-      mat.customProgramCacheKey = () => key;
+      mat.customProgramCacheKey = () => `${key}-${detail.value ? 1 : 0}`;
       return mat;
     };
-    const stems = new THREE.InstancedMesh(stemGeo, flowerWind(std(0x3fa65c), 'pf-wild-stem'), flowerCount);
-    const heads = new THREE.InstancedMesh(headGeo, flowerWind(new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 }), 'pf-wild-head'), flowerCount);
+    this.flowerMats = [flowerWind(std(0x3fa65c), 'pf-wild-stem'), flowerWind(new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 }), 'pf-wild-head')];
+    const stems = new THREE.InstancedMesh(stemGeo, this.flowerMats[0], flowerCount);
+    const heads = new THREE.InstancedMesh(headGeo, this.flowerMats[1], flowerCount);
     const palette = [0xffffff, 0xffe066, 0xff9ec4, 0xb9a6ff, 0xfff1a8];
     placed = 0;
     guard = 0;
@@ -190,6 +297,45 @@ export class Island {
       place: null,
       season: null,
     };
+
+    // ── the living miniature (medium and high) ─────────────────────────────
+    this.grass = null;
+    this.wildlife = new Wildlife(scene, { quality });
+    this._lawn(quality);
+  }
+
+  /** The lawn for a tier: built (or rebuilt for a new tier) on medium and high, hidden on low. */
+  _lawn(quality) {
+    const want = quality !== 'low';
+    if (want && this.grass?.quality !== quality) {
+      const old = this.grass;
+      if (old) {
+        this.group.remove(old.mesh);
+        old.mesh.geometry.dispose();
+        old.material.dispose();
+      }
+      this.grass = new Grass({ quality, stones: STEPPING_STONES, path: PATH, tussocks: this.tussocks });
+      this.group.add(this.grass.mesh);
+      if (old) this.grass.clearings = old.clearings;
+      this.grass.setGround(this.ground.place, true);
+    }
+    if (this.grass) this.grass.mesh.visible = want;
+    this.tufts.visible = !want;
+  }
+
+  /**
+   * Re-read the quality tier at run time (Settings): the surface detail of the scenery, the lawn,
+   * the wildlife. The boot tier is set by the constructor.
+   */
+  setQuality(quality) {
+    if (quality === this.quality) return;
+    this.quality = quality;
+    this.detail.value = detailFor(quality);
+    setSeasonDetail(this.detail.value);
+    this.mats.stone.needsUpdate = true;
+    for (const m of this.flowerMats) m.needsUpdate = true;
+    this._lawn(quality);
+    this.wildlife.setQuality(quality);
   }
 
   /**
@@ -201,12 +347,18 @@ export class Island {
   setGround(spec, instant = false) {
     this.ground.place = spec ?? null;
     this._refreshGround(instant, true);
+    this.grass?.setGround(this.ground.place, instant);
   }
 
   /** The season's say over the grass: { keepTufts(x, z), keepFlowers(x, z) } or null. */
   setSeasonGround(spec, instant = false) {
     this.ground.season = spec ?? null;
     this._refreshGround(instant, false);
+  }
+
+  /** Circles { x, z, r } the lawn keeps off (garden decorations standing on it). */
+  setClearings(list, instant = false) {
+    this.grass?.setClearings(list, instant);
   }
 
   _refreshGround(instant, recolour) {
@@ -298,6 +450,9 @@ export class Island {
   apply(v) {
     this.crystalMat.emissiveIntensity = 0.7 + v.lamps * 1.3;
     this.setAccent(v.accent);
+    // cloud shadows by day only (they fade out through dusk)
+    SEASON_U.uPfCloud.value = 0.3 * Math.min(1, Math.max(0, 1 - (v.stars ?? 0) * 1.4));
+    this.wildlife.apply(v);
   }
 
   update(t, dt) {
@@ -306,6 +461,8 @@ export class Island {
       this.ground.t = Math.min(1, this.ground.t + dt / GROUND_TIME);
       this._groundStep(this.ground.t);
     }
+    this.grass?.update(t, dt);
+    this.wildlife.update(t, dt);
     this.ringPulse = Math.max(0, this.ringPulse - dt * 1.6);
     this.ringLevel += (this.ringTarget - this.ringLevel) * Math.min(1, dt * 4);
     this.ringMat.emissiveIntensity = 0.22 + this.ringLevel * 1.5 + this.ringPulse * 3 + Math.sin(t * 2.4) * 0.06;

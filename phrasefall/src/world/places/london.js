@@ -1,13 +1,30 @@
 /**
- * London — a cobbled crescent behind the dais with pastel terraces, a red double-decker and a
- * black cab, Victorian lamps, a phone kiosk, a pillar box, railings, a bench, bunting and London
- * plane trees. Distant chunks: a Gothic clock tower, an observation wheel, a twin-towered bascule
- * bridge over the river, a domed cathedral and chimney-pot rooftops. All shapes are generic.
+ * London — a cobbled crescent behind the dais lined with a brick terrace of shops: a corner pub
+ * (The Good Egg, with its hanging sign), a café under a striped awning, a cake shop, a bargain
+ * corner shop with fruit crates and the evening paper's board, and a chippy, a sash window or six
+ * above each. A red double-decker and a black cab (now and then they drive off round the crescent
+ * and come back), Victorian lamps, a phone kiosk, a pillar box, railings, a bench, bunting and
+ * London plane trees.
+ *
+ * Behind it a second floating block of taller buildings — a mansion block, a warehouse with a
+ * faded painted sign, a brick block with a billboard of the phrases the player is learning and a
+ * stone department store — with a lane between them that frames the Gothic clock tower in the
+ * distance. Further out: an observation wheel, a twin-towered bascule bridge, a domed cathedral,
+ * chimney-pot rooftops and a skyline of far-off blocks. All shapes are generic.
+ *
+ * Signs (src/world/signs.js) carry the player's phrasebook: shop names, the café's chalkboard,
+ * the pub's food board, window posters, the paper's headline, a street-name plate and the
+ * billboards. Low quality keeps the terrace and its signs but leaves out the back block, the far
+ * skyline and the traffic.
  */
 import * as THREE from 'three';
 import { mulberry32 } from '../../core/utils.js';
 import { Diorama, SHAPE, rbox, groundY, islandR, ribbon, pathX, addLand, tools } from './kit.js';
 import { KIND } from '../seasons/shader.js';
+import { SignSet, POSTER } from '../signs.js';
+import { cityMaterials } from './city/materials.js';
+import { cityParts, WINDOW } from './city/parts.js';
+import { Traffic } from './city/traffic.js';
 
 const M = 'matte';
 const S = 'satin';
@@ -25,8 +42,10 @@ const C = {
   slate: 0x5a6378,
   pot: 0xd8784a,
   brick: 0xb8573f,
+  stock: 0xc9a77a,
   stone: 0xe8d6a6,
   stoneDark: 0xcbb27c,
+  portland: 0xe9e3d3,
   kerb: 0xd9d3c7,
   grout: 0x6c6862,
   paving: 0xcdc7bb,
@@ -41,20 +60,101 @@ const C = {
   spire: 0x41606d,
 };
 const WARM = 0xffc46b;
-const WINDOW = 0xd9a35a;
 
 /** Centre line of the cobbled crescent behind the dais, and its half width. */
 const streetZ = (x) => -2.86 + 0.074 * x * x;
 const HALF = 0.58;
+/** The terrace: house centres along the crescent, scale, and the module's size (local units). */
+const TERRACE = { s: 0.74, W: 1.82, D: 1.3, back: 0.12 };
+const houseAt = (x) => {
+  const z = streetZ(x) - HALF - 0.95 - TERRACE.back;
+  return { x, z, ry: -Math.atan(0.148 * x) * 1.35 };
+};
+/** Where the bus and the cab park (x along the crescent). */
+const BUS_X = 3.25;
+const CAB_X = -3.05;
+
+// ── vehicles (drawn into any Batch, at the origin facing +x) ──────────────
+function wheel(t, x, z, d = 0.42, w = 0.17) {
+  t.b.add(M, SHAPE.cyl, x, d / 2, z, d, w, d, Math.PI / 2, 0, 0, C.tyre);
+  t.b.add(S, SHAPE.cyl8, x, d / 2, z + Math.sign(z) * (w / 2 + 0.005), d * 0.5, 0.02, d * 0.5, Math.PI / 2, 0, 0, C.chrome);
+}
+
+function cab(t) {
+  const { part, block, slab, b } = t;
+  for (const x of [-0.62, 0.66]) for (const z of [-0.43, 0.43]) wheel(t, x, z);
+  block(0, 0.16, 0, 1.95, 0.5, 0.96, 0x1d1f26, S, 0.16);
+  block(-0.12, 0.6, 0, 1.36, 0.56, 0.9, 0x1d1f26, S, 0.14);
+  for (const z of [-1, 1]) {
+    block(0.2, 0.74, z * 0.452, 0.42, 0.3, 0.02, C.glassDark, S, 0.01);
+    block(-0.34, 0.74, z * 0.452, 0.48, 0.3, 0.02, C.glassDark, S, 0.01);
+  }
+  part(S, rbox(0.03, 0.34, 0.74, 0.01), 0.56, 0.9, 0, 1, 1, 1, C.glassDark, 0, 0, -0.25);
+  block(-0.79, 0.74, 0, 0.02, 0.28, 0.66, C.glassDark, S, 0.01);
+  slab(0.97, 0.3, 0, 0.04, 0.26, 0.4, C.chrome, S);
+  slab(0.98, 0.15, 0, 0.06, 0.07, 0.94, C.chrome, S);
+  slab(-0.98, 0.15, 0, 0.06, 0.07, 0.94, C.chrome, S);
+  for (const z of [-0.32, 0.32]) {
+    b.lit(0xfff4dc, 0.35, () => part(L, SHAPE.cyl, 0.97, 0.44, z, 0.16, 0.05, 0.16, 0xf4f1e6, 0, 0, Math.PI / 2));
+    b.lit(0xff3b30, 0.35, () => slab(-0.98, 0.4, z, 0.03, 0.1, 0.12, 0xb3202a, L));
+  }
+  b.lit(0xffb52e, -1, () => block(0.02, 1.15, 0, 0.36, 0.12, 0.16, 0xffc23d, L, 0.03));
+}
+
+/** The double-decker; `ad(x, y, z, w, h, ry)` places the advert panels on its sides. */
+function bus(t, ad) {
+  const { part, block, slab, b } = t;
+  const len = 3.9;
+  for (const x of [-1.15, 1.25]) for (const z of [-0.54, 0.54]) wheel(t, x, z, 0.56, 0.2);
+  block(0, 0.2, 0, len - 0.08, 0.32, 1.16, 0x2a2b31, M, 0.08);
+  block(0, 0.3, 0, len, 2.06, 1.22, C.red, S, 0.2);
+  block(0, 1.38, 0, len + 0.02, 0.1, 1.24, C.cream, S, 0.03);
+  for (const z of [-1, 1]) {
+    b.lit(0xffd590, 0.25, () => {
+      block(-0.25, 0.86, z * 0.612, 2.9, 0.42, 0.02, 0x41536b, L, 0.01);
+      block(0.02, 1.62, z * 0.612, 3.5, 0.44, 0.02, 0x41536b, L, 0.01);
+    });
+    for (let i = 0; i < 6; i++) slab(-1.6 + i * 0.6, 0.86, z * 0.622, 0.06, 0.42, 0.02, C.red, S);
+    for (let i = 0; i < 7; i++) slab(-1.73 + i * 0.585, 1.62, z * 0.622, 0.06, 0.44, 0.02, C.red, S);
+    slab(1.62, 0.5, z * 0.616, 0.36, 0.78, 0.02, 0x41536b, S);
+  }
+  b.lit(0xffd590, 0.25, () => {
+    block(len / 2 + 0.005, 0.86, 0, 0.02, 0.44, 0.96, 0x41536b, L, 0.01);
+    block(len / 2 + 0.005, 1.62, 0, 0.02, 0.44, 0.96, 0x41536b, L, 0.01);
+  });
+  b.lit(0xfff3c4, 0.15, () => slab(len / 2 + 0.01, 1.42, 0, 0.02, 0.16, 0.7, 0xf6f0d8, L));
+  for (const z of [-0.42, 0.42]) b.lit(0xfff4dc, 0.35, () => part(L, SHAPE.cyl, len / 2 + 0.01, 0.48, z, 0.16, 0.04, 0.16, 0xf4f1e6, 0, 0, Math.PI / 2));
+  slab(len / 2 + 0.02, 0.22, 0, 0.06, 0.08, 1.18, 0x2a2b31);
+  // the advert panels between the decks (a frame on each side; the posters are signs)
+  for (const z of [-1, 1]) slab(-0.35, 1.3, z * 0.626, 2.14, 0.3, 0.012, 0x2a2b31);
+  if (ad) for (const z of [-1, 1]) ad(-0.35, 1.45, z * 0.634, 2.08, 0.27, z > 0 ? 0 : Math.PI);
+}
 
 export class London extends Diorama {
   constructor(island, quality) {
     super(island, quality);
     this.rng = mulberry32(1851);
+    this.rng2 = mulberry32(18510);
     this.leafT = 0.5;
     this.trees = [];
+    Object.assign(this.mats, cityMaterials(this));
+    this.signs = new SignSet(this, 'london');
+    this.traffic = this.low ? null : new Traffic(this);
     this.build();
     this.finish();
+  }
+
+  finish() {
+    super.finish();
+    // window glass catches the light but casts no shadow of its own
+    for (const o of this.group.children) if (o.name === 'glowGlass') o.castShadow = false;
+    this.signs.finish();
+  }
+
+  update(t, dt = 0) {
+    super.update(t);
+    this.signs.update(t, dt);
+    this.traffic?.update(t, dt);
   }
 
   build() {
@@ -62,15 +162,9 @@ export class London extends Diorama {
     const rng = this.rng;
     const { part, block, slab, post, ball } = tools(b);
     const lit = () => 0.12 + rng() * 0.95;
-
-    /** a white sash window on a wall facing +z (wall plane at z), bottom at y */
-    const sash = (x, y, z, w, h, frame = C.white, glow = WINDOW) => {
-      slab(x, y - 0.06, z + 0.04, w + 0.16, 0.06, 0.1, frame);
-      slab(x, y - 0.02, z + 0.015, w + 0.1, h + 0.06, 0.04, frame);
-      b.lit(glow, lit(), () => slab(x, y + 0.01, z + 0.03, w, h, 0.02, C.glass, L));
-      slab(x, y + h * 0.5 - 0.01, z + 0.045, w, 0.035, 0.02, frame);
-      slab(x, y, z + 0.045, 0.03, h, 0.02, frame);
-    };
+    const P = cityParts(this, b, this.rng2);
+    const k = P.k;
+    const signs = this.signs;
 
     // ── Victorian street lamp ───────────────────────────────────────────────
     const lamp = () => {
@@ -101,6 +195,7 @@ export class London extends Diorama {
           for (let i = 1; i < 3; i++) slab(-0.29 + i * 0.193, 0.42, 0.02, 0.035, 1.22, 0.02, C.red, S);
           for (let i = 1; i < 6; i++) slab(0, 0.42 + i * 0.203, 0.02, 0.58, 0.035, 0.02, C.red, S);
           b.lit(0xfff3d6, 0.3, () => slab(0, 1.73, 0.01, 0.56, 0.15, 0.02, C.white, L));
+          signs.add(0, 1.805, 0.022, 0.52, 0.12, { style: 'plate', text: 'TELEPHONE', bg: '#fbf7ee', ink: '#1a1a1a' }, { glow: 0xfff3d6, lit: 0.3 });
         });
       }
       slab(0.31, 1.0, 0.455, 0.05, 0.16, 0.03, C.iron, S);
@@ -119,86 +214,6 @@ export class London extends Diorama {
       slab(0, 0.8, 0.235, 0.24, 0.04, 0.04, C.iron, S);
       slab(0, 0.55, 0.235, 0.16, 0.12, 0.02, C.white, M);
       slab(0, 0.3, 0.238, 0.08, 0.06, 0.02, C.gold, S);
-    };
-
-    // ── vehicles ────────────────────────────────────────────────────────────
-    const wheel = (x, z, d = 0.42, w = 0.17) => {
-      b.add(M, SHAPE.cyl, x, d / 2, z, d, w, d, Math.PI / 2, 0, 0, C.tyre);
-      b.add(S, SHAPE.cyl8, x, d / 2, z + Math.sign(z) * (w / 2 + 0.005), d * 0.5, 0.02, d * 0.5, Math.PI / 2, 0, 0, C.chrome);
-    };
-    const cab = () => {
-      for (const x of [-0.62, 0.66]) for (const z of [-0.43, 0.43]) wheel(x, z);
-      block(0, 0.16, 0, 1.95, 0.5, 0.96, 0x1d1f26, S, 0.16);
-      block(-0.12, 0.6, 0, 1.36, 0.56, 0.9, 0x1d1f26, S, 0.14);
-      for (const z of [-1, 1]) {
-        block(0.2, 0.74, z * 0.452, 0.42, 0.3, 0.02, C.glassDark, S, 0.01);
-        block(-0.34, 0.74, z * 0.452, 0.48, 0.3, 0.02, C.glassDark, S, 0.01);
-      }
-      part(S, rbox(0.03, 0.34, 0.74, 0.01), 0.56, 0.9, 0, 1, 1, 1, C.glassDark, 0, 0, -0.25);
-      block(-0.79, 0.74, 0, 0.02, 0.28, 0.66, C.glassDark, S, 0.01);
-      slab(0.97, 0.3, 0, 0.04, 0.26, 0.4, C.chrome, S);
-      slab(0.98, 0.15, 0, 0.06, 0.07, 0.94, C.chrome, S);
-      slab(-0.98, 0.15, 0, 0.06, 0.07, 0.94, C.chrome, S);
-      for (const z of [-0.32, 0.32]) {
-        b.lit(0xfff4dc, 0.35, () => part(L, SHAPE.cyl, 0.97, 0.44, z, 0.16, 0.05, 0.16, 0xf4f1e6, 0, 0, Math.PI / 2));
-        b.lit(0xff3b30, 0.35, () => slab(-0.98, 0.4, z, 0.03, 0.1, 0.12, 0xb3202a, L));
-      }
-      b.lit(0xffb52e, -1, () => block(0.02, 1.15, 0, 0.36, 0.12, 0.16, 0xffc23d, L, 0.03));
-    };
-    const bus = () => {
-      const len = 3.9;
-      for (const x of [-1.15, 1.25]) for (const z of [-0.54, 0.54]) wheel(x, z, 0.56, 0.2);
-      block(0, 0.2, 0, len - 0.08, 0.32, 1.16, 0x2a2b31, M, 0.08);
-      block(0, 0.3, 0, len, 2.06, 1.22, C.red, S, 0.2);
-      block(0, 1.38, 0, len + 0.02, 0.1, 1.24, C.cream, S, 0.03);
-      for (const z of [-1, 1]) {
-        b.lit(0xffd590, 0.25, () => {
-          block(-0.25, 0.86, z * 0.612, 2.9, 0.42, 0.02, 0x41536b, L, 0.01);
-          block(0.02, 1.62, z * 0.612, 3.5, 0.44, 0.02, 0x41536b, L, 0.01);
-        });
-        for (let i = 0; i < 6; i++) slab(-1.6 + i * 0.6, 0.86, z * 0.622, 0.06, 0.42, 0.02, C.red, S);
-        for (let i = 0; i < 7; i++) slab(-1.73 + i * 0.585, 1.62, z * 0.622, 0.06, 0.44, 0.02, C.red, S);
-        slab(1.62, 0.5, z * 0.616, 0.36, 0.78, 0.02, 0x41536b, S);
-      }
-      b.lit(0xffd590, 0.25, () => {
-        block(len / 2 + 0.005, 0.86, 0, 0.02, 0.44, 0.96, 0x41536b, L, 0.01);
-        block(len / 2 + 0.005, 1.62, 0, 0.02, 0.44, 0.96, 0x41536b, L, 0.01);
-      });
-      b.lit(0xfff3c4, 0.15, () => slab(len / 2 + 0.01, 1.42, 0, 0.02, 0.16, 0.7, 0xf6f0d8, L));
-      for (const z of [-0.42, 0.42]) b.lit(0xfff4dc, 0.35, () => part(L, SHAPE.cyl, len / 2 + 0.01, 0.48, z, 0.16, 0.04, 0.16, 0xf4f1e6, 0, 0, Math.PI / 2));
-      slab(len / 2 + 0.02, 0.22, 0, 0.06, 0.08, 1.18, 0x2a2b31);
-    };
-
-    // ── terrace house ───────────────────────────────────────────────────────
-    const house = (body, door, chimneySide = 1) => {
-      const w = 1.5;
-      const d = 1.4;
-      const z = d / 2;
-      block(0, 0, 0, w, 2.7, d, body, M, 0.04);
-      block(0, 0, 0, w + 0.02, 0.22, d + 0.02, C.white, M, 0.02);
-      slab(0, 1.28, z, w + 0.02, 0.08, 0.06, C.white);
-      block(0, 2.62, 0, w + 0.1, 0.14, d + 0.1, C.white, M, 0.03);
-      // door with fanlight, frame and steps
-      const dx = -0.36;
-      slab(dx, 0.22, z + 0.005, 0.54, 1.02, 0.04, C.white);
-      block(dx, 0.24, z + 0.02, 0.4, 0.84, 0.04, door, S, 0.02);
-      b.lit(WINDOW, lit(), () => part(L, SHAPE.halfDisc, dx, 1.09, z + 0.035, 0.38, 0.38, 0.02, C.glass));
-      ball(dx + 0.12, 0.66, z + 0.06, 0.05, C.gold, S);
-      slab(dx, 0, z + 0.14, 0.62, 0.12, 0.3, C.white);
-      slab(dx, 0, z + 0.28, 0.72, 0.06, 0.3, C.white);
-      // windows, a little iron balcony upstairs
-      sash(0.34, 0.5, z, 0.44, 0.64);
-      sash(-0.36, 1.56, z, 0.4, 0.74);
-      sash(0.36, 1.56, z, 0.4, 0.74);
-      slab(0, 1.46, z + 0.1, 1.26, 0.04, 0.12, C.iron, S);
-      for (let i = 0; i < 9; i++) slab(-0.6 + i * 0.15, 1.46, z + 0.15, 0.022, 0.24, 0.022, C.iron, S);
-      slab(0, 1.7, z + 0.15, 1.26, 0.03, 0.03, C.iron, S);
-      // slate roof and a chimney stack with pots
-      part(M, SHAPE.prism, 0, 2.95, 0, w + 0.06, 0.5, d - 0.1, C.slate);
-      const cx = chimneySide * (w / 2 - 0.2);
-      block(cx, 2.6, -0.1, 0.34, 0.92, 0.5, C.brick, M, 0.03);
-      slab(cx, 3.5, -0.1, 0.4, 0.06, 0.56, C.white);
-      for (const pz of [-0.25, -0.1, 0.05]) post(cx, 3.56, pz, 0.1, 0.2, C.pot);
     };
 
     // ── London plane tree ───────────────────────────────────────────────────
@@ -269,7 +284,7 @@ export class London extends Diorama {
       part(M, ribbon(path, -HALF, HALF, 0.0, 0.1), 0, 0, 0, 1, 1, 1, C.grout);
       part(M, ribbon(path, HALF, HALF + 0.14, 0.05, 0.12), 0, 0, 0, 1, 1, 1, C.kerb);
       part(M, ribbon(path, -HALF - 0.14, -HALF, 0.05, 0.12), 0, 0, 0, 1, 1, 1, C.kerb);
-      part(M, ribbon(path, -HALF - 1.7, -HALF - 0.14, 0.025, 0.1), 0, 0, 0, 1, 1, 1, C.paving);
+      part(k.paving, ribbon(path, -HALF - 1.7, -HALF - 0.14, 0.025, 0.1), 0, 0, 0, 1, 1, 1, C.paving);
       const cob = [0x8f8a84, 0x9e978d, 0x7f7c7b, 0xa8a095, 0x8b8379];
       for (const d of [-0.42, -0.14, 0.14, 0.42]) {
         for (let x = -6.4 + d * 0.5; x < 7; ) {
@@ -281,38 +296,207 @@ export class London extends Diorama {
           x += 0.29 / l;
         }
       }
-      for (let x = -3.1; x < 3.3; x += 0.62) {
-        const dz = 0.148 * x;
-        const l = Math.hypot(1, dz);
-        const d = -HALF - 0.92;
-        const px = x - (dz / l) * d;
-        const pz = streetZ(x) + d / l;
-        if (islandR(px, pz) < 0.93) part(M, SHAPE.box, px, at(px, pz) + 0.026, pz, 0.025, 0.012, 1.5, 0xb4aea2, 0, -Math.atan(dz), 0);
-      }
     }));
 
-    // terraces along the back of the crescent
-    const terrace = [
-      [-2.05, 0.42, 0xa8dcc4, 0x2b3a67, -1],
-      [-0.7, 0.13, 0xf4b4b9, 0x2f6b4f, 1],
-      [0.66, -0.12, 0x9ccaf0, 0xd23b3b, -1],
-      [1.98, -0.4, 0xf7d98a, 0x24262e, 1],
+    // ── the terrace of shops along the back of the crescent ──────────────────
+    const { W, D } = TERRACE;
+    const fz = D / 2;
+    /** the upper storeys of a terrace house: wall, string course, sashes, cornice, parapet, roof, chimney */
+    const upper = (o) => {
+      const wallKey = o.render ? k.render : k.brick;
+      block(0, 0, 0, W, 2.78, D, o.wall, wallKey, 0.02);
+      slab(0, 1.18, fz - 0.005, W + 0.01, 0.06, 0.05, o.trim ?? 0xebe4d4);
+      const cur = [0x9b3b3b, 0x2f5a7a, 0xd9c08a, 0x5a7a4a, null, 0x7a4a6a];
+      const rows = [[1.42, 0.56], [2.12, 0.44]];
+      rows.forEach(([y, h], r) => {
+        for (const x of [-0.56, 0, 0.56]) {
+          if (o.plate && r === 0 && x < 0) continue;
+          const c = cur[(this.rng2() * cur.length) | 0];
+          P.sash(x, y, fz, 0.34, h, { curtain: c, both: r === 0, bars: r === 0 ? [2, 2] : [2, 1], lintel: o.render ? 'flat' : 'arch', lintelCol: o.render ? 0xf3ede0 : 0xc2604a });
+        }
+      });
+      if (o.balcony) {
+        slab(0, 1.36, fz + 0.06, W - 0.2, 0.035, 0.14, C.iron, S);
+        for (let i = 0; i < 12; i++) slab(-W / 2 + 0.16 + i * ((W - 0.32) / 11), 1.36, fz + 0.12, 0.018, 0.22, 0.018, C.iron, S);
+        slab(0, 1.58, fz + 0.12, W - 0.2, 0.025, 0.025, C.iron, S);
+      }
+      // cornice and parapet, the slate roof behind, a chimney stack on the party wall
+      slab(0, 2.66, fz + 0.01, W + 0.04, 0.1, 0.09, o.trim ?? 0xebe4d4);
+      block(0, 2.76, 0.0, W, 0.16, D, o.wall, wallKey, 0.015);
+      P.roofSlope(0, 2.78, -0.1, W - 0.04, 0.5, D - 0.3);
+      P.chimney(o.chimney * (W / 2 - 0.08), 2.8, -0.12, 0.34, 0.5, 0.5, 3, o.render ? 0xb8573f : o.wall);
+    };
+    /** the fascia sign over a shopfront */
+    const fascia = (f, spec, inset = 0.16) => signs.add(0, f.y + f.h / 2, f.z, W - inset * 2, f.h * 0.92, { style: 'fascia', ...spec });
+
+    const pub = () => {
+      upper({ wall: 0xa9583f, chimney: -1 });
+      // glazed-tile ground floor, gilt fascia, lanterns and a hanging sign
+      const f = P.shopfront(0, 0, fz, W, { color: 0x1f4a3a, door: 'mid', h: 1.14, fascia: 0.24, glow: 0xffc27a, lit: 0.12 });
+      fascia(f, { id: 'a-good-egg', text: 'The Good Egg', bg: '#173d2f', gilt: true });
+      for (const s of [-1, 1]) {
+        slab(s * (W / 2 - 0.2), 1.0, fz + 0.06, 0.04, 0.12, 0.08, C.iron, S);
+        b.lit(WARM, -1, () => part(L, SHAPE.lantern, s * (W / 2 - 0.2), 0.98, fz + 0.16, 0.1, 0.16, 0.1, 0x5a4630));
+        this.halo(s * (W / 2 - 0.2), 0.98, fz + 0.16, 1.1);
+        // hanging baskets
+        b.kind(KIND.FOLIAGE, () => ball(s * (W / 2 - 0.42), 1.42, fz + 0.2, 0.2, 0x4f9a48));
+        for (let i = 0; i < 5; i++) ball(s * (W / 2 - 0.42) + Math.cos(i * 1.3) * 0.09, 1.38 + (i % 2) * 0.05, fz + 0.2 + Math.sin(i * 1.3) * 0.09, 0.07, [0xff5a6e, 0xffd23f, 0xb05aff, 0xffffff][i % 4]);
+        part(S, SHAPE.box, s * (W / 2 - 0.42), 1.58, fz + 0.12, 0.015, 0.015, 0.16, C.iron);
+      }
+      // the hanging sign on its bracket, turned a little towards the square so its picture shows
+      const h = P.bracket(-W / 2 + 0.16, 1.62, fz, 0.46);
+      const egg = (g, x, y, r) => {
+        g.fillStyle = '#f7f1df';
+        g.beginPath();
+        g.ellipse(x, y + r * 0.05, r * 0.62, r * 0.82, 0, 0, Math.PI * 2);
+        g.fill();
+        g.fillStyle = '#f2b63a';
+        g.beginPath();
+        g.arc(x, y + r * 0.18, r * 0.34, 0, Math.PI * 2);
+        g.fill();
+        g.strokeStyle = '#d9ad4a';
+        g.lineWidth = r * 0.06;
+        g.beginPath();
+        g.ellipse(x, y + r * 0.05, r * 0.7, r * 0.9, 0, 0, Math.PI * 2);
+        g.stroke();
+      };
+      b.at(h.x, h.y, h.z, 0.75, 1, () => {
+        slab(0, -0.03, 0, 0.02, 0.03, 0.02, C.iron, S);
+        slab(0, -0.52, 0, 0.42, 0.5, 0.035, 0x2a2420);
+        signs.add(0, -0.27, 0.019, 0.39, 0.47, { style: 'hanging', id: 'a-good-egg', text: 'The Good Egg', bg: '#173d2f', emblem: egg }, { back: 0.038 });
+      });
+    };
+
+    const cafe = () => {
+      // the street-name plate takes the place of a first-floor window
+      upper({ wall: C.stock, chimney: 1, plate: true });
+      const f = P.shopfront(0, 0, fz, W, { color: 0xf1e6d0, door: 'right', h: 1.14, fascia: 0.22, glow: 0xffd59a, lit: 0.1 });
+      fascia(f, { id: 'tuck-in', text: 'Tuck In', bg: '#7a1f2b', ink: '#fff4dc', font: 'display', upper: false });
+      const a = P.awning(-W / 2 + 0.1, W / 2 - 0.1, f.y - 0.04, fz + 0.04, 0.22, [0xb3243a, 0xf6efe0]);
+      signs.add(0, a.y, a.z, W - 0.32, 0.09, { style: 'awning', id: 'a-brew-and-a-natter', text: 'a brew and a natter', bg: '#b3243a' });
+      slab(-0.5, 1.555, fz + 0.004, 0.74, 0.25, 0.016, 0x151515);
+      signs.add(-0.5, 1.68, fz + 0.016, 0.72, 0.23, { style: 'street', id: 'mind-the-gap', text: 'Mind the Gap Road', district: 'SE1' });
+    };
+
+    const bakery = () => {
+      upper({ wall: 0xf3d3d6, render: true, chimney: -1, balcony: true, trim: 0xfdf8f2 });
+      const f = P.shopfront(0, 0, fz, W, { color: 0x9fd6c4, door: 'left', h: 1.14, fascia: 0.24, glow: 0xffe1b0, lit: 0.1 });
+      fascia(f, { id: 'the-icing-on-the-cake', text: 'The Icing on the Cake', bg: '#f7c6d4', ink: '#5a2a44', font: 'display', upper: false, trim: 'rgba(255,255,255,0.9)' });
+      // cakes in the window
+      for (const [x, c] of [[0.0, 0xfff1e6], [0.32, 0xf7b6c8], [0.62, 0xc8e8ff]]) {
+        post(x, 0.25, fz + 0.04, 0.16, 0.08, 0xffffff, S);
+        post(x, 0.33, fz + 0.04, 0.2, 0.12, c);
+        post(x, 0.45, fz + 0.04, 0.13, 0.09, c);
+        ball(x, 0.56, fz + 0.04, 0.05, 0xe2483a);
+      }
+      // a poster in the window
+      signs.add(0.48, 0.74, fz + 0.03, 0.34, 0.24, { style: 'poster', id: 'sell-like-hot-cakes', text: 'sell like hot cakes', scheme: POSTER[5] });
+    };
+
+    const bargain = () => {
+      upper({ wall: 0xb5634a, chimney: 1 });
+      const f = P.shopfront(0, 0, fz, W, { color: 0xc8202d, door: 'left', h: 1.14, fascia: 0.24, glow: 0xfff0d0, lit: 0.08 });
+      fascia(f, { id: 'bag-a-bargain', text: 'Bag a Bargain', bg: '#ffd23f', ink: '#c8202d', trim: 'rgba(200,32,45,0.9)' });
+      // posters in the window, fruit crates out front
+      signs.add(0.2, 0.76, fz + 0.03, 0.3, 0.22, { style: 'plate', id: 'on-offer', text: 'ON OFFER!', bg: '#fff36b', ink: '#c8202d' });
+      signs.add(0.6, 0.66, fz + 0.03, 0.28, 0.32, { style: 'poster', id: 'dirt-cheap', text: 'dirt cheap', scheme: POSTER[2] });
+      for (const [x, fruit] of [[0.18, [0x6cc04a, 0x8ad35a]], [0.56, [0xff8a2a, 0xffa94a]]]) {
+        block(x, 0.0, fz + 0.2, 0.34, 0.16, 0.24, 0x9a6a45, M, 0.01);
+        part(M, SHAPE.box, x, 0.2, fz + 0.2, 0.32, 0.03, 0.22, 0x9a6a45, -0.25, 0, 0);
+        for (let i = 0; i < 8; i++) ball(x - 0.12 + (i % 4) * 0.08, 0.19 + Math.floor(i / 4) * 0.04, fz + 0.14 + Math.floor(i / 4) * 0.08, 0.075, fruit[i % 2]);
+      }
+    };
+
+    const chippy = () => {
+      upper({ wall: C.stock, chimney: -1 });
+      const f = P.shopfront(0, 0, fz, W, { color: 0x1f5fa8, door: 'right', h: 1.14, fascia: 0.24, glow: 0xfff6dc, lit: 0.08 });
+      fascia(f, { id: 'the-chippy', text: 'The Chippy', bg: '#1f5fa8', ink: '#ffffff' });
+      signs.add(-0.25, 0.7, fz + 0.03, 0.42, 0.3, { style: 'menu', head: 'Today', lines: [{ id: 'fish-and-chips', text: 'fish and chips' }, { id: 'a-takeaway', text: 'a takeaway' }], bg: '#fffaf0', ink: '#1f5fa8' });
+    };
+
+    const endHouse = () => {
+      upper({ wall: C.stock, chimney: 1, balcony: true });
+      // a front door with a fanlight and steps, a ground-floor sash, area railings
+      slab(-0.4, 0, fz - 0.01, 0.62, 0.14, 0.04, 0xece6da);
+      slab(-0.4, 0.14, fz + 0.004, 0.46, 0.9, 0.03, C.white);
+      block(-0.4, 0.15, fz + 0.016, 0.34, 0.72, 0.03, 0x2b3a67, S, 0.02);
+      b.lit(WINDOW, P.lit(), () => part(k.glass, SHAPE.halfDisc, -0.4, 0.88, fz + 0.03, 0.32, 0.32, 0.02, 0x56677c));
+      ball(-0.31, 0.5, fz + 0.04, 0.04, C.gold, S);
+      for (let i = 0; i < 3; i++) slab(-0.4, 0, fz + 0.1 + i * 0.09, 0.56 + i * 0.06, 0.13 - i * 0.04, 0.1, 0xe2dccf);
+      P.sash(0.42, 0.42, fz, 0.38, 0.56, { curtain: 0x9b3b3b, both: true, bars: [2, 2], lintel: 'arch', lintelCol: 0xc2604a });
+      slab(0.3, 0, fz + 0.26, 0.9, 0.04, 0.03, C.iron, S);
+      for (let i = 0; i < 9; i++) slab(-0.1 + i * 0.1, 0, fz + 0.26, 0.02, 0.36, 0.02, C.iron, S);
+    };
+
+    const row = [
+      [-3.4, endHouse],
+      [-2.05, pub],
+      [-0.7, cafe],
+      [0.66, bakery],
+      [1.98, bargain],
+      [3.35, chippy],
     ];
-    for (const [x, ry, body, door, side] of terrace) {
-      const z = streetZ(x) - HALF - 0.95;
-      b.prop(x, at(x, z), z, ry, 0.74, near(x, z), () => house(body, door, side));
+    for (const [x, fn] of row) {
+      const h = houseAt(x);
+      b.prop(x, at(x, h.z), h.z, h.ry, TERRACE.s, near(x, h.z), fn);
     }
 
-    // vehicles on the crescent
-    {
-      const x = 3.25;
+    // pavement furniture in front of the shops (in each shop's frame, on the pavement)
+    const onPavement = (x, along, fn) => {
+      const h = houseAt(x);
+      const ry = h.ry;
+      const off = fz * TERRACE.s + 0.29;
+      const px = x + Math.sin(ry) * off + Math.cos(ry) * along;
+      const pz = h.z + Math.cos(ry) * off - Math.sin(ry) * along;
+      b.prop(px, at(px, pz), pz, ry, 1, near(px, pz), fn);
+    };
+    // the pub's food board, the café's chalkboard, the paper's headline outside the corner shop
+    const chalkboard = (lines, head) => () => {
+      const a = P.aboard(0.3, 0.42, 0x6b4a32);
+      signs.add(0, a.y, a.z, 0.3, 0.42, { style: 'chalk', head, lines }, { rx: a.rx });
+    };
+    onPavement(-2.05, 0.42, chalkboard([{ id: 'pub-grub', text: 'Pub grub' }, { id: 'fish-and-chips', text: 'Fish and chips' }], 'Food'));
+    onPavement(-0.7, -0.38, chalkboard([{ id: 'a-cuppa-and-a-biscuit', text: 'A cuppa and a biscuit' }, { id: 'a-bacon-sarnie', text: 'A bacon sarnie' }], 'Menu'));
+    onPavement(1.98, 0.38, () => {
+      const a = P.aboard(0.28, 0.4, 0x2b2d33);
+      signs.add(0, a.y, a.z, 0.28, 0.4, { style: 'news', id: 'its-chucking-it-down', text: "It's chucking it down", head: 'The Daily Natter' }, { rx: a.rx });
+    });
+    // a bus stop by the bus
+    onPavement(3.35, 0.55, () => {
+      post(0, 0, 0, 0.05, 1.7, 0x3a3d44, S);
+      slab(0, 1.42, 0.0, 0.34, 0.2, 0.03, 0xc8202d, S);
+      signs.add(0, 1.52, 0.017, 0.32, 0.18, { style: 'plate', text: 'BUS STOP', bg: '#ffffff', ink: '#c8202d', keyline: '#c8202d' });
+      slab(0, 0.95, 0.03, 0.18, 0.26, 0.04, 0x3a3d44, S);
+      slab(0, 0.97, 0.052, 0.15, 0.22, 0.004, 0xf3efe6);
+    });
+
+    // vehicles on the crescent: parked (low), or with a life of their own (high / medium)
+    const busAt = (x) => {
       const z = streetZ(x) + 0.02;
-      b.prop(x, at(x, z), z, -Math.atan(0.148 * x), 0.84, near(x, z), bus);
-    }
-    {
-      const x = -3.05;
+      return { x, y: at(x, z), z, ry: -Math.atan(0.148 * x) };
+    };
+    const cabAt = (x) => {
       const z = streetZ(x) - 0.04;
-      b.prop(x, at(x, z), z, Math.PI - Math.atan(0.148 * x), 0.82, near(x, z), cab);
+      return { x, y: at(x, z), z, ry: -Math.atan(0.148 * x) };
+    };
+    const busAd = (bb, group) => (x, y, z, w, h, ry) =>
+      signs.add(x, y, z, w, h, { style: 'poster', text: '' }, { ry, live: { period: 10 }, res: 260, batch: bb, group });
+    if (this.traffic) {
+      const tr = this.traffic;
+      const busCar = tr.vehicle({ build: (bb, group) => bus({ ...tools(bb), b: bb }, busAd(bb, group)), park: BUS_X, scale: 0.84, delay: near(BUS_X, -2.1), street: busAt });
+      const cabCar = tr.vehicle({ build: (bb) => cab({ ...tools(bb), b: bb }), park: CAB_X, scale: 0.82, delay: near(CAB_X, -2.2), street: cabAt });
+      // the bus pulls away first, the cab follows it round; then they come back the same way round
+      tr.route([
+        { car: busCar, kind: 'out', from: BUS_X, to: 6.7, at: 0, dur: 3.4 },
+        { car: cabCar, kind: 'out', from: CAB_X, to: 6.7, at: 1.6, dur: 5.2 },
+        { car: busCar, kind: 'in', from: -6.5, to: BUS_X, at: 10, dur: 6.2 },
+        { car: cabCar, kind: 'in', from: -6.5, to: CAB_X, at: 13.5, dur: 2.8 },
+      ]);
+    } else {
+      const p = busAt(BUS_X);
+      b.prop(p.x, p.y, p.z, p.ry, 0.84, near(p.x, p.z), () => bus({ ...tools(b), b }, (x, y, z, w, h, ry) => signs.add(x, y, z, w, h, { style: 'poster', text: '' }, { ry, live: { period: 10 }, res: 200 })));
+      const c = cabAt(CAB_X);
+      b.prop(c.x, c.y, c.z, c.ry, 0.82, near(c.x, c.z), () => cab({ ...tools(b), b }));
     }
 
     // street furniture in the garden square
@@ -341,7 +525,91 @@ export class London extends Diorama {
     /** open ground in front of the crescent (where season props may go) */
     this.free = (x, z) => z > streetZ(x) + HALF + 0.45;
 
+    if (!this.low) this.backBlock(P);
     this.far();
+  }
+
+  // ── the block behind: a second floating street of taller buildings ────────
+  backBlock(P) {
+    const b = this.b;
+    const { part, block, slab, post, ball } = P;
+    const k = P.k;
+    const signs = this.signs;
+    const paved = (c, x, y, z, r) => {
+      const n = 0.5 + 0.5 * Math.sin(x * 2.1 + z * 1.7);
+      const edge = Math.hypot(x, z / 0.36) / r;
+      return c.setHex(edge > 0.9 || y < -0.06 ? 0x6fc15a : n > 0.5 ? 0xd3cdc1 : 0xc8c1b4);
+    };
+    /** a plain block of flats or offices: walls, a stone band per storey, windows in bays */
+    const blockOf = (x, z, w, d, storeys, o) => {
+      const sh = o.storey ?? 0.62;
+      const h = storeys * sh + 0.2;
+      const key = o.key ?? k.brick;
+      block(x, 0, z, w, h, d, o.wall, key, 0.03);
+      slab(x, 0, z + d / 2 - 0.02, w + 0.02, 0.32, 0.06, o.base ?? 0x7b736a);
+      const bays = o.bays ?? Math.max(2, Math.round(w / 0.42));
+      for (let s = 0; s < storeys; s++) {
+        const y = 0.36 + s * sh;
+        if (o.bands) slab(x, y - 0.08, z + d / 2, w + 0.01, 0.035, 0.03, o.bands);
+        for (let i = 0; i < bays; i++) {
+          const wx = x - w / 2 + ((i + 0.5) * w) / bays;
+          if (o.skip?.(s, i)) continue;
+          P.pane(wx, y, z + d / 2, Math.min(0.24, (w / bays) * 0.55), sh * 0.58, { frame: o.frame ?? 0xf2ede2, sill: o.sill ?? 0xe0d8c8 });
+        }
+      }
+      slab(x, h - 0.12, z + d / 2 + 0.01, w + 0.08, 0.1, 0.08, o.cornice ?? 0xe9e2d2);
+      return h;
+    };
+
+    b.chunk(1.6, -0.42, -9.9, 0, 1, { delay: 0.7, phase: 1.3, amp: 0.05 }, () => {
+      addLand(b, 5.6, { depthScale: 0.36, top: paved });
+      // A ── a red-brick mansion block with stone bands and Dutch gables
+      const hA = blockOf(-4.0, 0.05, 1.7, 1.2, 5, { wall: 0xa9493a, bands: 0xeae0cc, storey: 0.6 });
+      for (const gx of [-4.42, -3.58]) {
+        part(k.brick, SHAPE.prism, gx, hA + 0.22, 0.45, 0.62, 0.44, 0.32, 0xa9493a);
+        P.pane(gx, hA + 0.06, 0.62, 0.16, 0.2, { frame: 0xf2ede2 });
+      }
+      P.roofSlope(-4.0, hA - 0.02, -0.15, 1.6, 0.5, 0.8);
+      P.chimney(-4.6, hA, -0.2, 0.22, 0.6, 0.3, 2, 0xa9493a);
+      // B ── a stock-brick warehouse with a faded painted sign high on its front
+      const hB = blockOf(-2.15, 0.15, 1.75, 1.2, 4, { wall: 0xc4a171, storey: 0.6, cornice: 0xd9cdb6, skip: (s) => s === 3 });
+      signs.add(-2.15, hB - 0.42, 0.75 + 0.014, 1.5, 0.36, { style: 'plate', id: 'the-best-thing-since-sliced-bread', text: 'THE BEST THING SINCE SLICED BREAD', bg: '#c4a171', ink: 'rgba(246,238,214,0.82)' }, { res: 200 });
+      P.roofSlope(-2.15, hB - 0.02, -0.1, 1.7, 0.42, 1.0);
+      // C ── a narrow stucco house with a bay
+      const hC = blockOf(-0.62, 0.25, 1.05, 1.1, 3, { wall: 0xf1e7d4, key: k.render, storey: 0.66, bays: 2, frame: 0xffffff });
+      P.roofSlope(-0.62, hC - 0.02, 0.05, 1.0, 0.45, 0.9);
+      P.chimney(-0.3, hC, -0.1, 0.22, 0.5, 0.3, 2, 0xa9583f);
+      // the lane between C and D: setts, a lamp, a bollard (it frames the clock tower beyond)
+      b.kind(KIND.PAVED, () => slab(0.35, 0.0, -0.2, 0.92, 0.03, 2.6, 0x8f8a84, k.paving));
+      post(0.0, 0, 0.75, 0.06, 1.25, C.iron, S);
+      b.lit(WARM, -1, () => b.add(L, SHAPE.lantern, 0.0, 1.32, 0.75, 0.13, 0.2, 0.13, 0, 0, 0, 0x5a4630));
+      this.halo(0.0, 1.32, 0.75, 1.4);
+      for (const z of [0.95, -0.4]) post(0.72, 0, z, 0.08, 0.3, C.iron, S);
+      // D ── a tall red-brick block with a billboard of what the player is learning
+      const hD = blockOf(1.85, 0.2, 1.75, 1.3, 7, { wall: 0xb5573f, bands: 0xe6dccb, storey: 0.6, skip: (s) => s === 4 || s === 5 });
+      P.roofSlope(1.85, hD - 0.02, 0.0, 1.7, 0.4, 1.1, 0x5a6378);
+      const bd = P.hoarding(1.85, 3.25, 0.85, 1.36, 0.72);
+      signs.add(bd.x, bd.y, bd.z, 1.36, 0.72, { style: 'poster', text: '' }, { live: { period: 9 }, res: 230, glow: 0xffffff, lit: 0.35 });
+      // E ── a Portland stone department store with a corner dome and a banner for the sales
+      const hE = blockOf(3.75, 0.0, 1.85, 1.3, 5, { wall: C.portland, key: k.stone, storey: 0.64, bands: 0xd9d1bf, base: 0xcfc6b2, cornice: 0xf3eee2, frame: 0x3b3f46 });
+      post(4.55, hE, 0.5, 0.56, 0.4, C.portland, M, SHAPE.cyl);
+      part(M, SHAPE.dome, 4.55, hE + 0.4, 0.5, 0.62, 0.55, 0.62, 0x6f9c8c);
+      ball(4.55, hE + 0.98, 0.5, 0.08, C.gold, S);
+      for (const x of [3.35, 4.1]) {
+        post(x, hE - 1.9, 0.67, 0.025, 1.7, 0x9a9488, S);
+        slab(x, hE - 1.9, 0.68, 0.34, 1.6, 0.012, 0x2f5fa8);
+      }
+      signs.add(3.35, hE - 1.1, 0.69, 0.32, 1.5, { style: 'plate', id: 'the-sales', text: 'THE SALES', bg: '#2f5fa8', ink: '#ffffff' }, { rz: 0, res: 200 });
+      signs.add(4.1, hE - 1.1, 0.69, 0.32, 1.5, { style: 'plate', id: 'the-sales', text: 'THE SALES', bg: '#c8202d', ink: '#ffffff' }, { res: 200 });
+      // street trees and lamps along the front
+      for (const [x, z] of [[-3.0, 1.15], [-1.3, 1.25], [2.9, 1.2]]) {
+        post(x, 0, z, 0.12, 0.9, C.bark);
+        b.kind(KIND.FOLIAGE, () => {
+          part(M, SHAPE.sphere, x, 1.15, z, 0.85, 0.75, 0.85, C.leaf[0]);
+          part(M, SHAPE.sphere, x + 0.25, 1.0, z + 0.1, 0.6, 0.5, 0.6, C.leaf[2]);
+        });
+      }
+    });
   }
 
   // ── distant chunks ────────────────────────────────────────────────────────
@@ -361,8 +629,8 @@ export class London extends Diorama {
       ball(x, y + h + 0.02, z, 0.07, C.gold, S);
     };
 
-    // A ── Gothic clock tower beside a long Gothic hall
-    b.chunk(14, 0.8, -30, -0.3, 1, { delay: 0.86, phase: 0.4, amp: 0.3 }, () => {
+    // A ── Gothic clock tower beside a long Gothic hall (seen down the lane behind the terrace)
+    b.chunk(6.4, -3.1, -33.5, -0.3, 1, { delay: 0.86, phase: 0.4, amp: 0.3 }, () => {
       addLand(b, 3.1, { top: paved });
       // the hall
       b.at(-1.1, 0, 0.25, 0, 1, () => {
@@ -498,30 +766,30 @@ export class London extends Diorama {
     // D ── domed cathedral
     b.chunk(-26, 6.5, -50, 0.35, 1, { delay: 0.96, phase: 1.2, amp: 0.4 }, () => {
       addLand(b, 3.6, { top: paved });
-      const W = 0xefe8d8;
-      block(0, 0, 0, 4.0, 1.7, 2.2, W, M, 0.05);
+      const W2 = 0xefe8d8;
+      block(0, 0, 0, 4.0, 1.7, 2.2, W2, M, 0.05);
       part(M, SHAPE.prism, 0, 2.0, 0, 4.0, 0.6, 2.0, C.lead);
       // portico
-      for (let i = 0; i < 6; i++) post(-0.9 + i * 0.36, 0, 1.25, 0.18, 1.5, W);
-      slab(0, 1.5, 1.2, 2.2, 0.22, 0.5, W);
-      part(M, SHAPE.prism, 0, 1.92, 1.2, 2.3, 0.45, 0.5, W);
+      for (let i = 0; i < 6; i++) post(-0.9 + i * 0.36, 0, 1.25, 0.18, 1.5, W2);
+      slab(0, 1.5, 1.2, 2.2, 0.22, 0.5, W2);
+      part(M, SHAPE.prism, 0, 1.92, 1.2, 2.3, 0.45, 0.5, W2);
       for (let i = 0; i < 5; i++) pane(-1.6 + i * 0.8, 0.5, 1.11, 0.24, 0.55);
       // twin bell towers
       for (const s of [-1, 1]) {
-        block(s * 1.6, 1.7, 0.6, 0.7, 1.2, 0.7, W, M, 0.04);
-        post(s * 1.6, 2.9, 0.6, 0.6, 0.35, W, M, SHAPE.cyl);
+        block(s * 1.6, 1.7, 0.6, 0.7, 1.2, 0.7, W2, M, 0.04);
+        post(s * 1.6, 2.9, 0.6, 0.6, 0.35, W2, M, SHAPE.cyl);
         part(M, SHAPE.dome, s * 1.6, 3.25, 0.6, 0.62, 0.5, 0.62, C.lead);
         ball(s * 1.6, 3.55, 0.6, 0.12, C.gold, S);
       }
       // drum, dome and lantern
-      post(0, 2.2, -0.2, 2.2, 1.1, W, M, SHAPE.cyl);
+      post(0, 2.2, -0.2, 2.2, 1.1, W2, M, SHAPE.cyl);
       for (let i = 0; i < 14; i++) {
         const a = (i / 14) * Math.PI * 2;
         post(Math.cos(a) * 1.18, 2.2, -0.2 + Math.sin(a) * 1.18, 0.12, 1.0, 0xf7f2e6);
       }
-      post(0, 3.25, -0.2, 2.45, 0.12, W, M, SHAPE.cyl);
+      post(0, 3.25, -0.2, 2.45, 0.12, W2, M, SHAPE.cyl);
       part(M, SHAPE.dome, 0, 3.35, -0.2, 2.3, 2.2, 2.3, C.lead);
-      post(0, 4.4, -0.2, 0.42, 0.55, W);
+      post(0, 4.4, -0.2, 0.42, 0.55, W2);
       part(M, SHAPE.dome, 0, 4.95, -0.2, 0.46, 0.4, 0.46, C.lead);
       ball(0, 5.25, -0.2, 0.18, C.gold, S);
       slab(0, 5.3, -0.2, 0.05, 0.4, 0.05, C.gold, S);
@@ -566,7 +834,47 @@ export class London extends Diorama {
         b.kind(KIND.FOLIAGE, () => part(M, SHAPE.sphere, 1.4, 1.1, 0.9, 1.4, 1.3, 1.4, C.leaf[0]));
         post(1.4, 0, 0.9, 0.2, 0.6, C.bark);
       });
+
+      // G ── the wider city: far blocks of flats and offices, church spires and a few towers
+      this.skyline();
     }
+  }
+
+  /** Far-off blocks round the clock tower: cheap boxes wearing window patterns (lit at night). */
+  skyline() {
+    const b = this.b;
+    const P = cityParts(this, b, this.rng2);
+    const { part, block, slab, post, ball } = P;
+    const k = P.k;
+    const tower = (x, z, w, d, h, col, key, roof = 0x5a6378) => {
+      block(x, 0, z, w, h, d, col, key, 0.03);
+      slab(x, h, z, w + 0.06, 0.08, d + 0.06, 0xd8d2c6);
+      if (roof) part(k.slate, SHAPE.prism, x, h + 0.08 + 0.22, z, w, 0.44, d * 0.8, roof);
+    };
+    const spire = (x, z, h, col = 0xeee8da) => {
+      block(x, 0, z, 0.5, h * 0.55, 0.5, col, k.stone, 0.02);
+      post(x, h * 0.55, z, 0.36, h * 0.12, col, M, SHAPE.cyl8);
+      part(M, SHAPE.cone8, x, h * 0.67 + h * 0.17, z, 0.34, h * 0.34, 0.34, col);
+      ball(x, h * 1.02, z, 0.06, C.gold, S);
+    };
+    // left of the clock tower: Victorian blocks and a Wren-ish spire
+    b.chunk(1.2, -2.8, -24, 0.1, 1, { delay: 0.84, phase: 2.6, amp: 0.25 }, () => {
+      addLand(b, 3.2, { depthScale: 0.6 });
+      tower(-1.6, 0.2, 1.3, 1.0, 4.4, 0xb7654c, k.flats);
+      tower(-0.2, -0.4, 1.2, 1.1, 5.4, 0xd8c7a6, k.flats);
+      tower(1.2, 0.1, 1.4, 1.0, 3.9, 0xa65a45, k.flats);
+      spire(2.4, -0.5, 6.6);
+    });
+    // right of it: offices and a couple of glass towers far away
+    b.chunk(13.5, -3.6, -38, -0.35, 1, { delay: 0.95, phase: 3.7, amp: 0.3 }, () => {
+      addLand(b, 3.6, { depthScale: 0.6 });
+      tower(-2.0, 0.3, 1.2, 1.1, 5.0, 0xe2dccd, k.office, null);
+      tower(-0.6, -0.2, 1.3, 1.2, 8.2, 0x8fa8c0, k.office, null);
+      tower(0.9, 0.4, 1.1, 1.0, 6.4, 0xcfc8b8, k.office, null);
+      tower(2.1, -0.3, 1.0, 1.0, 4.2, 0xb7654c, k.flats);
+      post(-0.6, 8.2, -0.2, 0.06, 1.2, 0xd8dde4, S);
+      b.lit(0xff3b30, -1, () => ball(-0.6, 9.45, -0.2, 0.14, 0xff5a4a, L));
+    });
   }
 
   ambient(fx, dt, quality, season) {
