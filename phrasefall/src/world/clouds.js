@@ -38,11 +38,12 @@ varying float vH;
 void main() {
   vec3 n = normalize(vN);
   vec3 v = normalize(vView);
-  float wrap = clamp((dot(n, uSunDir) + 0.6) / 1.6, 0.0, 1.0);
+  // each puff reads as a soft ball: a clear but gentle terminator, light pooling on the tops
+  float wrap = clamp((dot(n, uSunDir) + 0.35) / 1.35, 0.0, 1.0);
   wrap = wrap * wrap * (3.0 - 2.0 * wrap);
-  float top = smoothstep(0.0, 0.7, vH);
-  vec3 col = mix(uShade, uLit, wrap * (0.5 + 0.5 * top));
-  col *= 0.8 + 0.2 * top;
+  float top = smoothstep(0.0, 0.75, vH);
+  vec3 col = mix(uShade, uLit, wrap * (0.6 + 0.4 * top) + 0.12 * max(n.y, 0.0));
+  col *= 0.9 + 0.1 * top;
   // silver lining: the rims light up where the sun is behind the cloud
   float fres = pow(1.0 - max(dot(n, v), 0.0), 3.0);
   col += uRim * fres * (0.3 + 0.7 * max(dot(-v, uRimDir), 0.0)) * (0.6 + 0.4 * top);
@@ -121,7 +122,8 @@ export class Clouds {
     // middle layer: drifts across behind the island
     for (let i = 0; i < midCount; i++) {
       const z = -10 - rng() * 62;
-      push({ x: (rng() * 2 - 1) * 60, y: -3 + rng() * 22, z, s: 1.5 + rng() * 2.4 + -z * 0.035, speed: 0.25 + rng() * 0.35, wrap: 66, bob: rng() * 6 });
+      // distinct puffs with sky between them (sized so even the far ones never fill the view)
+      push({ x: (rng() * 2 - 1) * 60, y: -3 + rng() * 22, z, s: 1.1 + rng() * 1.7 + -z * 0.024, speed: 0.25 + rng() * 0.35, wrap: 66, bob: rng() * 6 });
     }
     // cloud sea below
     for (let i = 0; i < seaCount; i++) {
@@ -136,8 +138,8 @@ export class Clouds {
   apply(v, sunDir, skySun) {
     const u = this.uniforms;
     // lit side: the sun plus the sky; shade side: the sky's own colour, cool and soft
-    u.uLit.value.copy(v.sunLight).multiplyScalar(v.sunIntensity * 0.38).add(_c.copy(v.hemiSky).multiplyScalar(v.hemiIntensity * 0.42)).multiply(v.cloud);
-    u.uShade.value.copy(v.hemiSky).multiplyScalar(v.hemiIntensity * 0.62).add(_c.copy(v.skyHorizon).multiplyScalar(0.18)).multiply(v.cloud);
+    u.uLit.value.copy(v.sunLight).multiplyScalar(v.sunIntensity * 0.4).add(_c.copy(v.hemiSky).multiplyScalar(v.hemiIntensity * 0.45)).multiply(v.cloud);
+    u.uShade.value.copy(v.hemiSky).multiplyScalar(v.hemiIntensity * 0.6).add(_c.copy(v.skyHorizon).multiplyScalar(0.3)).multiply(v.cloud);
     u.uRim.value.copy(v.rim).multiplyScalar(0.25 + v.rimIntensity * 0.3);
     u.uGlow.value.copy(v.cloudGlow).multiplyScalar(v.cloudGlowAmt * 0.8);
     if (sunDir) u.uSunDir.value.copy(sunDir).normalize();

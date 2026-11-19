@@ -1463,7 +1463,7 @@ export default [
     level: 3,
     meaning: 'a complete outfit, often an odd one',
     distractors: ['the time you get out of bed', 'the full plan from start to finish', 'a big effort to wake everyone up'],
-    example: 'He turned up in the whole get-up: hat, cape and plastic sword.',
+    example: 'He turned up in the whole get-up: wig, cape and fake moustache.',
     synonyms: ['the full outfit', 'the works'],
     register: 'Informal',
     context: 'British informal, often for costumes, uniforms or unusual clothes: "you should have seen his get-up!".',

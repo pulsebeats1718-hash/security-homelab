@@ -252,7 +252,9 @@ export class Environment {
     u.uHighTint.value.set(0.016 + warm * 0.03, 0.006 + warm * 0.008, -0.012 - warm * 0.02);
     u.uShadowTint.value.set(-0.006 - night * 0.004, 0.0, 0.016 + night * 0.018);
     u.uVibrance.value = 0.22 + warm * 0.12 - night * 0.05;
-    u.uVignette.value.x = 0.32 + night * 0.1;
+    u.uContrast.value = 0.2 - night * 0.12;
+    u.uLift.value.set(0.012, 0.008 + night * 0.008, 0.024 + night * 0.02);
+    u.uVignette.value.x = 0.32 + night * 0.06;
     post.bloom.strength = 0.7 + night * 0.25;
   }
 
@@ -266,7 +268,10 @@ export class Environment {
     if (this.stage.postActive) scene.fog.color.convertSRGBToLinear();
     scene.fog.density = v.fogDensity;
     if (this._envDue || !scene.environment) this._env();
-    scene.environmentIntensity = v.env * ENV_GAIN * dim;
+    // the sky light carries the sky's own brightness: scale it so a night sky still gives a soft
+    // moonlit fill (and a bright noon sky does not flood everything)
+    const envLum = 0.4 * lum(v.skyTop) + 0.4 * lum(v.skyHorizon) + 0.2 * lum(v.hemiGround);
+    scene.environmentIntensity = v.env * dim * Math.min(5, Math.max(0.8, ENV_LEVEL / Math.max(envLum, 1e-3)));
     this.stage.renderer.toneMappingExposure = v.exposure * dim;
     this.hemi.color.copy(v.hemiSky);
     this.hemi.groundColor.copy(v.hemiGround);
@@ -335,5 +340,6 @@ const _a = new THREE.Vector3();
 const _b = new THREE.Vector3();
 const _c3 = new THREE.Vector3();
 const _p = new THREE.Vector3();
-/** The sky light is brighter overall than the neutral room it replaced: the themes' env values are scaled by this. */
-const ENV_GAIN = 1;
+/** How bright the sky light is on average (the themes' `env` values then scale it, as before). */
+const ENV_LEVEL = 0.62;
+const lum = (c) => 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;

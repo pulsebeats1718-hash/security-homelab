@@ -53,7 +53,7 @@ function stormMaterial(u) {
     shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vStorm;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvStorm = position;');
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', '#include <common>\nuniform vec3 uStormRim;\nuniform vec3 uStormFlash;\nvarying vec3 vStorm;')
-      .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb *= mix(0.58, 1.1, smoothstep(-0.75, 0.7, vStorm.y));')
+      .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb *= mix(0.68, 1.12, smoothstep(-0.75, 0.75, vStorm.y));')
       .replace(
         '#include <emissivemap_fragment>',
         `#include <emissivemap_fragment>
