@@ -521,7 +521,7 @@ export default [
     mistake: 'Write "could\'ve" or "could have", never "could of": "I could\'ve done a better job".',
   },
   {
-    id: 'the-crack-of-dawn',
+    id: 'at-the-crack-of-dawn',
     text: 'the crack of dawn',
     type: 'set-phrase',
     level: 1,
@@ -898,7 +898,7 @@ export default [
     mistake: 'Say "from morning till night" (or "until"), not "since morning till night".',
   },
   {
-    id: 'from-scratch',
+    id: 'start-from-scratch',
     text: 'from scratch',
     type: 'set-phrase',
     level: 1,

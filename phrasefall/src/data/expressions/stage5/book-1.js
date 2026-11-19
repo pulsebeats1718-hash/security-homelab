@@ -417,7 +417,7 @@ export default [
     mistake: 'Say "a dumping ground for something", not "a dump ground" or "a dumping place of".',
   },
   {
-    id: 'run-errands',
+    id: 'run-an-errand',
     text: 'run errands',
     type: 'collocation',
     level: 1,

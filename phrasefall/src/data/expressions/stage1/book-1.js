@@ -417,7 +417,7 @@ export default [
     mistake: 'Spell it "brolly" (plural "brollies"), and don\'t use it in formal writing: there, say "umbrella".',
   },
   {
-    id: 'bug-me',
+    id: 'bug-someone',
     text: 'bug me',
     type: 'everyday',
     level: 2,
@@ -636,19 +636,6 @@ export default [
     register: 'Informal',
     context: 'Context decides: it can mean hurry up, try harder, or "you can\'t be serious".',
     mistake: 'Here "come on" doesn\'t mean "arrive": it urges hurry or effort, and with a falling tone it shows disbelief.',
-  },
-  {
-    id: 'a-complete-rip-off',
-    text: 'a complete rip-off',
-    type: 'everyday',
-    level: 2,
-    meaning: 'a price that is far too high',
-    distractors: ['an amazing bargain at that price', "a piece of clothing that's torn", 'a sale where everything is free'],
-    example: "Eight quid for a sandwich? That's a complete rip-off.",
-    synonyms: ['daylight robbery', 'a con', 'overpriced'],
-    register: 'Informal',
-    context: 'Used to complain about prices in shops, airports, cinemas and tourist spots. The verb is "rip someone off".',
-    mistake: 'Write the noun with a hyphen, "a rip-off"; the verb is two words: "they ripped us off".',
   },
   {
     id: 'could-be-worse',

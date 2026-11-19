@@ -1314,7 +1314,7 @@ export default [
     mistake: 'Say "up the creek", not "on the creek" or "down the creek".',
   },
   {
-    id: 'up-to-your-eyeballs',
+    id: 'up-to-your-eyes',
     text: 'up to your eyeballs',
     type: 'idiom',
     level: 2,

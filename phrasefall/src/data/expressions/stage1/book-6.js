@@ -79,7 +79,7 @@ export default [
     mistake: 'Keep "don\'t": the positive "hold your breath" just means stop breathing for a moment.',
   },
   {
-    id: 'drop-someone-a-line',
+    id: 'drop-me-a-line',
     text: 'drop someone a line',
     type: 'everyday',
     level: 2,
@@ -391,7 +391,7 @@ export default [
     mistake: 'Nothing follows "on": "I\'ve got a lot on", not "I\'ve got a lot on work".',
   },
   {
-    id: 'a-heads-up',
+    id: 'just-a-heads-up',
     text: 'a heads-up',
     type: 'everyday',
     level: 1,

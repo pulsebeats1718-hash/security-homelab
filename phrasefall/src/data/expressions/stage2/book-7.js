@@ -1,7 +1,7 @@
 /** Stage 2 — phrasal verbs from the player's phrasebook, batch 7. Schema: dev/EXPRESSION_GUIDE.md */
 export default [
   {
-    id: 'take-on-staff',
+    id: 'take-on-new-staff',
     text: 'take on (staff)',
     type: 'phrasal',
     level: 2,

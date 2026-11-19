@@ -1444,19 +1444,6 @@ export default [
     mistake: 'Say "if I remember rightly", not "if I remind rightly": "remind" means make someone remember.',
   },
   {
-    id: 'if-im-being-honest',
-    text: "if I'm being honest",
-    type: 'everyday',
-    level: 2,
-    meaning: 'to tell you the truth',
-    distractors: ['if you promise not to lie', "if I'm allowed to leave now", "if I'm in the right mood"],
-    example: "If I'm being honest, I preferred the old place.",
-    synonyms: ['to be honest', 'truth be told'],
-    register: 'Neutral',
-    context: 'Softens a frank opinion or admission, often one the listener may not like.',
-    mistake: 'Learners say "if I am sincere"; the fixed hedge is "if I\'m (being) honest" or "to be honest".',
-  },
-  {
     id: 'if-you-dont-mind-me-saying',
     text: "if you don't mind me saying",
     type: 'everyday',
@@ -1522,7 +1509,7 @@ export default [
     mistake: 'Learners expect a joke. It signals a complaint, so "funny" does not mean humorous here.',
   },
   {
-    id: 'im-not-entirely-convinced',
+    id: 'im-not-convinced',
     text: "I'm not entirely convinced",
     type: 'everyday',
     level: 2,

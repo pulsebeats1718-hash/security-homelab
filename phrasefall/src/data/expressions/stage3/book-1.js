@@ -1249,7 +1249,7 @@ export default [
     mistake: 'Use "fall flat", not "fall flatly" or "fall down": "the joke fell flat".',
   },
   {
-    id: 'fall-head-over-heels',
+    id: 'head-over-heels',
     text: 'fall head over heels',
     type: 'idiom',
     level: 2,

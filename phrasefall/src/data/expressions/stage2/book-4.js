@@ -92,19 +92,6 @@ export default [
     mistake: 'Put a pronoun in the middle: "size him up", not "size up him".',
   },
   {
-    id: 'slag-off',
-    text: 'slag off',
-    type: 'phrasal',
-    level: 2,
-    meaning: 'say rude, unfair things about someone',
-    distractors: ['praise someone loudly in front of others', 'make fun of someone in a kind way', 'ignore someone who is rude to you'],
-    example: "He's always slagging off his old school, but he had a great time there.",
-    synonyms: ['badmouth', 'run down', 'rubbish'],
-    register: 'Very informal',
-    context: 'British slang among friends, about people, teams, films or places. Avoid it in polite or formal situations.',
-    mistake: 'The object can go in the middle: "slag him off" or "slag off the team"; don\'t add "about": not "slag off about him".',
-  },
-  {
     id: 'sleep-on-it',
     text: 'sleep on it',
     type: 'phrasal',
@@ -1093,7 +1080,7 @@ export default [
     mistake: 'Put a pronoun in the middle: "he wolfed it down", not "he wolfed down it".',
   },
   {
-    id: 'wont-stand-for-it',
+    id: 'stand-for-rudeness',
     text: "won't stand for it",
     type: 'phrasal',
     level: 2,
