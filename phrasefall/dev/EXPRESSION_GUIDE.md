@@ -89,46 +89,36 @@ Aim for roughly 35% level 1, 40% level 2, 25% level 3 in each file.
   under the phrase. All four options must make sense with the hint.
 - **Suitable for all ages:** no swearing, sexual or drug references or slurs. Mild British slang is fine.
 
-## Who writes what
+## Where expressions come from
 
-Each file has an owner. An expression belongs to exactly one file; when it could
-fit several, the rule in the table decides.
+The database is the player's own British English phrasebook: a tutor's list of
+set phrases, idioms, phrasal verbs and everyday chunks, each with a meaning and an
+example, turned into game entries (meaning, distractors, synonyms, register,
+context and a common mistake). The book's examples often came from private
+chats, so the game's examples are rewritten wherever they named real people.
 
 | file | contents |
 |---|---|
-| `stage1/core.js` … `stage5/core.js` | the original 30 per stage — read only |
-| `stage1/social.js` | everyday expressions for social life and getting things done: greetings, goodbyes, thanks, apologies, requests, offers, invitations, plans, hospitality, shops, cafés and pubs, phone and messages, travel, time, wishes |
-| `stage1/reactions.js` | everyday expressions that react or give a view: exclamations, feelings and states, opinions, agreeing and disagreeing, surprise, sympathy, encouragement, complaints, emphasis, hesitation |
-| `stage2/up.js` | phrasal verbs whose first particle is **up** (`come up with`) |
-| `stage2/out.js` | first particle **out** (`run out of`) |
-| `stage2/off-down.js` | first particle **off** or **down** (`cut down on`) |
-| `stage2/on-in.js` | first particle **on**, **in** or **into** (`get on with`) |
-| `stage2/other-particles.js` | every other particle: over, through, round/around, about, back, away, across, along, after, for, with, forward, ahead, apart, by, behind, together, against, under, past, without … |
-| `stage3/*.js` | idioms. Decide by the **first** rule that matches: |
-| `stage3/body.js` | 1. contains a body-part word (head, face, eye, ear, nose, mouth, lip, tongue, tooth, chin, cheek, neck, throat, shoulder, arm, elbow, hand, finger, thumb, chest, heart, stomach, back, leg, knee, foot, toe, heel, skin, bone, blood, hair, brain) |
-| `stage3/animals.js` | 2. contains an animal, bird, fish or insect word |
-| `stage3/food-colour-number.js` | 3. contains a food or drink word, a colour, or a number/ordinal/fraction |
-| `stage3/nature-time-home.js` | 4. contains a weather or nature word (rain, sun, wind, cloud, ice, fire, water, sea, tree, flower, earth, rock, sky, moon, star …), a time word (time, day, night, hour, minute, week, year, clock), or a household object (house, door, wall, roof, table, chair, bed, pot, kettle, nail, hammer, rope, box, bag …) |
-| `stage3/life-work-play.js` | 5. everything else: money, work and business, sport and games, travel and transport, clothes, music and the arts, school, people and relationships |
-| `stage4/pairs-similes.js` | binomials and trinomials (`bits and bobs`, `sink or swim`, `lock, stock and barrel`, `slowly but surely`) and fixed `as … as …` similes (`as fit as a fiddle`) |
-| `stage4/discourse.js` | discourse markers, fixed adverbial and prepositional phrases and sentence frames that organise speech and writing (`as a matter of fact`, `on the whole`, `by heart`, `for good`, `if need be`) |
-| `stage5/collocations.js` | C1–C2 collocations: verb + noun (`allay fears`), adjective + noun (`a glaring error`), adverb + adjective (`bitterly disappointed`), fixed noun phrases (`a vicious circle`) |
-| `stage5/advanced.js` | C1–C2 idioms and expressions, often literary, formal or distinctly British (`a curate's egg`, `beyond the pale`, `a busman's holiday`) |
-| `stage1/spoken.js` | everyday spoken British English for social situations: greetings and replies, small talk, thanks, apologies, offers, invitations, ending a chat, the phone, shops, cafés, pubs, office chat |
-| `stage1/spoken-2.js` | spoken reactions, opinions, fillers and softeners, and British politeness and understatement (`I'm not being funny, but…`, `with all due respect`) |
-| `stage2/senses-*.js` | extra meanings of phrasal verbs, with sense hints, split by first particle like the files above (`senses-up`, `senses-out`, `senses-off-down`, `senses-on-in`, `senses-other`) |
-| `stage5/collocations-everyday-verb.js`, `…-adj.js` | B1–C1 collocations that make English sound natural: verb + noun (`meet a deadline`), adjective/adverb + noun or adjective (`heavy traffic`, `fast asleep`) |
-| `stage5/collocations-adverb-verb.js` | adverb + verb and verb + adverb collocations (`strongly recommend`, `sleep soundly`) |
-| `stage1/spoken-3.js` | spoken and written phrases for work, study and messages (`no rush`, `just to flag`, `kind regards`) |
-| `stageN/*-2.js`, `*-3.js` | later batches of the file with the same name, following the same rules (`stage3/body-3.js` holds more body-part idioms) |
+| `stageN/book-1.js` … `stageN/book-8.js` | the phrasebook, in book order, split into eight batches; within a batch each expression goes to the stage of its type (below) |
+| `stageN/kept.js` | expressions from the earlier database that the Situations and Literal Theatre are built on and the book does not have — read only |
+| `stageN/<topic>.js` | anything added later: one file per topic or batch |
 
-Stage 3 is for idioms a B2 learner commonly meets in films, TV and conversation;
-rarer, literary or formal idioms belong in `stage5/advanced.js`. Binomials and
-`as … as …` similes are never stage 3.
+Which stage an expression belongs to:
+
+| stage | type | what |
+|---|---|---|
+| 1 | `everyday` | spoken chunks, replies, reactions, exclamations, greetings, banter and slang words, the pub, the phone, agreeing and disagreeing, complaining, apologising, sympathising, spoken hedges and conversation glue |
+| 2 | `phrasal` | phrasal and prepositional verbs |
+| 3 | `idiom` | figurative idioms a B2 learner meets in conversation and on TV |
+| 4 | `set-phrase` | fixed prepositional and adverbial phrases, binomials, `as … as` and `like …` similes, sentence frames, written hedges and discourse markers, common sayings |
+| 5 | `collocation`, `advanced` | natural word partnerships; rarer, literary, formal or distinctly British idioms and proverbs |
+
+Every expression belongs to exactly one file. Sticker-album sets (`src/data/sets.js`),
+Situations and Literal Theatre refer to expressions by `id`, so never rename an id.
 
 ## Workflow
 
-1. Read this guide and the `core.js` of your stage to see the style and what already exists.
+1. Read this guide and a `book-*.js` file of your stage to see the style and what already exists.
 2. Plan your headwords. Check anything that might already exist:
    `node scripts/check-expressions.mjs --find <word> [<word>…]`
 3. Write in batches of about 40 entries. Create the file with the first batch,
