@@ -155,7 +155,8 @@ built game works offline. `node src/online/merge.test.mjs` runs the cloud-save t
 ```
 src/
   main.js                 boot and wiring
-  core/                   stage (renderer, camera shots, frame loop), save data, events, maths
+  core/                   stage (renderer, camera shots, frame loop), post (the high / medium finish:
+                          MSAA HDR target, bloom, grade, menu tilt-shift), save data, events, maths
   data/
     expressions/          stage1/ … stage5/ — the expression database, one folder per stage
     stages.js             pace, goals and scoring rules
@@ -167,7 +168,8 @@ src/
     animator.js           procedural animation: idle layers, action clips, secondary motion
     models/               one file per character (auto-discovered)
     thumbnails.js         portrait renderer for the collection strip
-  world/                  sky, lighting themes, island, clouds, particle effects, the memory garden and
+  world/                  sky, sky light (image-based light from the theme's sky), atmosphere (haze),
+                          lighting themes, island, clouds, particle effects, the memory garden and
                           its decorations, boss storm clouds; places/ (Home, London, New York, Sydney),
                           seasons/, theatre/ (Literal Theatre's scenes)
   data/situations/        the Situations, one file per place
@@ -254,8 +256,13 @@ correct answer, the number of answers that clears a stage, and the points.
   No samples, nothing to license; a composed, recorded soundtrack would be richer.
 - **Performance.** One WebGL canvas, ~150 draw calls. Quality presets
   (Auto / High / Medium / Low) plus dynamic resolution keep the frame rate steady
-  on phones. Development screenshots were taken with a software renderer, so real
-  frame rates were reasoned about rather than measured on physical devices.
+  on phones. High renders into a multisampled half-float target and finishes the frame
+  in one pass (bloom from ½ resolution, the grade, a tilt-shift on menu shots), with
+  softer shadows and clear-coated toys; Medium does the same with bloom from ¼
+  resolution and no tilt-shift; Low draws straight to the screen as it always has (a
+  device without multisampled half-float targets does too). Development screenshots
+  were taken with a software renderer, so real frame rates were reasoned about rather
+  than measured on physical devices.
 - **Progress is saved in the browser** (`localStorage`). Players who sign in also
   get a cloud copy that syncs between devices; a guest's progress is lost if site
   data is cleared.
