@@ -7,10 +7,10 @@ export const SETS = [
     color: '#2a98d8',
     blurb: 'Rain, sun and everything in between.',
     ids: [
-      'rain-cats-and-dogs', 'its-chucking-it-down', 'heavy-rain', 'better-take-a-brolly', 'hold-off-the-rain',
-      'whats-the-forecast', 'its-lovely-out', 'brighten-up-the-sky', 'its-freezing', 'its-a-bit-nippy',
-      'its-boiling', 'under-the-weather', 'a-storm-in-a-teacup', 'every-cloud-has-a-silver-lining',
-      'come-rain-or-shine', 'it-never-rains-but-it-pours',
+      'the-suns-out', 'a-heatwave', 'scorching', 'pour-down', 'its-spitting', 'rain-cats-and-dogs',
+      'soaked-through', 'blow-a-gale', 'a-cold-snap', 'black-ice', 'four-seasons-in-one-day',
+      'a-storm-brewing', 'a-storm-in-a-teacup', 'a-fair-weather-friend', 'come-rain-or-shine',
+      'every-cloud-has-a-silver-lining',
     ],
   },
   {
@@ -20,10 +20,10 @@ export const SETS = [
     color: '#e2512b',
     blurb: 'From a cuppa to a full English, tuck in!',
     ids: [
-      'a-piece-of-cake', 'the-icing-on-the-cake', 'not-my-cup-of-tea', 'have-a-sweet-tooth',
-      'the-best-thing-since-sliced-bread', 'food-for-thought', 'with-a-pinch-of-salt',
-      'i-could-eat-a-horse', 'im-starving', 'im-stuffed', 'fancy-a-cuppa', 'whats-for-tea',
-      'eat-out', 'go-off', 'a-packed-lunch', 'a-full-english',
+      'im-starving', 'peckish', 'i-could-eat-a-horse', 'my-mouths-watering', 'tuck-in', 'seconds',
+      'a-full-english', 'a-packed-lunch', 'a-sunday-roast', 'fish-and-chips', 'burnt-to-a-crisp',
+      'fancy-a-cuppa', 'how-do-you-take-your-tea', 'not-my-cup-of-tea', 'a-piece-of-cake',
+      'the-icing-on-the-cake',
     ],
   },
   {
@@ -33,10 +33,9 @@ export const SETS = [
     color: '#1e9a57',
     blurb: 'Saving up, splashing out and making ends meet.',
     ids: [
-      'cost-an-arm-and-a-leg', 'break-the-bank', 'its-a-bargain', 'as-cheap-as-chips',
-      'im-skint', 'make-ends-meet', 'in-the-red', 'tighten-your-belt', 'a-tight-budget',
-      'save-up', 'save-for-a-rainy-day', 'money-doesnt-grow-on-trees', 'splash-out', 'chip-in',
-      'my-treat', 'keep-the-change',
+      'a-tenner', 'value-for-money', 'dirt-cheap', 'bag-a-bargain', 'cost-an-arm-and-a-leg', 'splash-out',
+      'save-up', 'a-nest-egg', 'money-doesnt-grow-on-trees', 'im-skint', 'strapped-for-cash',
+      'make-ends-meet', 'foot-the-bill', 'cough-up', 'keep-the-change', 'on-the-house',
     ],
   },
   {
@@ -46,9 +45,9 @@ export const SETS = [
     color: '#e2478a',
     blurb: 'Chuffed, gutted, nervous or calm: say how you feel.',
     ids: [
-      'over-the-moon', 'im-chuffed', 'that-made-my-day', 'cant-wait', 'cheer-up', 'keep-your-chin-up',
-      'feel-blue', 'im-fed-up', 'im-gutted', 'in-a-bad-mood', 'lose-your-temper', 'calm-down',
-      'green-with-envy', 'have-butterflies-in-your-stomach', 'get-cold-feet', 'a-weight-off-your-shoulders',
+      'over-the-moon', 'im-chuffed', 'as-happy-as-larry', 'laid-back', 'cheer-up', 'feel-blue', 'heartbroken',
+      'im-gutted', 'green-with-envy', 'make-your-blood-boil', 'a-nervous-wreck', 'have-the-jitters',
+      'scared-stiff', 'as-red-as-a-beetroot', 'keep-a-stiff-upper-lip', 'a-weight-off-your-shoulders',
     ],
   },
   {
@@ -58,10 +57,10 @@ export const SETS = [
     color: '#9a6236',
     blurb: 'Cats, horses, owls and more, hiding in everyday English.',
     ids: [
-      'the-elephant-in-the-room', 'let-the-cat-out-of-the-bag', 'a-little-bird-told-me', 'smell-a-rat',
-      'pigs-might-fly', 'hold-your-horses', 'the-lions-share', 'like-a-duck-to-water', 'a-fish-out-of-water',
-      'have-a-whale-of-a-time', 'a-night-owl', 'at-a-snails-pace', 'dog-tired',
-      'as-busy-as-a-bee', 'as-quiet-as-a-mouse', 'chicken-out',
+      'the-elephant-in-the-room', 'let-the-cat-out-of-the-bag', 'cat-got-your-tongue',
+      'a-little-bird-told-me', 'smell-a-rat', 'pigs-might-fly', 'hold-your-horses', 'like-a-duck-to-water',
+      'a-fish-out-of-water', 'have-a-whale-of-a-time', 'a-night-owl', 'as-busy-as-a-bee',
+      'as-quiet-as-a-mouse', 'chicken-out', 'a-wild-goose-chase', 'butterflies-in-your-stomach',
     ],
   },
   {
@@ -69,12 +68,11 @@ export const SETS = [
     name: "All in a day's work",
     icon: 'briefcase',
     color: '#38559f',
-    blurb: 'Deadlines, pay rises and calling it a day.',
+    blurb: 'Nine to five, pay rises and calling it a day.',
     ids: [
-      'what-do-you-do', 'a-nine-to-five-job', 'im-working-from-home', 'learn-the-ropes', 'pull-your-weight',
-      'roll-up-your-sleeves', 'be-snowed-under', 'meet-a-deadline', 'burn-the-midnight-oil',
-      'the-daily-grind', 'the-rat-race', 'call-it-a-day', 'clock-off', 'a-pay-rise',
-      'get-the-sack', 'hand-in-your-notice',
+      'a-nine-to-five', 'im-working-from-home', 'learn-the-ropes', 'a-team-player', 'a-jack-of-all-trades',
+      'have-a-lot-on', 'be-snowed-under', 'behind-schedule', 'time-is-money', 'burn-the-midnight-oil',
+      'the-rat-race', 'a-pay-rise', 'time-off', 'clock-off', 'call-it-a-day', 'hand-in-your-notice',
     ],
   },
   {
@@ -84,9 +82,9 @@ export const SETS = [
     color: '#0e8ea8',
     blurb: 'Trains, planes and getting away from it all.',
     ids: [
-      'hit-the-road', 'set-off', 'im-on-my-way', 'are-we-there-yet', 'give-someone-a-lift', 'a-traffic-jam',
-      'single-or-return', 'a-one-way-ticket', 'a-window-seat', 'take-off', 'check-in', 'miss-the-boat',
-      'on-holiday', 'enjoy-your-holiday', 'get-the-travel-bug', 'off-the-beaten-track',
+      'go-on-holiday', 'go-abroad', 'a-staycation', 'all-inclusive', 'travel-light', 'set-off',
+      'hit-the-road', 'catch-a-train', 'a-return-ticket', 'mind-the-gap', 'hop-on-a-bus', 'bumper-to-bumper',
+      'jet-lag', 'the-seaside', 'off-the-beaten-track', 'in-the-middle-of-nowhere',
     ],
   },
   {
@@ -96,9 +94,10 @@ export const SETS = [
     color: '#8650d4',
     blurb: 'Early, late or just in the nick of time.',
     ids: [
-      'time-flies', 'take-your-time', 'hurry-up', 'hang-on-a-sec', 'running-a-bit-late', 'better-late-than-never',
-      'on-the-dot', 'in-the-nick-of-time', 'at-the-last-minute', 'at-the-crack-of-dawn', 'around-the-clock',
-      'put-back-the-clocks', 'long-time-no-see', 'once-in-a-blue-moon', 'sooner-or-later', 'time-will-tell',
+      'in-a-bit', 'any-minute-now', 'is-that-the-time', 'time-flies', 'in-the-blink-of-an-eye', 'on-the-dot',
+      'in-good-time', 'in-the-nick-of-time', 'better-late-than-never', 'be-pressed-for-time',
+      'move-back-a-meeting', 'no-time-like-the-present', 'a-fortnight', 'a-bank-holiday', 'back-in-the-day',
+      'once-in-a-blue-moon',
     ],
   },
   {
@@ -106,11 +105,11 @@ export const SETS = [
     name: 'Home sweet home',
     icon: 'home',
     color: '#c2603a',
-    blurb: 'Family life, chores and a roof over your head.',
+    blurb: 'Family life, chores and no place like home.',
     ids: [
-      'make-yourself-at-home', 'a-roof-over-your-head', 'move-in', 'a-quiet-night-in', 'tidy-up',
-      'do-the-washing-up', 'take-the-bins-out', 'hows-the-family', 'grow-up', 'bring-up', 'take-after',
-      'a-chip-off-the-old-block', 'pass-down', 'fly-the-nest', 'bobs-your-uncle', 'nothing-to-write-home-about',
+      'make-yourself-at-home', 'theres-no-place-like-home', 'move-house', 'get-on-the-property-ladder',
+      'flatmate', 'diy', 'put-the-heating-on', 'tidy-up', 'hoover', 'do-the-washing-up', 'take-the-bins-out',
+      'like-a-pigsty', 'pick-up-the-kids', 'the-school-run', 'put-your-feet-up', 'forty-winks',
     ],
   },
   {
@@ -118,11 +117,12 @@ export const SETS = [
     name: 'Best of friends',
     icon: 'friends',
     color: '#b347c2',
-    blurb: 'Meeting people, getting on and making up.',
+    blurb: 'Nights out, family and friends through thick and thin.',
     ids: [
-      'make-friends', 'a-close-friend', 'break-the-ice', 'hit-it-off', 'get-on-with', 'see-eye-to-eye',
-      'birds-of-a-feather-flock-together', 'hang-out', 'bump-into', 'keep-in-touch', 'in-the-same-boat',
-      'a-shoulder-to-cry-on', 'fall-out-with', 'make-up-with-a-friend', 'head-over-heels', 'tie-the-knot',
+      'break-the-ice', 'hit-it-off', 'get-on-like-a-house-on-fire', 'a-good-laugh-a-person', 'meet-up',
+      'a-night-out', 'have-a-ball', 'let-your-hair-down', 'the-more-the-merrier', 'threes-a-crowd',
+      'keep-in-touch', 'through-thick-and-thin', 'get-back-together', 'the-apple-of-your-eye',
+      'the-spitting-image-of', 'blood-is-thicker-than-water',
     ],
   },
   {
@@ -130,11 +130,12 @@ export const SETS = [
     name: 'Thinking caps on',
     icon: 'cap',
     color: '#3a6ee0',
-    blurb: 'School, study and putting your brain to work.',
+    blurb: 'Learning, figuring things out and putting your brain to work.',
     ids: [
-      'do-homework', 'sit-an-exam', 'learn-by-heart', 'top-of-the-class', 'with-flying-colours', 'a-bookworm',
-      'a-crash-course', 'brush-up-on', 'pick-up-a-language', 'get-the-hang-of', 'live-and-learn',
-      'figure-out', 'rack-your-brains', 'think-outside-the-box', 'its-not-rocket-science', 'i-havent-a-clue',
+      'pick-up-a-language', 'get-the-hang-of', 'practice-makes-perfect', 'a-bit-rusty', 'brush-up-on',
+      'swot-up', 'go-blank', 'with-flying-colours', 'rack-your-brains', 'figure-out', 'the-penny-dropped',
+      'its-all-greek-to-me', 'its-not-rocket-science', 'a-stroke-of-genius', 'food-for-thought',
+      'live-and-learn',
     ],
   },
   {
@@ -142,12 +143,12 @@ export const SETS = [
     name: 'Game on',
     icon: 'ball',
     color: '#d97706',
-    blurb: 'Goals, games and playing fair.',
+    blurb: 'Matches, races and playing fair.',
     ids: [
-      'kick-off', 'score-a-goal', 'a-hat-trick', 'win-a-match', 'well-played', 'did-you-see-the-match',
-      'neck-and-neck', 'warm-up', 'work-out-at-the-gym', 'its-your-turn', 'a-pub-quiz',
-      'the-ball-is-in-your-court', 'on-the-ball', 'a-whole-new-ball-game', 'a-level-playing-field',
-      'move-the-goalposts',
+      'footie', 'watch-the-match', 'cheer-on', 'warm-up', 'jump-the-gun', 'neck-and-neck',
+      'slow-and-steady-wins-the-race', 'a-game-plan', 'step-up-your-game', 'on-the-ball',
+      'the-ball-is-in-your-court', 'throw-in-the-towel', 'a-good-sport', 'fair-play', 'not-cricket',
+      'a-pub-quiz',
     ],
   },
   {
@@ -157,9 +158,9 @@ export const SETS = [
     color: '#d8364a',
     blurb: 'Sniffles, sneezes and feeling better again.',
     ids: [
-      'ive-got-a-cold', 'bless-you', 'pick-up-a-bug', 'come-down-with', 'off-colour', 'im-off-sick',
-      'a-sore-throat', 'i-need-to-see-a-doctor', 'get-well-soon', 'take-it-easy', 'get-over',
-      'im-on-the-mend', 'as-right-as-rain', 'a-good-night-s-sleep', 'as-fit-as-a-fiddle', 'full-of-beans',
+      'come-down-with', 'under-the-weather', 'bless-you', 'a-frog-in-your-throat', 'lose-your-voice',
+      'a-splitting-headache', 'pins-and-needles', 'twist-your-ankle', 'out-of-shape', 'the-gp', 'a-e',
+      'im-off-sick', 'get-some-rest', 'get-well-soon', 'be-on-the-mend', 'as-right-as-rain',
     ],
   },
   {
@@ -169,10 +170,10 @@ export const SETS = [
     color: '#5c9a1c',
     blurb: 'Gardens, trees, fresh air and wide open spaces.',
     ids: [
-      'do-the-gardening', 'have-green-fingers', 'pull-up-weeds', 'put-down-roots', 'branch-out',
-      'turn-over-a-new-leaf', 'the-grass-is-always-greener', 'as-fresh-as-a-daisy', 'take-a-walk',
-      'a-breath-of-fresh-air', 'soak-up', 'out-of-the-woods', 'bark-up-the-wrong-tree',
-      'make-a-mountain-out-of-a-molehill', 'as-old-as-the-hills', 'a-drop-in-the-ocean',
+      'the-world-is-your-oyster', 'soak-up', 'have-green-fingers', 'nip-it-in-the-bud', 'as-fresh-as-a-daisy',
+      'the-grass-is-always-greener', 'branch-out', 'bark-up-the-wrong-tree', 'out-of-the-woods',
+      'spread-like-wildfire', 'down-to-earth', 'water-under-the-bridge', 'make-a-mountain-out-of-a-molehill',
+      'as-old-as-the-hills', 'a-drop-in-the-ocean', 'the-tip-of-the-iceberg',
     ],
   },
   {
@@ -182,9 +183,10 @@ export const SETS = [
     color: '#119c80',
     blurb: 'Chats, news, secrets and getting to the point.',
     ids: [
-      'have-a-chinwag', 'give-me-a-ring', 'speak-up', 'talk-over', 'all-ears', 'in-a-nutshell',
-      'beat-about-the-bush', 'a-slip-of-the-tongue', 'im-lost-for-words', 'break-the-news', 'spread-the-word',
-      'word-of-mouth', 'hear-it-on-the-grapevine', 'keep-a-secret', 'my-lips-are-sealed', 'spill-the-beans',
+      'give-someone-a-ring', 'ill-drop-you-a-text', 'group-chat', 'youre-breaking-up', 'speak-up',
+      'guess-what', 'believe-it-or-not', 'hear-it-on-the-grapevine', 'the-talk-of-the-town',
+      'spill-the-beans', 'first-things-first', 'in-a-nutshell', 'beat-about-the-bush', 'i-couldnt-agree-more',
+      'agree-to-disagree', 'the-pot-calling-the-kettle-black',
     ],
   },
   {
@@ -194,9 +196,10 @@ export const SETS = [
     color: '#b08a00',
     blurb: 'Winning, losing, slip-ups and a little luck.',
     ids: [
-      'win-a-prize', 'come-out-on-top', 'you-nailed-it', 'make-a-comeback', 'have-a-go', 'throw-in-the-towel',
-      'make-a-mistake', 'slip-up', 'put-your-foot-in-it', 'go-pear-shaped', 'back-to-square-one',
-      'fingers-crossed', 'touch-wood', 'beginners-luck', 'third-time-lucky', 'a-blessing-in-disguise',
+      'come-out-on-top', 'you-nailed-it', 'pull-off', 'on-a-roll', 'hit-the-jackpot',
+      'by-the-skin-of-your-teeth', 'slip-up', 'go-pear-shaped', 'back-to-square-one', 'bounce-back',
+      'a-blessing-in-disguise', 'fingers-crossed', 'touch-wood', 'beginners-luck', 'third-time-lucky',
+      'you-win-some-you-lose-some',
     ],
   },
 ];
