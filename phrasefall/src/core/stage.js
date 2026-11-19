@@ -7,19 +7,25 @@
  *   pitch   elevation angle
  *   span    world units visible across the full viewport height (zoom)
  *   ox, oy  where the focus sits on screen, in CSS px from the centre (+x right, +y down)
+ *   tilt    (optional, 0…1) how much tilt-shift blur the shot wants — menus use it for a
+ *           miniature look; high quality only, and a shot that leaves it out gets none
  * Screens ask for a shot and the stage glides between them, so moving through
  * the menus feels like one continuous camera move rather than page changes.
+ *
+ * Quality tiers: high and medium render through PostFX (core/post.js: MSAA HDR target, bloom,
+ * grading; tilt-shift on high); low renders straight to the screen as it always has.
  */
 import * as THREE from 'three';
 import { clamp, ease, lerp } from './utils.js';
+import { PostFX, postSupported } from './post.js';
 
-const QUALITY = {
-  high: { maxPixelRatio: 2, shadow: 2048 },
-  medium: { maxPixelRatio: 1.5, shadow: 1024 },
-  low: { maxPixelRatio: 1, shadow: 0 },
+export const QUALITY = {
+  high: { maxPixelRatio: 2, shadow: 2048, shadowRadius: 3.2, post: { samples: 4, bloomDiv: 2, bloomLevels: 5, tilt: true } },
+  medium: { maxPixelRatio: 1.5, shadow: 1024, shadowRadius: 1.6, post: { samples: 4, bloomDiv: 4, bloomLevels: 4, tilt: false } },
+  low: { maxPixelRatio: 1, shadow: 0, shadowRadius: 1, post: null },
 };
 
-const SHOT_KEYS = ['fx', 'fy', 'fz', 'yaw', 'pitch', 'span', 'ox', 'oy', 'drift'];
+const SHOT_KEYS = ['fx', 'fy', 'fz', 'yaw', 'pitch', 'span', 'ox', 'oy', 'drift', 'tilt'];
 const FOV = 32;
 
 export function autoQuality() {
@@ -58,7 +64,7 @@ export class Stage {
     this.listeners = [];
     this.resizeListeners = [];
 
-    this.shot = { fx: 0, fy: 1, fz: 0, yaw: 0, pitch: 0.1, span: 6, ox: 0, oy: 0, drift: 0 };
+    this.shot = { fx: 0, fy: 1, fz: 0, yaw: 0, pitch: 0.1, span: 6, ox: 0, oy: 0, drift: 0, tilt: 0 };
     this._from = { ...this.shot };
     this._to = { ...this.shot };
     this._tweenT = 1;
@@ -74,6 +80,11 @@ export class Stage {
     this._last = 0;
     this._loop = this._loop.bind(this);
 
+    /** the high / medium finish (null on low, or where the device cannot run it) */
+    this.post = null;
+    this._postChecked = false;
+    this._syncPost();
+
     this.resize = this.resize.bind(this);
     window.addEventListener('resize', this.resize);
     window.addEventListener('orientationchange', this.resize);
@@ -85,8 +96,65 @@ export class Stage {
     this.qualityName = name === 'auto' ? autoQuality() : name;
     this.quality = QUALITY[this.qualityName] ?? QUALITY.medium;
     if (this.adaptive) this.resScale = 1;
+    this._syncPost();
     this.resize();
     for (const fn of this.resizeListeners) fn(this);
+  }
+
+  /** Build, retune or drop the post finish for the current tier. */
+  _syncPost() {
+    const tier = this.quality.post;
+    if (!tier || !postSupported(this.renderer)) {
+      this.post?.dispose();
+      this.post = null;
+      return;
+    }
+    if (this.post) this.post.setTier(tier);
+    else this.post = new PostFX(this.renderer, tier);
+    this._postChecked = false;
+  }
+
+  /** True when frames go through the post finish (the scene then renders linear, untone-mapped). */
+  get postActive() {
+    return !!this.post?.ok;
+  }
+
+  /**
+   * Compile the shaders `object` needs ahead of time, for the target the scene really renders into
+   * (tone mapping and output colour space are part of a program, so they must match).
+   */
+  compile(object, scene = this.scene) {
+    const r = this.renderer;
+    const prev = r.getRenderTarget();
+    r.setRenderTarget(this.postActive ? this.post.scene : null);
+    r.compile(object, this.camera, scene);
+    r.setRenderTarget(prev);
+  }
+
+  /** Render one frame of the scene (through the finish on high / medium). */
+  renderFrame() {
+    const post = this.post;
+    if (post?.ok) {
+      post.tilt.amount = this.shot.tilt;
+      if (post.tilt.amount > 0.004) {
+        // keep the focus band on the shot's subject wherever the shot puts it on screen
+        const p = _v.copy(this._focus).project(this.camera);
+        post.tilt.focus = clamp(p.y * 0.5 + 0.5, 0.15, 0.85);
+      }
+      post.render(this.scene, this.camera);
+      if (!this._postChecked) {
+        // a device that cannot multisample a half-float target falls back to the direct path
+        this._postChecked = true;
+        if (!post.check()) {
+          console.warn('Phrasefall: post-processing is not available on this device; rendering directly.');
+          post.dispose();
+          this.post = null;
+          for (const fn of this.resizeListeners) fn(this);
+        }
+      }
+      return;
+    }
+    this.renderer.render(this.scene, this.camera);
   }
 
   onUpdate(fn) {
@@ -105,15 +173,22 @@ export class Stage {
     this.pixelRatio = Math.min(window.devicePixelRatio || 1, this.quality.maxPixelRatio) * this.resScale;
     this.renderer.setPixelRatio(this.pixelRatio);
     this.renderer.setSize(w, h, false);
+    this._sizePost();
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     for (const fn of this.resizeListeners) fn(this);
   }
 
+  _sizePost() {
+    if (!this.post) return;
+    const size = this.renderer.getDrawingBufferSize(_size);
+    this.post.setSize(size.x, size.y);
+  }
+
   // ── camera shots ────────────────────────────────────────────────────────
   /** Glide to a shot over `seconds` (0 = cut). */
   setShot(target, seconds = 0.9) {
-    const to = { ...this._to, ...target };
+    const to = { ...this._to, ...target, tilt: target.tilt ?? 0 };
     if (seconds <= 0) {
       Object.assign(this.shot, to);
       this._to = to;
@@ -202,7 +277,7 @@ export class Stage {
     this.time += dt;
     for (const fn of this.listeners) fn(dt, this.time);
     this._applyCamera(dt);
-    this.renderer.render(this.scene, this.camera);
+    this.renderFrame();
 
     if (this.adaptive && raw < 0.25) {
       // dynamic resolution: trade sharpness for a steady frame rate on weak GPUs
@@ -217,6 +292,7 @@ export class Stage {
           this.pixelRatio = Math.min(window.devicePixelRatio || 1, this.quality.maxPixelRatio) * this.resScale;
           this.renderer.setPixelRatio(this.pixelRatio);
           this.renderer.setSize(this.width, this.height, false);
+          this._sizePost();
         }
       }
     }
@@ -224,3 +300,4 @@ export class Stage {
 }
 
 const _v = new THREE.Vector3();
+const _size = new THREE.Vector2();
