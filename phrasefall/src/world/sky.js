@@ -19,6 +19,7 @@ uniform vec3 uSunDir;
 uniform vec3 uSunColor;
 uniform float uSunDisc;
 uniform float uTime;
+uniform float uDither;
 varying vec3 vDir;
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
@@ -31,26 +32,41 @@ float noise(vec2 p) {
 void main() {
   vec3 d = normalize(vDir);
   float h = d.y;
+  vec3 S = normalize(uSunDir);
+  // how close this direction is to the sun's side of the sky (by compass bearing only)
+  float side = dot(normalize(d.xz + vec2(1e-4)), normalize(S.xz + vec2(1e-4)));
+
+  // horizon → zenith, blended in a gamma-like space so the middle of the gradient stays clean
+  // (a straight mix of orange and blue goes grey)
   vec3 col = h > 0.0
-    ? mix(uHorizon, uTop, pow(smoothstep(0.0, 0.85, h), 0.62))
-    : mix(uHorizon, uBottom, smoothstep(0.0, -0.45, h));
+    ? mix(sqrt(uHorizon), sqrt(uTop), pow(smoothstep(0.0, 0.9, h), 0.55))
+    : mix(sqrt(uHorizon), sqrt(uBottom), smoothstep(0.0, -0.4, h));
+  col *= col;
 
-  // soft band of haze sitting on the horizon
-  col = mix(col, uHorizon, exp(-abs(h) * 7.0) * 0.45);
+  // a luminous band along the horizon, brighter under the sun; the sky round the sun warmer and
+  // lighter, the far side a touch deeper
+  float band = exp(-abs(h) * 8.0);
+  col = mix(col, uHorizon * (1.1 + 0.3 * max(side, 0.0)), band * 0.5);
+  col *= 1.0 + 0.18 * side * (1.0 - smoothstep(0.0, 0.75, h));
 
-  // high wispy cirrus, cheap two-octave noise stretched sideways
-  vec2 q = d.xz / (abs(h) + 0.35);
-  float wisp = noise(q * vec2(1.4, 4.2) + vec2(uTime * 0.012, 0.0)) * 0.65 + noise(q * vec2(3.1, 9.0) - vec2(uTime * 0.02, 0.0)) * 0.35;
-  wisp = smoothstep(0.52, 0.86, wisp) * smoothstep(0.02, 0.3, h) * 0.22;
-  col = mix(col, mix(uHorizon, vec3(1.0), 0.55), wisp);
+  // high wispy cirrus, cheap two-octave noise stretched sideways (only above the horizon)
+  if (h > 0.02) {
+    vec2 q = d.xz / (h + 0.35);
+    float wisp = noise(q * vec2(1.4, 4.2) + vec2(uTime * 0.012, 0.0)) * 0.65 + noise(q * vec2(3.1, 9.0) - vec2(uTime * 0.02, 0.0)) * 0.35;
+    wisp = smoothstep(0.52, 0.86, wisp) * smoothstep(0.02, 0.3, h) * 0.24;
+    col = mix(col, mix(uHorizon, vec3(1.0), 0.6) * (1.0 + 0.4 * max(side, 0.0)), wisp);
+  }
 
-  // sun: crisp disc, tight bloom, wide glow
-  float sd = max(dot(d, normalize(uSunDir)), 0.0);
-  float disc = smoothstep(0.99945, 0.99975, sd) * uSunDisc;
-  col += uSunColor * (disc * 0.9 + pow(sd, 260.0) * 0.4 * (0.3 + uSunDisc) + pow(sd, 24.0) * 0.2 + pow(sd, 5.0) * 0.1);
+  // the sun: a crisp disc bright enough to glow, a corona, and a wide soft halo
+  float s = max(dot(d, S), 0.0);
+  float disc = smoothstep(0.99945, 0.99975, s) * uSunDisc;
+  col += uSunColor * (disc * 4.0 + pow(s, 700.0) * 1.1 * uSunDisc + pow(s, 64.0) * 0.3 * (0.3 + uSunDisc) + pow(s, 8.0) * 0.15 + pow(s, 2.5) * 0.06);
 
   gl_FragColor = vec4(col, 1.0);
+  #include <tonemapping_fragment>
   #include <colorspace_fragment>
+  // straight to an 8-bit screen (low quality) a sky gradient bands: break it up with ±½ step of noise
+  gl_FragColor.rgb += (hash(gl_FragCoord.xy) - 0.5) * uDither / 255.0;
 }`;
 
 const STAR_VERT = /* glsl */ `
@@ -74,8 +90,12 @@ void main() {
   vec2 c = gl_PointCoord - 0.5;
   float r = length(c);
   float a = smoothstep(0.5, 0.0, r);
+  float core = smoothstep(0.16, 0.0, r);
   a = a * a * vTw * uOpacity;
-  gl_FragColor = vec4(vec3(0.9, 0.95, 1.0), a);
+  // a hot core: the brightest stars twinkle into a little glow
+  gl_FragColor = vec4(vec3(0.9, 0.95, 1.0) * (1.0 + core * vTw * 1.6), a);
+  #include <tonemapping_fragment>
+  #include <colorspace_fragment>
 }`;
 
 const AURORA_VERT = /* glsl */ `
@@ -120,6 +140,7 @@ export class Sky {
       uSunColor: { value: new THREE.Color() },
       uSunDisc: { value: 1 },
       uTime: { value: 0 },
+      uDither: { value: 1 },
     };
     const dome = new THREE.Mesh(
       new THREE.SphereGeometry(300, 32, 20),
@@ -213,6 +234,11 @@ export class Sky {
     this.moonHalo.material.opacity = 0.5 * v.moon;
     this.aurora.visible = v.aurora > 0.01;
     for (const a of this.auroraUniforms) a.uOpacity.value = v.aurora * 0.55;
+  }
+
+  /** Dither the sky only when it goes straight to the screen (the post finish dithers everything). */
+  setDither(on) {
+    this.uniforms.uDither.value = on ? 1 : 0;
   }
 
   update(t, camera, pixelRatio) {

@@ -84,6 +84,7 @@ export class Seasons {
       this.w[k] = target > this.w[k] ? Math.min(target, this.w[k] + step) : Math.max(target, this.w[k] - step);
     }
     this.springT += dt;
+    SEASON_U.uPfTime.value = t;
     this._sync();
     this.weather.update(t, stage);
     this.butterflies.update(t);
@@ -126,6 +127,8 @@ export class Seasons {
     this.light.copy(out.hemiSky).multiplyScalar(out.hemiIntensity * 0.55).add(_c.copy(out.sunLight).multiplyScalar(out.sunIntensity * 0.2));
     const m = Math.max(this.light.r, this.light.g, this.light.b);
     if (m > 1.05) this.light.multiplyScalar(1.05 / m);
+    // water glints follow the light: full by day, a soft moonlit twinkle at night
+    SEASON_U.uPfGlint.value = Math.min(1, Math.max(0.3, (out.sunIntensity - 1.3) / 1.2));
     this.weather.apply(out, this.light);
     this.butterflies.apply(this.light);
     return out;

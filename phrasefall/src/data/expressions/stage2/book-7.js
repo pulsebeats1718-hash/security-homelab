@@ -52,4 +52,17 @@ export default [
     context: "British informal, common in news: 'taxpayers will have to stump up £2 million'.",
     mistake: "Say 'stump up the money' or 'stump up for something', not 'stump the money'.",
   },
+  {
+    id: 'take-to-someone',
+    text: 'take to (someone)',
+    type: 'phrasal',
+    level: 2,
+    meaning: 'start to like someone',
+    distractors: ['start to argue with someone', 'drive someone to a place', 'slowly get bored of someone'],
+    example: "I'm sure the kids will take to their new teacher straight away.",
+    synonyms: ['warm to', 'hit it off with', 'like'],
+    register: 'Neutral',
+    context: "Used for people, places and activities: 'she took to golf'; 'take to doing' can also mean start a habit.",
+    mistake: "Keep 'to': 'I took to her at once', not 'I took her at once'.",
+  },
 ];

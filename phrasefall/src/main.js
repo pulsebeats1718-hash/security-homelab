@@ -188,6 +188,7 @@ async function boot() {
   app.setQuality = (q) => {
     stage.setQuality(q);
     env.setQuality();
+    if (!game.active) hero.refresh(); // the clear-coat finish comes and goes with high quality
   };
 
   const s = app.screens;

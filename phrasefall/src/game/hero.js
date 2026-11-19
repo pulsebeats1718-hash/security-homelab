@@ -72,6 +72,14 @@ export class Hero {
     return ch;
   }
 
+  /** Make the current character again (its materials pick up a new quality tier's finish). */
+  refresh() {
+    if (!this.ch) return;
+    const { id, locked } = this;
+    this.id = null;
+    this.set(id, { locked, effect: false, clip: null });
+  }
+
   play(clip, o) {
     return this.ch?.animator.play(clip, o);
   }

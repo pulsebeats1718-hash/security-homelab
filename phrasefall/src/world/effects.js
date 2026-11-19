@@ -39,6 +39,8 @@ void main() {
   float core = smoothstep(0.16, 0.0, r);
   float a = (glow * glow * 0.7 + core) * smoothstep(0.0, 0.25, vLife);
   gl_FragColor = vec4(vColor * (0.7 + core * 0.8), a);
+  #include <tonemapping_fragment>
+  #include <colorspace_fragment>
 }`;
 
 const _c = new THREE.Color();

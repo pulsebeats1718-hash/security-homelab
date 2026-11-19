@@ -13,7 +13,7 @@ import { Island } from './island.js';
 import { Places } from './places/index.js';
 import { Seasons } from './seasons/index.js';
 import { Clouds, Motes } from './clouds.js';
-import { rimShared } from '../characters/kit/materials.js';
+import { rimShared, toyFinish } from '../characters/kit/materials.js';
 import { ease, lerp } from '../core/utils.js';
 
 patchAtmosphere();
@@ -33,6 +33,7 @@ export class Environment {
     const scene = stage.scene;
     const q = stage.qualityName;
 
+    toyFinish.level = q; // characters made from now on get the finish of this tier
     scene.fog = new THREE.FogExp2(0xffd9c0, 0.011);
     // image-based light from a gradient sky in the theme's colours (rebuilt when the colours settle)
     this.skyLight = new SkyLight(stage.renderer);
@@ -216,6 +217,7 @@ export class Environment {
 
   /** Re-read the stage quality (shadows on / off, shadow resolution and softness). */
   setQuality() {
+    toyFinish.level = this.stage.qualityName;
     const size = this.stage.quality.shadow;
     this.sun.castShadow = size > 0;
     this.sun.shadow.radius = this.stage.quality.shadowRadius ?? 1;
@@ -225,7 +227,7 @@ export class Environment {
       this.sun.shadow.map?.dispose();
       this.sun.shadow.map = null;
     }
-    this._grade();
+    this._apply(); // fog colour and grade depend on whether the post finish is on
   }
 
   /** Temporarily brighten / dim everything (game-over desaturation, flashes). */
@@ -249,8 +251,8 @@ export class Environment {
     const u = post.uFinal;
     u.uHighTint.value.set(0.016 + warm * 0.03, 0.006 + warm * 0.008, -0.012 - warm * 0.02);
     u.uShadowTint.value.set(-0.006 - night * 0.004, 0.0, 0.016 + night * 0.018);
-    u.uVibrance.value = 0.16 + warm * 0.12 - night * 0.04;
-    u.uVignette.value.x = 0.28 + night * 0.1;
+    u.uVibrance.value = 0.22 + warm * 0.12 - night * 0.05;
+    u.uVignette.value.x = 0.32 + night * 0.1;
     post.bloom.strength = 0.42 + night * 0.18;
   }
 
@@ -259,6 +261,9 @@ export class Environment {
     const scene = this.stage.scene;
     const dim = 1 - (this.dim ?? 0) * 0.45;
     scene.fog.color.copy(v.fog);
+    // three mixes fog in after the output conversion when drawing straight to the screen, so the
+    // themes' fog colours were tuned as if sRGB: the linear post path gets the same look from this
+    if (this.stage.postActive) scene.fog.color.convertSRGBToLinear();
     scene.fog.density = v.fogDensity;
     if (this._envDue || !scene.environment) this._env();
     scene.environmentIntensity = v.env * ENV_GAIN * dim;
@@ -279,7 +284,7 @@ export class Environment {
     this.sky.apply(v, this._skySun);
     this.island.apply(v);
     this.places.apply(v);
-    this.clouds.apply(v);
+    this.clouds.apply(v, this._sunDir, this._skySun);
     this.motes.apply(v);
   }
 
@@ -306,12 +311,17 @@ export class Environment {
       this._dimApplied = this.dim;
       dirty = true;
     }
+    if (this._postWas !== this.stage.postActive) {
+      this._postWas = this.stage.postActive;
+      dirty = true;
+    }
     this.seasons.update(t, dt, this.stage);
     if (seasonBlend && !this.seasons.blending) this._envDue = true;
     if (dirty) this._apply();
     else if (this._envDue) this._env();
     // the characters' rim light comes from the sky's sun side: hand them its direction in view space
     rimShared.dir.value.copy(this._skySun).transformDirection(this.stage.camera.matrixWorldInverse);
+    this.sky.setDither(!this.stage.postActive);
     this.sky.update(t, this.stage.camera, this.stage.pixelRatio);
     this.island.update(t, dt);
     this.places.update(t, dt);

@@ -102,6 +102,7 @@ uniform vec3 uLift;
 uniform vec3 uGamma;     // 1 / gamma
 uniform vec3 uGain;
 uniform float uVibrance;
+uniform float uContrast;
 uniform vec3 uShadowTint;
 uniform vec3 uHighTint;
 uniform vec4 uVignette;  // strength, aspect, inner, outer
@@ -140,6 +141,8 @@ void main() {
   // the grade, in display space
   c = uGain * (c + uLift * (1.0 - c));
   c = pow(max(c, 0.0), uGamma);
+  // a gentle S-curve: a little more depth in the shadows and sparkle in the highlights
+  c = mix(c, c * c * (3.0 - 2.0 * c), uContrast);
   float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
   float sat = max(c.r, max(c.g, c.b)) - min(c.r, min(c.g, c.b));
   c = mix(vec3(l), c, 1.0 + uVibrance * (1.0 - sat));
@@ -165,10 +168,11 @@ export const GRADE = {
   lift: [0.012, 0.008, 0.024],
   gamma: [1.0, 1.0, 1.0],
   gain: [1.0, 1.0, 1.0],
-  vibrance: 0.16,
+  vibrance: 0.22,
+  contrast: 0.2,
   shadowTint: [-0.006, 0.0, 0.016],
   highTint: [0.016, 0.006, -0.012],
-  vignette: 0.28,
+  vignette: 0.32,
   vignetteColor: [0.34, 0.27, 0.48],
 };
 
@@ -242,6 +246,7 @@ export class PostFX {
       uGamma: { value: new THREE.Vector3(...g.gamma.map((x) => 1 / x)) },
       uGain: { value: new THREE.Vector3(...g.gain) },
       uVibrance: { value: g.vibrance },
+      uContrast: { value: g.contrast },
       uShadowTint: { value: new THREE.Vector3(...g.shadowTint) },
       uHighTint: { value: new THREE.Vector3(...g.highTint) },
       uVignette: { value: new THREE.Vector4(g.vignette, 1, 0.42, 0.98) },

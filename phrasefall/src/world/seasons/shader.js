@@ -36,8 +36,11 @@ export const sandEdge = (x, z) => {
   return Math.hypot(x, qz) - (SAND.r + SAND.a * Math.sin(th * 3 + 1.3) + SAND.b * Math.sin(th * 7 + 0.4));
 };
 
-/** Season weights (spring, summer, autumn, winter) shared by every patched material. */
-export const SEASON_U = { uSeason: { value: new THREE.Vector4(0, 0, 1, 0) } };
+/**
+ * Season weights (spring, summer, autumn, winter) shared by every patched material, plus the clock
+ * (wind sway, water sparkle) and how bright the sparkle is in the current light.
+ */
+export const SEASON_U = { uSeason: { value: new THREE.Vector4(0, 0, 1, 0) }, uPfTime: { value: 0 }, uPfGlint: { value: 1 } };
 
 const lin = (hex) => {
   const c = new THREE.Color(hex);
@@ -45,8 +48,10 @@ const lin = (hex) => {
 };
 
 const VERT_PARS = /* glsl */ `
+uniform float uPfTime;
 varying vec3 vPfWorld;
 varying float vPfKind;
+varying float vPfAO;
 varying float vPfHash;
 #ifdef PF_GRASS_ATTR
 attribute float aGrass;
@@ -55,6 +60,26 @@ varying float vPfGrass;
 #ifdef PF_TIP
 varying float vPfTip;
 #endif
+`;
+
+// wind: leaves and blossom sway gently, more the higher above their prop's base (before the pop
+// animation, so a tree popping up sways with it)
+const VERT_SWAY = /* glsl */ `
+{
+  #ifdef PF_KIND_ATTR
+  float pfSK = floor(aPop.w * 0.5 + 0.001);
+  vec3 pfSA = aPop.xyz;
+  #else
+  float pfSK = float(PF_KIND);
+  vec3 pfSA = vec3(0.0);
+  #endif
+  if ((pfSK > 0.5 && pfSK < 2.5) || (pfSK > 4.5 && pfSK < 5.5)) {
+    float pfH = max(transformed.y - pfSA.y, 0.0);
+    float pfPh = uPfTime * 1.25 + pfSA.x * 0.37 + pfSA.z * 0.23;
+    transformed.x += (sin(pfPh) * 0.6 + sin(pfPh * 2.3 + 1.7) * 0.25) * 0.012 * pfH;
+    transformed.z += cos(pfPh * 0.8 + 0.6) * 0.006 * pfH;
+  }
+}
 `;
 
 const VERT_MAIN = /* glsl */ `
@@ -74,6 +99,12 @@ const VERT_MAIN = /* glsl */ `
   vec3 pfA = vec3(modelMatrix[3].x, 0.0, modelMatrix[3].z); // not y: floating islands bob
   #endif
   vPfHash = fract(sin(dot(pfA, vec3(12.9898, 78.233, 37.719))) * 43758.5453);
+  // height above the prop's base, for the contact shading
+  #ifdef PF_KIND_ATTR
+  vPfAO = pfW.y - (modelMatrix * vec4(aPop.xyz, 1.0)).y;
+  #else
+  vPfAO = pfW.y - modelMatrix[3].y;
+  #endif
   #ifdef PF_GRASS_ATTR
   vPfGrass = aGrass;
   #endif
@@ -85,8 +116,12 @@ const VERT_MAIN = /* glsl */ `
 
 const FRAG_PARS = /* glsl */ `
 uniform vec4 uSeason;
+uniform float uPfTime;
+uniform float uPfGlint;
+vec3 pfGlint = vec3(0.0);
 varying vec3 vPfWorld;
 varying float vPfKind;
+varying float vPfAO;
 varying float vPfHash;
 #ifdef PF_GRASS_ATTR
 varying float vPfGrass;
@@ -167,6 +202,17 @@ if (dot(uSeason, uSeason) > 0.0) {
     c = mix(c, ${lin(0xe6ecf6)} * (0.93 + 0.07 * n), uSeason.w * snow);
     roughnessFactor = mix(roughnessFactor, 0.95, uSeason.w * snow);
   }
+  // water sparkle: little glints of sun dancing on open water (not on ice)
+  float pfWet = (k > 3.5 && k < 4.5) ? 1.0 : (ground ? water : 0.0);
+  if (pfWet > 0.01 && up > 0.6) {
+    vec2 gp = vPfWorld.xz * 12.0;
+    float gt = uPfTime;
+    float g = sin(gp.x * 1.7 + gt * 1.9 + sin(gp.y * 1.3 - gt * 0.7) * 2.0) * sin(gp.y * 2.1 - gt * 1.4 + sin(gp.x * 0.9 + gt * 0.6) * 2.0);
+    pfGlint = vec3(1.0, 0.96, 0.86) * pow(max(g, 0.0), 22.0) * 3.2 * pfWet * uPfGlint * (1.0 - uSeason.w) * smoothstep(0.6, 0.95, up);
+  }
+  // contact shading: props darken softly where they meet the ground (a cheap ambient occlusion
+  // that sits them in the diorama instead of on it)
+  if (k < 2.5 || (k > 4.5 && k < 6.5)) c *= mix(0.6, 1.0, smoothstep(-0.02, 0.5, vPfAO));
   diffuseColor.rgb = c;
 }
 `;
@@ -179,8 +225,14 @@ if (dot(uSeason, uSeason) > 0.0) {
 export function seasonShader(shader, opts = {}) {
   Object.assign(shader.uniforms, SEASON_U);
   const defs = [opts.kindAttr ? '#define PF_KIND_ATTR' : `#define PF_KIND ${opts.kind ?? KIND.GENERIC}`, opts.sand ? '#define PF_SAND' : '', opts.grassAttr ? '#define PF_GRASS_ATTR' : '', opts.tip ? '#define PF_TIP' : ''].join('\n');
-  shader.vertexShader = shader.vertexShader.replace('#include <common>', `#include <common>\n${defs}\n${VERT_PARS}`).replace('#include <project_vertex>', `#include <project_vertex>\n${VERT_MAIN}`);
-  shader.fragmentShader = shader.fragmentShader.replace('#include <common>', `#include <common>\n${defs}\n${FRAG_PARS}`).replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>\n${FRAG_MAIN}`);
+  shader.vertexShader = shader.vertexShader
+    .replace('#include <common>', `#include <common>\n${defs}\n${VERT_PARS}`)
+    .replace('#include <begin_vertex>', `#include <begin_vertex>\n${VERT_SWAY}`)
+    .replace('#include <project_vertex>', `#include <project_vertex>\n${VERT_MAIN}`);
+  shader.fragmentShader = shader.fragmentShader
+    .replace('#include <common>', `#include <common>\n${defs}\n${FRAG_PARS}`)
+    .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>\n${FRAG_MAIN}`)
+    .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += pfGlint;');
 }
 
 /** Season cache key fragment for customProgramCacheKey. */

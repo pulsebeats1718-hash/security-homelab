@@ -1,6 +1,10 @@
 /**
  * ExpressionCard — the glowing tablet that carries an expression down from the sky.
  * One instance is reused for every expression.
+ *
+ * Its finish: a glossy enamel face (it catches the sky's light) with a slow sheen sweeping across
+ * it now and then; golden cards get polished metal, a brighter, quicker sheen and twinkling glitter
+ * that the bloom on high and medium quality turns into a soft glow.
  */
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
@@ -56,8 +60,37 @@ export class ExpressionCard {
     scene.add(this.group);
 
     this.accent = new THREE.Color(0xffc83d);
-    this.frameMat = new THREE.MeshStandardMaterial({ color: 0xffc83d, roughness: 0.4, emissive: 0xffc83d, emissiveIntensity: 0.35 });
-    this.faceMat = new THREE.MeshStandardMaterial({ color: 0xfff6e3, roughness: 0.6, emissive: 0xfff1d6, emissiveIntensity: 0.5 });
+    this.frameMat = new THREE.MeshStandardMaterial({ color: 0xffc83d, roughness: 0.32, emissive: 0xffc83d, emissiveIntensity: 0.35 });
+    this.faceMat = new THREE.MeshStandardMaterial({ color: 0xfff6e3, roughness: 0.34, emissive: 0xfff1d6, emissiveIntensity: 0.5 });
+    // the sheen and (golden cards) the glitter, drawn on the face as light of its own
+    this.finish = { uCardTime: { value: 0 }, uSheen: { value: 0.3 }, uGlitter: { value: 0 }, uSheenColor: { value: new THREE.Color(1, 0.97, 0.9) } };
+    this.faceMat.onBeforeCompile = (shader) => {
+      Object.assign(shader.uniforms, this.finish);
+      shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vCardPos;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvCardPos = position;');
+      shader.fragmentShader = shader.fragmentShader.replace('#include <common>', `#include <common>
+uniform float uCardTime;
+uniform float uSheen;
+uniform float uGlitter;
+uniform vec3 uSheenColor;
+varying vec3 vCardPos;`).replace(
+        '#include <emissivemap_fragment>',
+        `#include <emissivemap_fragment>
+{
+  float front = smoothstep(0.02, 0.11, vCardPos.z);
+  // a diagonal band of light crosses the face in about two seconds, then rests
+  float cross = mix(-5.2, 5.2, smoothstep(0.0, 0.5, fract(uCardTime * 0.2)));
+  float d = vCardPos.x + vCardPos.y * 0.8 - cross;
+  float band = exp(-d * d * 2.6) * 0.75 + exp(-d * d * 22.0) * 0.5;
+  totalEmissiveRadiance += uSheenColor * band * uSheen * front;
+  // glitter: tiny glints that come and go
+  if (uGlitter > 0.0) {
+    float g = sin(vCardPos.x * 57.0 + uCardTime * 2.9) * sin(vCardPos.y * 61.0 - uCardTime * 2.3) * sin((vCardPos.x - vCardPos.y) * 37.0 + uCardTime * 1.7);
+    totalEmissiveRadiance += uSheenColor * pow(max(g, 0.0), 14.0) * uGlitter * front;
+  }
+}`
+      );
+    };
+    this.faceMat.customProgramCacheKey = () => 'pf-card-face';
     const frame = new THREE.Mesh(new RoundedBoxGeometry(W, H, 0.2, 5, 0.36), this.frameMat);
     frame.castShadow = true;
     const face = new THREE.Mesh(new RoundedBoxGeometry(W - 0.26, H - 0.26, 0.25, 5, 0.25), this.faceMat);
@@ -242,8 +275,10 @@ export class ExpressionCard {
     this.golden = golden;
     this.kind = kind;
     // golden: a rich gold face and a polished frame (the frame shimmers in update())
-    this.frameMat.metalness = golden ? 0.35 : 0;
-    this.frameMat.roughness = golden ? 0.28 : 0.4;
+    this.frameMat.metalness = golden ? 0.6 : 0;
+    this.frameMat.roughness = golden ? 0.22 : 0.32;
+    this.finish.uSheen.value = golden ? 0.85 : 0.3;
+    this.finish.uGlitter.value = golden ? 2.6 : 0;
     // twist cards: a soft tint of their own, so they read as different at a glance
     const face = golden ? 0xffdf86 : (kind && TWIST_FACE[kind]) || 0xfff6e3;
     this.faceMat.color.set(face);
@@ -298,6 +333,7 @@ export class ExpressionCard {
   update(dt, fallTime) {
     if (this.state === 'gone') return null;
     this.age += dt;
+    this.finish.uCardTime.value = this.age * (this.golden ? 1.6 : 1) + 1.2;
     const g = this.group;
     const a = this.age;
     let result = null;

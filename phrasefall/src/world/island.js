@@ -125,8 +125,22 @@ export class Island {
     const headGeo = new THREE.SphereGeometry(0.065, 8, 6);
     headGeo.scale(1, 0.7, 1);
     headGeo.translate(0, 0.21, 0);
-    const stems = new THREE.InstancedMesh(stemGeo, mats.leaf2, flowerCount);
-    const heads = new THREE.InstancedMesh(headGeo, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 }), flowerCount);
+    // the wild flowers nod in the same breeze as the grass (stems and heads share the motion)
+    const flowerWind = (mat, key) => {
+      mat.onBeforeCompile = (shader) => {
+        shader.uniforms.uWind = this.windUniform;
+        shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nuniform float uWind;').replace(
+          '#include <begin_vertex>',
+          `#include <begin_vertex>
+          float sway = sin(uWind * 1.7 + instanceMatrix[3].x * 1.1 + instanceMatrix[3].z * 0.8) * 0.07 + sin(uWind * 2.9 + instanceMatrix[3].z * 1.9) * 0.03;
+          transformed.x += sway * position.y * 1.6;`
+        );
+      };
+      mat.customProgramCacheKey = () => key;
+      return mat;
+    };
+    const stems = new THREE.InstancedMesh(stemGeo, flowerWind(std(0x3fa65c), 'pf-wild-stem'), flowerCount);
+    const heads = new THREE.InstancedMesh(headGeo, flowerWind(new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 }), 'pf-wild-head'), flowerCount);
     const palette = [0xffffff, 0xffe066, 0xff9ec4, 0xb9a6ff, 0xfff1a8];
     placed = 0;
     guard = 0;
