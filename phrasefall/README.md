@@ -112,14 +112,16 @@ four options before they land.
   devices and join live leaderboards (today's daily challenge, this week, all time).
   Guests play straight away, and their progress comes along when they sign in.
   Runs on Firebase; setup, costs and limits are in [DEPLOY.md](DEPLOY.md).
-- **6,037 British English expressions**, chosen to help learners sound natural:
-  964 everyday and spoken phrases (including work and message English), 1,706
-  phrasal verbs, 1,299 idioms, 700 set phrases, 1,118 collocations and 250 advanced
-  idioms. Common phrasal verbs appear once per meaning, each with a short hint on
-  the card: "pick up (a language)", "pick up (the phone)". Every expression has
-  three plausible wrong answers, an example, synonyms, register, context and a
-  common learner mistake, and a difficulty level; harder ones join a stage as the
-  player discovers more of it.
+- **3,585 British English expressions from the player's own phrasebook** – a tutor's
+  collection of the set phrases, idioms, phrasal verbs and everyday chunks that make
+  someone sound at home in Britain, turned into game cards: 1,127 everyday and spoken
+  phrases, 730 phrasal verbs, 929 idioms, 464 set phrases, similes and sayings, 278
+  collocations and 57 advanced idioms (`dev/EXPRESSION_GUIDE.md`). Phrasal verbs with
+  several common meanings appear once per meaning, each with a short hint on the card:
+  "pick up (a language)", "pick up (the phone)". Every expression has three plausible
+  wrong answers, an example, synonyms, register, context and a common learner mistake
+  (the tutor's notes on the player's own slips among them), and a difficulty level;
+  harder ones join a stage as the player discovers more of it.
 
 ## Run it
 
