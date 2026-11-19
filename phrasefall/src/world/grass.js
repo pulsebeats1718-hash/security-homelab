@@ -340,6 +340,9 @@ export class Grass {
     this.mesh.frustumCulled = false;
     this.mesh.castShadow = false;
     this.mesh.receiveShadow = true;
+    // drawn after the props and characters that stand in it (opaque draws go by material, not by
+    // depth), and before the turf, so hidden blades and hidden turf are rejected before shading
+    this.mesh.renderOrder = 0.5;
 
     this.t = 1;
     this.place = null;
