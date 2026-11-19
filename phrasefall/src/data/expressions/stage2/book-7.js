@@ -1,19 +1,6 @@
 /** Stage 2 — phrasal verbs from the player's phrasebook, batch 7. Schema: dev/EXPRESSION_GUIDE.md */
 export default [
   {
-    id: 'run-something-past-someone',
-    text: 'run something past someone',
-    type: 'phrasal',
-    level: 2,
-    meaning: "ask someone's opinion about an idea",
-    distractors: ['hide something from your manager', 'explain something far too quickly', 'hand a task over to someone else'],
-    example: 'Can I run an idea past you before the meeting?',
-    synonyms: ['run something by someone', 'check with someone', 'sound someone out'],
-    register: 'Informal',
-    context: "Common at work when you want quick feedback or approval: 'Let me run it past my manager first.'",
-    mistake: "Say 'run it past someone' or 'run it by someone', not 'run it to someone'.",
-  },
-  {
     id: 'take-on-staff',
     text: 'take on (staff)',
     type: 'phrasal',
