@@ -578,7 +578,7 @@ export default [
     type: 'phrasal',
     level: 2,
     meaning: 'go inside a shop for a short time',
-    distractors: ['walk past without going in', 'queue outside for ages', 'break into a shop at night'],
+    distractors: ['walk straight past without going in', 'queue outside the shop for ages', 'break into a shop in the night'],
     example: "I'll pop into the chemist on the way home.",
     synonyms: ['nip into', 'drop into'],
     register: 'Informal',

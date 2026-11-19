@@ -208,7 +208,7 @@ export class PostFX {
     this.height = 1;
     this.ok = true;
     /** bloom strength, threshold and knee (HDR, before exposure) */
-    this.bloom = { strength: 0.42, threshold: 1.25, knee: 0.55 };
+    this.bloom = { strength: 0.7, threshold: 1.7, knee: 0.35 };
     /** the tilt-shift: amount (0 = off), focus height on screen (0 bottom … 1 top), sharp half-band, ramp */
     this.tilt = { amount: 0, focus: 0.5, band: 0.16, ramp: 0.3 };
 

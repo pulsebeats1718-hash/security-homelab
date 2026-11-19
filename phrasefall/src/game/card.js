@@ -365,9 +365,10 @@ varying vec3 vCardPos;`).replace(
     if (this.golden) {
       // a slow shimmer, and the corner gems spin
       const shimmer = 0.5 + 0.5 * Math.sin(a * 3.2);
-      this.frameMat.emissiveIntensity = 0.45 + shimmer * 0.5 + d * 0.6;
+      // bright enough to bloom: the gold frame breathes a soft glow
+      this.frameMat.emissiveIntensity = 0.9 + shimmer * 0.9 + d * 0.6;
       this.glow.material.opacity = 0.6 + shimmer * 0.25 + d * 0.2;
-      this.gemMat.emissiveIntensity = 1.2 + shimmer * 1.2;
+      this.gemMat.emissiveIntensity = 1.8 + shimmer * 1.8;
       for (const gem of this.gems) gem.rotation.y = a * 3;
     } else {
       this.frameMat.emissiveIntensity = 0.32 + d * (0.5 + pulse * 0.6);

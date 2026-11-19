@@ -338,4 +338,17 @@ export default [
     context: 'Used to set realistic hopes about change, success, learning or recovery.',
     mistake: 'Write "overnight" as one word: "it won\'t happen overnight", not "over night".',
   },
+  {
+    id: 'i-dare-say',
+    text: 'I dare say',
+    type: 'set-phrase',
+    level: 3,
+    meaning: 'used for what you think is probable',
+    distractors: ['used to say you will stay silent', 'used to say a person is rather proud', 'used to give a short, polite warning'],
+    example: "I dare say we'll manage.",
+    synonyms: ['I suppose', 'I imagine'],
+    register: 'Neutral',
+    context: 'A slightly old-fashioned British phrase for a likely guess.',
+    mistake: 'Don\'t say "I dare to say": the fixed phrase is "I dare say" (also written "I daresay").',
+  },
 ];

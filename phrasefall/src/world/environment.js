@@ -253,7 +253,7 @@ export class Environment {
     u.uShadowTint.value.set(-0.006 - night * 0.004, 0.0, 0.016 + night * 0.018);
     u.uVibrance.value = 0.22 + warm * 0.12 - night * 0.05;
     u.uVignette.value.x = 0.32 + night * 0.1;
-    post.bloom.strength = 0.42 + night * 0.18;
+    post.bloom.strength = 0.7 + night * 0.25;
   }
 
   _apply() {
