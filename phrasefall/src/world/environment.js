@@ -5,8 +5,9 @@
  * season it is dressed for (spring, summer, autumn, winter).
  */
 import * as THREE from 'three';
-import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { THEMES, COLOR_KEYS, NUMBER_KEYS } from './themes.js';
+import { SkyLight } from './skylight.js';
+import { patchAtmosphere } from './atmosphere.js';
 import { Sky, makeGlowTexture } from './sky.js';
 import { Island } from './island.js';
 import { Places } from './places/index.js';
@@ -14,6 +15,11 @@ import { Seasons } from './seasons/index.js';
 import { Clouds, Motes } from './clouds.js';
 import { rimShared } from '../characters/kit/materials.js';
 import { ease, lerp } from '../core/utils.js';
+
+patchAtmosphere();
+
+/** Where the shadow-casting scenery lives: the island's top and what stands on it (radius, depth, height). */
+const SHADOW_SPACE = { r: 7.0, depth: 0.86, low: -0.5, high: 6.5 };
 
 const dirFrom = ([az, el], out) => {
   const a = (az * Math.PI) / 180;
@@ -28,9 +34,10 @@ export class Environment {
     const q = stage.qualityName;
 
     scene.fog = new THREE.FogExp2(0xffd9c0, 0.011);
-    const pmrem = new THREE.PMREMGenerator(stage.renderer);
-    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-    pmrem.dispose();
+    // image-based light from a gradient sky in the theme's colours (rebuilt when the colours settle)
+    this.skyLight = new SkyLight(stage.renderer);
+    this._envDue = true;
+    this._envMid = false;
 
     this.hemi = new THREE.HemisphereLight(0xffffff, 0x888888, 0.8);
     scene.add(this.hemi);
@@ -41,6 +48,7 @@ export class Environment {
     Object.assign(this.sun.shadow.camera, { left: -9, right: 9, top: 10, bottom: -8, near: 1, far: 70 });
     this.sun.shadow.bias = -0.0005;
     this.sun.shadow.normalBias = 0.035;
+    this.sun.shadow.radius = stage.quality.shadowRadius ?? 1;
     scene.add(this.sun, this.sun.target);
 
     this.rim = new THREE.DirectionalLight(0xffffff, 1);
@@ -53,14 +61,15 @@ export class Environment {
     this.clouds = new Clouds(scene, { quality: q });
     this.motes = new Motes(scene, { quality: q });
 
-    // soft contact shadow for when real shadows are switched off
+    // soft contact shadow under the character: the only shadow when real shadows are off, and a
+    // touch of ambient occlusion that grounds the toy on the dais when they are on
     this.blob = new THREE.Mesh(
       new THREE.CircleGeometry(0.75, 24),
       new THREE.MeshBasicMaterial({ map: makeGlowTexture(), color: 0x000000, transparent: true, opacity: 0.38, depthWrite: false })
     );
     this.blob.rotation.x = -Math.PI / 2;
     this.blob.position.y = 0.012;
-    this.blob.visible = stage.quality.shadow === 0;
+    this._blobLook();
     scene.add(this.blob);
 
     this.themeName = 'sunrise';
@@ -81,8 +90,53 @@ export class Environment {
     dirFrom(THEMES.sunrise.skySun, this._skySun);
     this._fromSun = this._sunDir.clone();
     this._fromSky = this._skySun.clone();
+    this._rimView = new THREE.Vector3();
     this._apply();
     this.setPlace('home', { instant: true });
+  }
+
+  _blobLook() {
+    const shadows = this.stage.quality.shadow > 0;
+    this.blob.material.opacity = shadows ? 0.2 : 0.38;
+    this.blob.scale.setScalar(shadows ? 0.82 : 1);
+  }
+
+  /**
+   * Fit the sun's shadow camera tightly round the island for the current sun direction, so its
+   * texels are spent where the characters and props are (crisper contact shadows), with the depth
+   * range only as deep as the scenery.
+   */
+  _fitShadow() {
+    const cam = this.sun.shadow.camera;
+    // the shadow camera's own axes (it sits out along the sun direction looking back at the origin)
+    const z = _a.copy(this._sunDir).normalize();
+    const x = _b.set(0, 1, 0).cross(z).normalize();
+    const y = _c3.copy(z).cross(x);
+    const { r, depth, low, high } = SHADOW_SPACE;
+    let x0 = Infinity;
+    let x1 = -Infinity;
+    let y0 = Infinity;
+    let y1 = -Infinity;
+    let z0 = Infinity;
+    let z1 = -Infinity;
+    for (let i = 0; i < 16; i++) {
+      const a = (i / 16) * Math.PI * 2;
+      for (const h of [low, high]) {
+        _p.set(Math.cos(a) * r, h, Math.sin(a) * r * depth);
+        const px = _p.dot(x);
+        const py = _p.dot(y);
+        const pz = _p.dot(z);
+        x0 = Math.min(x0, px);
+        x1 = Math.max(x1, px);
+        y0 = Math.min(y0, py);
+        y1 = Math.max(y1, py);
+        z0 = Math.min(z0, pz);
+        z1 = Math.max(z1, pz);
+      }
+    }
+    const d = 32; // the sun sits 32 units out along its direction: depth along the view is d − p·z
+    Object.assign(cam, { left: x0 - 0.3, right: x1 + 0.3, top: y1 + 0.3, bottom: y0 - 0.3, near: Math.max(0.5, d - z1 - 1.5), far: d - z0 + 1.5 });
+    cam.updateProjectionMatrix();
   }
 
   /**
@@ -115,7 +169,10 @@ export class Environment {
    */
   setSeason(season, { instant = false } = {}) {
     this.seasons.set(season, { instant });
-    if (instant) this._apply();
+    if (instant) {
+      this._envDue = true;
+      this._apply();
+    }
   }
 
   /** Id of the current season. */
@@ -143,6 +200,7 @@ export class Environment {
       dirFrom(to.skySun, this._skySun);
       this._to = to;
       this._mix = 1;
+      this._envDue = true;
       this._apply();
       return;
     }
@@ -153,23 +211,47 @@ export class Environment {
     this._to = to;
     this._mix = 0;
     this._dur = seconds;
+    this._envMid = false;
   }
 
-  /** Re-read the stage quality (shadows on / off, shadow resolution). */
+  /** Re-read the stage quality (shadows on / off, shadow resolution and softness). */
   setQuality() {
     const size = this.stage.quality.shadow;
     this.sun.castShadow = size > 0;
-    this.blob.visible = size === 0;
+    this.sun.shadow.radius = this.stage.quality.shadowRadius ?? 1;
+    this._blobLook();
     if (size && this.sun.shadow.mapSize.x !== size) {
       this.sun.shadow.mapSize.set(size, size);
       this.sun.shadow.map?.dispose();
       this.sun.shadow.map = null;
     }
+    this._grade();
   }
 
   /** Temporarily brighten / dim everything (game-over desaturation, flashes). */
   setDim(amount) {
     this.dim = amount;
+  }
+
+  /** Rebuild the sky's image-based light from the current (season-tinted) colours, if they changed. */
+  _env() {
+    this.stage.scene.environment = this.skyLight.update(this.vs, this._skySun);
+    this._envDue = false;
+  }
+
+  /** The post finish's grade follows the time of day: warmer at golden hour, cooler and deeper at night. */
+  _grade() {
+    const post = this.stage.post;
+    if (!post) return;
+    const v = this.vs;
+    const night = Math.min(1, v.stars ?? 0);
+    const warm = Math.max(0, (v.cloudGlowAmt ?? 0) - 0.12) * (1 - night);
+    const u = post.uFinal;
+    u.uHighTint.value.set(0.016 + warm * 0.03, 0.006 + warm * 0.008, -0.012 - warm * 0.02);
+    u.uShadowTint.value.set(-0.006 - night * 0.004, 0.0, 0.016 + night * 0.018);
+    u.uVibrance.value = 0.16 + warm * 0.12 - night * 0.04;
+    u.uVignette.value.x = 0.28 + night * 0.1;
+    post.bloom.strength = 0.42 + night * 0.18;
   }
 
   _apply() {
@@ -178,7 +260,8 @@ export class Environment {
     const dim = 1 - (this.dim ?? 0) * 0.45;
     scene.fog.color.copy(v.fog);
     scene.fog.density = v.fogDensity;
-    scene.environmentIntensity = v.env * dim;
+    if (this._envDue || !scene.environment) this._env();
+    scene.environmentIntensity = v.env * ENV_GAIN * dim;
     this.stage.renderer.toneMappingExposure = v.exposure * dim;
     this.hemi.color.copy(v.hemiSky);
     this.hemi.groundColor.copy(v.hemiGround);
@@ -191,6 +274,8 @@ export class Environment {
     this.rim.intensity = v.rimIntensity;
     this.rim.position.copy(this._skySun).multiplyScalar(30).setY(Math.max(6, this._skySun.y * 30));
     rimShared.color.value.copy(v.rim);
+    this._fitShadow();
+    this._grade();
     this.sky.apply(v, this._skySun);
     this.island.apply(v);
     this.places.apply(v);
@@ -199,7 +284,8 @@ export class Environment {
   }
 
   update(dt, t) {
-    let dirty = this.seasons.blending;
+    const seasonBlend = this.seasons.blending;
+    let dirty = seasonBlend;
     if (this._mix < 1) {
       this._mix = Math.min(1, this._mix + dt / this._dur);
       const e = ease.inOutCubic(this._mix);
@@ -210,12 +296,22 @@ export class Environment {
       this._sunDir.copy(this._fromSun).lerp(dirFrom(to.sun, this._a), e).normalize();
       this._skySun.copy(this._fromSky).lerp(dirFrom(to.skySun, this._b), e).normalize();
       dirty = true;
+      // the sky light is rebuilt half-way through a blend and once it settles, never every frame
+      if (!this._envMid && this._mix >= 0.5) {
+        this._envMid = true;
+        this._envDue = true;
+      }
+      if (this._mix >= 1) this._envDue = true;
     } else if (this._dimApplied !== this.dim) {
       this._dimApplied = this.dim;
       dirty = true;
     }
     this.seasons.update(t, dt, this.stage);
+    if (seasonBlend && !this.seasons.blending) this._envDue = true;
     if (dirty) this._apply();
+    else if (this._envDue) this._env();
+    // the characters' rim light comes from the sky's sun side: hand them its direction in view space
+    rimShared.dir.value.copy(this._skySun).transformDirection(this.stage.camera.matrixWorldInverse);
     this.sky.update(t, this.stage.camera, this.stage.pixelRatio);
     this.island.update(t, dt);
     this.places.update(t, dt);
@@ -225,3 +321,9 @@ export class Environment {
 }
 
 const _c = new THREE.Color();
+const _a = new THREE.Vector3();
+const _b = new THREE.Vector3();
+const _c3 = new THREE.Vector3();
+const _p = new THREE.Vector3();
+/** The sky light is brighter overall than the neutral room it replaced: the themes' env values are scaled by this. */
+const ENV_GAIN = 1;
