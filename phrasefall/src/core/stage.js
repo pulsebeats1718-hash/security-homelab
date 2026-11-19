@@ -19,7 +19,7 @@ import * as THREE from 'three';
 import { clamp, ease, lerp } from './utils.js';
 import { PostFX, postSupported } from './post.js';
 
-export const QUALITY = {
+const QUALITY = {
   high: { maxPixelRatio: 2, shadow: 2048, shadowRadius: 3.2, post: { samples: 4, bloomDiv: 2, bloomLevels: 5, tilt: true } },
   medium: { maxPixelRatio: 1.5, shadow: 1024, shadowRadius: 1.6, post: { samples: 4, bloomDiv: 4, bloomLevels: 4, tilt: false } },
   low: { maxPixelRatio: 1, shadow: 0, shadowRadius: 1, post: null },

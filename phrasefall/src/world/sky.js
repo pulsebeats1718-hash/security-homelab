@@ -39,8 +39,10 @@ void main() {
 
   // horizon → zenith, blended in a gamma-like space so the middle of the gradient stays clean
   // (a straight mix of orange and blue goes grey)
+  // (the gradient climbs quickly, so the band of sky the camera sees runs from the horizon's
+  // colour into the zenith's)
   vec3 col = h > 0.0
-    ? mix(sqrt(uHorizon), sqrt(uTop), pow(smoothstep(0.0, 0.9, h), 0.55))
+    ? mix(sqrt(uHorizon), sqrt(uTop), pow(smoothstep(0.0, 0.6, h), 0.5))
     : mix(sqrt(uHorizon), sqrt(uBottom), smoothstep(0.0, -0.4, h));
   col *= col;
 

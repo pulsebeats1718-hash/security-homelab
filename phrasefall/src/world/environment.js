@@ -91,7 +91,6 @@ export class Environment {
     dirFrom(THEMES.sunrise.skySun, this._skySun);
     this._fromSun = this._sunDir.clone();
     this._fromSky = this._skySun.clone();
-    this._rimView = new THREE.Vector3();
     this._apply();
     this.setPlace('home', { instant: true });
   }
@@ -249,10 +248,10 @@ export class Environment {
     const night = Math.min(1, v.stars ?? 0);
     const warm = Math.max(0, (v.cloudGlowAmt ?? 0) - 0.12) * (1 - night);
     const u = post.uFinal;
-    u.uHighTint.value.set(0.016 + warm * 0.03, 0.006 + warm * 0.008, -0.012 - warm * 0.02);
-    u.uShadowTint.value.set(-0.006 - night * 0.004, 0.0, 0.016 + night * 0.018);
-    u.uVibrance.value = 0.22 + warm * 0.12 - night * 0.05;
-    u.uContrast.value = 0.2 - night * 0.12;
+    u.uHighTint.value.set(0.026 + warm * 0.03, 0.01 + warm * 0.008, -0.018 - warm * 0.02);
+    u.uShadowTint.value.set(-0.014 - night * 0.004, 0.0, 0.03 + night * 0.012);
+    u.uVibrance.value = 0.24 + warm * 0.12 - night * 0.05;
+    u.uContrast.value = 0.22 - night * 0.13;
     u.uLift.value.set(0.012, 0.008 + night * 0.008, 0.024 + night * 0.02);
     u.uVignette.value.x = 0.32 + night * 0.06;
     post.bloom.strength = 0.7 + night * 0.25;
@@ -275,9 +274,11 @@ export class Environment {
     this.stage.renderer.toneMappingExposure = v.exposure * dim;
     this.hemi.color.copy(v.hemiSky);
     this.hemi.groundColor.copy(v.hemiGround);
-    this.hemi.intensity = v.hemiIntensity;
+    // a little less flat fill and a little more sun than before: shapes read as rounded toys,
+    // with a lit side and a shade side (the sky light makes up the rest of the fill)
+    this.hemi.intensity = v.hemiIntensity * LIGHT_BALANCE.hemi;
     this.sun.color.copy(v.sunLight);
-    this.sun.intensity = v.sunIntensity;
+    this.sun.intensity = v.sunIntensity * LIGHT_BALANCE.sun;
     this.sun.position.copy(this._sunDir).multiplyScalar(32);
     this.sun.target.position.set(0, 0, 0);
     this.rim.color.copy(v.rim);
@@ -341,6 +342,8 @@ const _a = new THREE.Vector3();
 const _b = new THREE.Vector3();
 const _c3 = new THREE.Vector3();
 const _p = new THREE.Vector3();
+/** Key-to-fill balance over the themes' values. */
+const LIGHT_BALANCE = { hemi: 0.72, sun: 1.12 };
 /** How bright the sky light is on average (the themes' `env` values then scale it, as before). */
-const ENV_LEVEL = 0.95;
+const ENV_LEVEL = 0.8;
 const lum = (c) => 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
