@@ -67,6 +67,15 @@ four options before they land.
 - **Fever and golden cards** – ten right in a row starts *fever*: the island glows,
   the music speeds up and every answer scores double until the next miss. About
   one classic card in sixteen is *golden* and worth triple points.
+- **Phrases around town** (`src/world/signs.js`, `src/world/places/city/`) – the places are
+  realistic miniature streets: brick terraces, a pub and a corner shop in London, brownstones
+  and a deli in New York, a harbour front in Sydney, a village behind Home Island, with a bus
+  or a cab driving past now and then. Their signs carry real expressions from the database:
+  shop fascias, café chalkboards ("Fancy a cuppa?"), a theatre marquee ("Break a leg!"),
+  British street-name plates ("Piece of Cake Lane"), noticeboards and neon. Posters and
+  billboards rotate through what the player is learning now (due for review, needing work,
+  met lately), and tapping any sign in the menu shows what its expression means. Signs keep
+  still during a game, and drinks or grim phrases never appear on them.
 - **Five stages** – everyday expressions → phrasal verbs → idioms → set phrases →
   advanced expressions and collocations. Each stage is faster and moves the world
   on through the day, from sunrise to a starlit aurora.
@@ -260,16 +269,20 @@ correct answer, the number of answers that clears a stage, and the points.
   It also means no cloth simulation, fingers or lip-sync.
 - **Audio is synthesised** with the Web Audio API — every effect and the music.
   No samples, nothing to license; a composed, recorded soundtrack would be richer.
-- **Performance.** One WebGL canvas, ~150 draw calls. Quality presets
-  (Auto / High / Medium / Low) plus dynamic resolution keep the frame rate steady
-  on phones. High renders into a multisampled half-float target, adds a soft bloom built
-  at ½ resolution and finishes the frame in a single full-screen pass (tone mapping, the
-  grade, vignette, dithering, a tilt-shift on menu shots), with softer shadows and
-  clear-coated toys; Medium does the same with bloom from ¼ resolution and no
-  tilt-shift; Low draws straight to the screen as it always has (so does a device that
-  cannot multisample a half-float target). Development screenshots
-  were taken with a software renderer, so real frame rates were reasoned about rather
-  than measured on physical devices.
+- **Performance.** One WebGL canvas, about 150 draw calls and 150,000–280,000 triangles
+  a frame depending on the place. Quality presets (Auto / High / Medium / Low) plus dynamic
+  resolution keep the frame rate steady on phones. High and Medium render into a
+  multisampled half-float target and finish the frame with contact shadows (ambient
+  occlusion), a depth of field that keeps the character, the card and the street signs
+  sharp, sun shafts, bloom and one grading pass; High adds the menu's tilt-shift, denser
+  grass, softer shadows and clear-coated toys, while Medium runs the depth effects at ¼
+  resolution with two MSAA samples. Low draws straight to the screen with plain materials,
+  no lawn and no distant village (so does a device that cannot multisample a half-float
+  target). On Auto, a device that stays slow even at the lowest resolution steps down a
+  tier by itself and remembers it. Development screenshots and timings were taken with a
+  software renderer, which overstates the cost of many small draw calls, so real frame
+  rates were reasoned about (draw calls, triangles, full-screen passes) rather than
+  measured on physical devices.
 - **Progress is saved in the browser** (`localStorage`). Players who sign in also
   get a cloud copy that syncs between devices; a guest's progress is lost if site
   data is cleared.
