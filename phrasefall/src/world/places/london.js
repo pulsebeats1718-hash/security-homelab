@@ -338,10 +338,16 @@ export class London extends Diorama {
         slab(s * (W / 2 - 0.2), 1.0, fz + 0.06, 0.04, 0.12, 0.08, C.iron, S);
         b.lit(WARM, -1, () => part(L, SHAPE.lantern, s * (W / 2 - 0.2), 0.98, fz + 0.16, 0.1, 0.16, 0.1, 0x5a4630));
         this.halo(s * (W / 2 - 0.2), 0.98, fz + 0.16, 1.1);
-        // hanging baskets
-        b.kind(KIND.FOLIAGE, () => ball(s * (W / 2 - 0.42), 1.42, fz + 0.2, 0.2, 0x4f9a48));
-        for (let i = 0; i < 5; i++) ball(s * (W / 2 - 0.42) + Math.cos(i * 1.3) * 0.09, 1.38 + (i % 2) * 0.05, fz + 0.2 + Math.sin(i * 1.3) * 0.09, 0.07, [0xff5a6e, 0xffd23f, 0xb05aff, 0xffffff][i % 4]);
-        part(S, SHAPE.box, s * (W / 2 - 0.42), 1.58, fz + 0.12, 0.015, 0.015, 0.16, C.iron);
+        // hanging baskets: an iron arm, a dark basket brimming with trailing flowers
+        const bx = s * (W / 2 - 0.42);
+        part(S, SHAPE.box, bx, 1.62, fz + 0.1, 0.015, 0.015, 0.2, C.iron);
+        slab(bx, 1.5, fz + 0.2, 0.008, 0.12, 0.008, C.iron, S);
+        ball(bx, 1.43, fz + 0.2, 0.2, 0x2e2a26, S, 0.55);
+        b.kind(KIND.FOLIAGE, () => ball(bx, 1.47, fz + 0.2, 0.21, 0x4f9a48, M, 0.6));
+        for (let i = 0; i < 9; i++) {
+          const a = i * 0.7 + s;
+          ball(bx + Math.cos(a) * 0.1, 1.43 + (i % 3) * 0.03 - (i % 4 === 0 ? 0.06 : 0), fz + 0.2 + Math.sin(a) * 0.1, 0.045, [0xff5a6e, 0xffffff, 0xb05aff, 0xffd23f, 0xff8ab0][i % 5]);
+        }
       }
       // the hanging sign on its bracket, turned a little towards the square so its picture shows
       const h = P.bracket(-W / 2 + 0.16, 1.62, fz, 0.46);
@@ -589,7 +595,7 @@ export class London extends Diorama {
       const hD = blockOf(1.85, 0.2, 1.75, 1.3, 7, { wall: 0xb5573f, bands: 0xe6dccb, storey: 0.6, skip: (s) => s === 4 || s === 5 });
       P.roofSlope(1.85, hD - 0.02, 0.0, 1.7, 0.4, 1.1, 0x5a6378);
       const bd = P.hoarding(1.85, 3.25, 0.85, 1.36, 0.72);
-      signs.add(bd.x, bd.y, bd.z, 1.36, 0.72, { style: 'poster', text: '' }, { live: { period: 9 }, res: 230, glow: 0xffffff, lit: 0.35 });
+      signs.add(bd.x, bd.y, bd.z, 1.36, 0.72, { style: 'billboard', text: '' }, { live: { period: 9 }, res: 230, glow: 0xffffff, lit: 0.35 });
       // E ── a Portland stone department store with a corner dome and a banner for the sales
       const hE = blockOf(3.75, 0.0, 1.85, 1.3, 5, { wall: C.portland, key: k.stone, storey: 0.64, bands: 0xd9d1bf, base: 0xcfc6b2, cornice: 0xf3eee2, frame: 0x3b3f46 });
       post(4.55, hE, 0.5, 0.56, 0.4, C.portland, M, SHAPE.cyl);
@@ -629,31 +635,34 @@ export class London extends Diorama {
       ball(x, y + h + 0.02, z, 0.07, C.gold, S);
     };
 
-    // A ── Gothic clock tower beside a long Gothic hall (seen down the lane behind the terrace)
-    b.chunk(6.4, -3.1, -33.5, -0.3, 1, { delay: 0.86, phase: 0.4, amp: 0.3 }, () => {
+    // A ── Gothic clock tower beside a long Gothic hall (seen down the lane behind the terrace), in a
+    //      warm honey stone that holds its own against the morning haze
+    const TS = 0xd6bc84;
+    const TSD = 0xb89c64;
+    b.chunk(4.25, -3.3, -26.2, -0.3, 1, { delay: 0.86, phase: 0.4, amp: 0.3 }, () => {
       addLand(b, 3.1, { top: paved });
       // the hall
       b.at(-1.1, 0, 0.25, 0, 1, () => {
-        block(0, 0, 0, 3.4, 1.7, 1.5, C.stone, M, 0.04);
-        part(M, SHAPE.prism, 0, 2.05, 0, 3.42, 0.7, 1.3, C.spire);
+        block(0, 0, 0, 3.4, 1.7, 1.5, TS, M, 0.04);
+        part(M, SHAPE.prism, 0, 2.05, 0, 3.42, 0.7, 1.3, 0x34505c);
         for (let i = 0; i < 6; i++) {
           const x = -1.45 + i * 0.58;
-          slab(x, 0, 0.76, 0.1, 1.7, 0.06, C.stoneDark);
+          slab(x, 0, 0.76, 0.1, 1.7, 0.06, TSD);
           pane(x + 0.29, 0.35, 0.77, 0.22, 0.5);
           pane(x + 0.29, 1.05, 0.77, 0.22, 0.45);
-          pinnacle(x, 1.7, 0.7, 0.55);
+          pinnacle(x, 1.7, 0.7, 0.55, TS);
         }
-        pinnacle(1.7, 1.7, 0.7, 0.55);
+        pinnacle(1.7, 1.7, 0.7, 0.55, TS);
       });
       // the tower
       b.at(1.15, 0, -0.1, 0, 1, () => {
-        block(0, 0, 0, 1.9, 0.55, 1.9, C.stoneDark, M, 0.04);
-        block(0, 0.55, 0, 1.5, 6.4, 1.5, C.stone, M, 0.03);
+        block(0, 0, 0, 1.9, 0.55, 1.9, TSD, M, 0.04);
+        block(0, 0.55, 0, 1.5, 6.4, 1.5, TS, M, 0.03);
         for (const [fx, fz] of [[0, 1], [1, 0], [-1, 0]]) {
           for (const o of [-0.42, 0, 0.42]) {
             const px = fz ? o : fx * 0.76;
             const pz = fz ? fz * 0.76 : o;
-            b.add(M, SHAPE.box, px, 3.75, pz, fz ? 0.06 : 0.04, 6.3, fz ? 0.04 : 0.06, 0, 0, 0, C.stoneDark);
+            b.add(M, SHAPE.box, px, 3.75, pz, fz ? 0.06 : 0.04, 6.3, fz ? 0.04 : 0.06, 0, 0, 0, TSD);
           }
           for (let k = 0; k < 4; k++) {
             const y = 1.3 + k * 1.3;
@@ -664,9 +673,9 @@ export class London extends Diorama {
           }
         }
         // clock stage
-        block(0, 6.95, 0, 1.86, 1.9, 1.86, C.stone, M, 0.04);
-        block(0, 6.85, 0, 1.96, 0.14, 1.96, C.stoneDark, M, 0.02);
-        block(0, 8.82, 0, 1.96, 0.14, 1.96, C.stoneDark, M, 0.02);
+        block(0, 6.95, 0, 1.86, 1.9, 1.86, TS, M, 0.04);
+        block(0, 6.85, 0, 1.96, 0.14, 1.96, TSD, M, 0.02);
+        block(0, 8.82, 0, 1.96, 0.14, 1.96, TSD, M, 0.02);
         for (const ry of [0, Math.PI / 2, -Math.PI / 2]) {
           b.at(Math.sin(ry) * 0.94, 7.9, Math.cos(ry) * 0.94, ry, 1, () => {
             block(0, -0.8, 0, 1.6, 1.6, 0.06, C.gold, S, 0.02);
@@ -683,14 +692,14 @@ export class London extends Diorama {
         }
         this.halo(0, 7.9, 1.2, 4.5, 0xfff0c8);
         // belfry and spire
-        block(0, 8.96, 0, 1.6, 1.05, 1.6, C.stone, M, 0.03);
+        block(0, 8.96, 0, 1.6, 1.05, 1.6, TS, M, 0.03);
         for (const o of [-0.38, 0, 0.38]) {
           slab(o, 9.12, 0.81, 0.18, 0.7, 0.03, 0x3a3f4f);
           slab(0.81, 9.12, o, 0.03, 0.7, 0.18, 0x3a3f4f);
           slab(-0.81, 9.12, o, 0.03, 0.7, 0.18, 0x3a3f4f);
         }
-        part(M, SHAPE.cone4, 0, 11.4, 0, 1.55, 2.9, 1.55, C.spire);
-        for (const [cx, cz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) pinnacle(cx * 0.78, 10.0, cz * 0.78, 1.1);
+        part(M, SHAPE.cone4, 0, 11.4, 0, 1.55, 2.9, 1.55, 0x34505c);
+        for (const [cx, cz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) pinnacle(cx * 0.78, 10.0, cz * 0.78, 1.1, TS);
         post(0, 12.8, 0, 0.08, 0.6, C.gold, S);
         ball(0, 13.45, 0, 0.16, C.gold, S);
       });
@@ -858,12 +867,12 @@ export class London extends Diorama {
       ball(x, h * 1.02, z, 0.06, C.gold, S);
     };
     // left of the clock tower: Victorian blocks and a Wren-ish spire
-    b.chunk(1.2, -2.8, -24, 0.1, 1, { delay: 0.84, phase: 2.6, amp: 0.25 }, () => {
+    b.chunk(-0.6, -3.0, -34, 0.1, 1, { delay: 0.84, phase: 2.6, amp: 0.25 }, () => {
       addLand(b, 3.2, { depthScale: 0.6 });
-      tower(-1.6, 0.2, 1.3, 1.0, 4.4, 0xb7654c, k.flats);
-      tower(-0.2, -0.4, 1.2, 1.1, 5.4, 0xd8c7a6, k.flats);
-      tower(1.2, 0.1, 1.4, 1.0, 3.9, 0xa65a45, k.flats);
-      spire(2.4, -0.5, 6.6);
+      tower(-1.6, 0.2, 1.3, 1.0, 5.4, 0xb7654c, k.flats);
+      tower(-0.2, -0.4, 1.2, 1.1, 6.6, 0xd8c7a6, k.flats);
+      tower(1.2, 0.1, 1.4, 1.0, 4.8, 0xa65a45, k.flats);
+      spire(2.4, -0.5, 7.8);
     });
     // right of it: offices and a couple of glass towers far away
     b.chunk(13.5, -3.6, -38, -0.35, 1, { delay: 0.95, phase: 3.7, amp: 0.3 }, () => {

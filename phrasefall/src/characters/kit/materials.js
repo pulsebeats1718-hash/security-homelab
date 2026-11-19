@@ -216,9 +216,10 @@ float toyY = vToyY;
 totalEmissiveRadiance += uStrike * (toyRim * 1.6 + 0.08);
 // fever: a warm energy glow round the silhouette, in bands that rise up the body
 if (uAura > 0.0) {
-  float auraEdge = pow(1.0 - toyNV, 1.7);
-  float auraWave = 0.72 + 0.28 * sin(toyY * 7.0 - uAuraT * 7.5) * sin(toyY * 3.1 - uAuraT * 4.3 + 1.0);
-  totalEmissiveRadiance += uAuraColor * uAura * (auraEdge * 2.4 * auraWave + 0.06);
+  // a saturated edge of fire, not a wash over the paint (the character keeps its colours)
+  float auraEdge = pow(1.0 - toyNV, 2.2);
+  float auraWave = 0.7 + 0.3 * sin(toyY * 7.0 - uAuraT * 7.5) * sin(toyY * 3.1 - uAuraT * 4.3 + 1.0);
+  totalEmissiveRadiance += uAuraColor * uAura * (auraEdge * 3.4 * auraWave + 0.015);
 }
 `;
 

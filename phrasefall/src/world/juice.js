@@ -18,6 +18,7 @@
  */
 import * as THREE from 'three';
 import { getCharacter } from '../characters/index.js';
+import { GLOW_BLEND } from './effects.js';
 
 const FEVER = new THREE.Color(0xff6a2b);
 const FEVER_CORE = new THREE.Color(0xffc45a);
@@ -39,16 +40,16 @@ uniform vec3 uEdge;
 varying vec2 vUv;
 void main() {
   vec2 p = vUv;
-  float r = length(p * vec2(1.0, 0.8));
-  float up = smoothstep(-0.3, 1.0, p.y);
+  float r = length(p * vec2(1.0, 0.84));
+  float up = smoothstep(-0.4, 1.0, p.y);
   float n = sin(p.x * 8.0 + uTime * 2.1) * 0.5 + sin(p.x * 15.0 - uTime * 3.3 + p.y * 4.0) * 0.3 + sin(p.y * 7.0 - uTime * 7.5 + p.x * 3.0) * 0.35;
-  float edge = 0.74 + 0.2 * n * up;
-  float body = smoothstep(edge, edge - 0.5, r);
-  float core = smoothstep(0.75, 0.0, r);
-  float flick = 0.88 + 0.12 * sin(uTime * 11.0 + p.y * 5.0);
-  vec3 col = mix(uEdge, uCore, core);
-  float a = body * uLevel * (0.4 + 0.6 * core) * flick;
-  gl_FragColor = vec4(col * (1.0 + core * 0.8), a);
+  float edge = 0.86 + 0.16 * n * up;
+  float body = smoothstep(edge, edge - 0.62, r);
+  float core = smoothstep(0.62, 0.0, r);
+  float flick = 0.86 + 0.14 * sin(uTime * 11.0 + p.y * 5.0);
+  vec3 col = mix(uEdge, uCore, core * 0.8 + 0.2);
+  float a = body * uLevel * flick;
+  gl_FragColor = vec4(col * (1.2 + core * 1.3) * a, a * 0.38);
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
 }`;
@@ -67,7 +68,7 @@ void main() {
   float ang = atan(vUv.y, vUv.x);
   float rays = pow(abs(sin(ang * 6.0 + uTime * 0.7)), 10.0) * smoothstep(1.0, 0.25, r) * 0.3;
   float a = (glow + ring + rays) * uLevel * smoothstep(1.0, 0.75, r);
-  gl_FragColor = vec4(uColor * (1.0 + glow), a);
+  gl_FragColor = vec4(uColor * (1.0 + glow) * a, a * 0.3);
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
 }`;
@@ -98,20 +99,22 @@ export class Juice {
 
     const plane = new THREE.PlaneGeometry(2, 2);
     this.auraU = { uTime: { value: 0 }, uLevel: { value: 0 }, uCore: { value: FEVER_CORE.clone() }, uEdge: { value: FEVER.clone() } };
-    this.aura = new THREE.Mesh(plane, new THREE.ShaderMaterial({ uniforms: this.auraU, vertexShader: QUAD_VERT, fragmentShader: AURA_FRAG, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    this.aura = new THREE.Mesh(plane, new THREE.ShaderMaterial({ uniforms: this.auraU, vertexShader: QUAD_VERT, fragmentShader: AURA_FRAG, transparent: true, depthWrite: false, ...GLOW_BLEND }));
     this.aura.visible = false;
     this.aura.renderOrder = 2;
     stage.scene.add(this.aura);
     this.daisU = { uTime: { value: 0 }, uLevel: { value: 0 }, uColor: { value: FEVER.clone() } };
-    this.dais = new THREE.Mesh(plane, new THREE.ShaderMaterial({ uniforms: this.daisU, vertexShader: QUAD_VERT, fragmentShader: DAIS_FRAG, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    this.dais = new THREE.Mesh(plane, new THREE.ShaderMaterial({ uniforms: this.daisU, vertexShader: QUAD_VERT, fragmentShader: DAIS_FRAG, transparent: true, depthWrite: false, ...GLOW_BLEND }));
     this.dais.rotation.x = -Math.PI / 2;
     this.dais.position.y = 0.03;
-    this.dais.scale.setScalar(2.5);
+    this.dais.scale.setScalar(2.0);
     this.dais.visible = false;
     this.dais.renderOrder = 1;
     stage.scene.add(this.dais);
 
     game.boss3d?.attach?.(fx, stage);
+    const card = game.card;
+    fx.warm?.push(this.aura, this.dais, ...[card.rays, card.trail, card.shadow].filter(Boolean));
     this._listen();
   }
 
@@ -170,7 +173,7 @@ export class Juice {
     on('progress:level', (p) => this._levelUp(p));
     on('achievement:unlocked', () => {
       if (this.game.state === 'playing' || this.game.state === 'resolving') return;
-      this.fx.swirl(this._feet(_v).setY(0.4), { count: this.fx.n(10), color: 0xfff3c4, color2: GOLD, size: 0.6, height: 1.6 });
+      this.fx.swirl(this._feet(_v).setY(0.4), { count: this.fx.n(10), color: 0xfff3c4, color2: GOLD, size: 1.1, height: 1.6 });
     });
     on('ui:screen', (name) => {
       this.screen = name;
@@ -190,7 +193,7 @@ export class Juice {
     fx.glitter(from, to, card.halfWidth * 0.8, {
       count: fx.n(golden ? 30 : 20),
       colors: golden ? [0xffffff, 0xffe08a, 0xffc83d, 0xfff3c4] : [0xffffff, 0xfff3c4, accent],
-      size: golden ? 0.62 : 0.5,
+      size: golden ? 1.5 : 1.25,
       speed: 4.2,
       delay: 0.14,
       stars: 0.4,
@@ -198,7 +201,7 @@ export class Juice {
     // a soft shockwave across the dais and sparkles spiralling up round the character
     const feet = this._feet(_t);
     fx.ring(_w.copy(feet).setY(0.05), { color: golden ? GOLD : accent, from: 0.5, to: 2.9, life: 0.6, flat: true, opacity: 0.55, width: 0.09, fill: 0.5 });
-    if (this.tier !== 'low') fx.swirl(_w.copy(feet).setY(0.25), { count: fx.n(golden ? 12 : 8), color: 0xffffff, color2: golden ? GOLD : accent, size: 0.62, height: 1.5, radius: 0.72 });
+    if (this.tier !== 'low') fx.swirl(_w.copy(feet).setY(0.25), { count: fx.n(golden ? 12 : 8), color: 0xffffff, color2: golden ? GOLD : accent, size: 1.2, height: 1.5, radius: 0.72 });
     if (golden) {
       fx.burstRays(from, { color: 0xffe7a3, size: card.halfWidth * 2.4, life: 0.9, opacity: 0.7, spin: 0.6, count: 16 });
       fx.flash(0xffd98a, 0.1, 0.25);
@@ -219,13 +222,15 @@ export class Juice {
     fx.ring(_w.copy(feet).setY(0.06), { color: col, from: 0.4, to: 3.6 + k * 0.4, life: 0.7, flat: true, opacity: 0.75, width: 0.06, fill: 0.6 });
     this._after(0.12, () => fx.ring(_w.copy(this._feet(_v)).setY(0.06), { color: 0xffffff, from: 0.3, to: 2.6 + k * 0.3, life: 0.55, flat: true, opacity: 0.5, width: 0.05 }));
     fx.burstRays(this._behind(_w), { color: big ? 0xffb366 : 0xffe7a3, size: 3.6 + k * 0.7, life: 1.1 + k * 0.15, opacity: 0.45 + k * 0.08, spin: 0.4, count: 12 + k * 2 });
-    fx.swirl(_w.copy(feet).setY(0.2), { count: fx.n(12 + k * 5), color: 0xffffff, color2: col, size: 0.75, height: 2.0, radius: 0.85, spin: 3.6, rise: 1.8 });
+    fx.swirl(_w.copy(feet).setY(0.2), { count: fx.n(12 + k * 5), color: 0xffffff, color2: col, size: 1.35, height: 2.0, radius: 0.85, spin: 3.6, rise: 1.8 });
+    // a halo of light round the character, facing the camera (the dais is behind the answers in play)
+    fx.ring(this._behind(_w).setZ(_w.z + 0.5), { color: col, from: 0.6, to: 2.4 + k * 0.3, life: 0.6, opacity: 0.6, width: 0.05, fill: 0.25 });
     // a fountain of sparks rising from the dais
     _w.copy(feet).setY(0.15);
     for (let i = 0, n = fx.n(10 + k * 6); i < n; i++) {
       const a = Math.random() * Math.PI * 2;
       const r = 0.3 + Math.random() * 0.9;
-      fx.spark(_w.x + Math.cos(a) * r, _w.y, _w.z + Math.sin(a) * r * 0.8, Math.cos(a) * 0.4, 3.5 + Math.random() * 3 + k * 0.5, Math.sin(a) * 0.3, Math.random() < 0.5 ? 0xffffff : col, 0.5 + Math.random() * 0.3, 0.7 + Math.random() * 0.4, 4, 1.2);
+      fx.spark(_w.x + Math.cos(a) * r, _w.y, _w.z + Math.sin(a) * r * 0.8, Math.cos(a) * 0.4, 3.5 + Math.random() * 3 + k * 0.5, Math.sin(a) * 0.3, Math.random() < 0.5 ? 0xffffff : col, 0.8 + Math.random() * 0.5, 0.7 + Math.random() * 0.4, 4, 1.2);
     }
     if (big) fx.flash(0xffc27a, 0.08 + k * 0.025, 0.3);
     return 6 + k * 1.6;
@@ -251,7 +256,8 @@ export class Juice {
     const feet = this._feet(_v);
     fx.burstRays(this._behind(_w), { color: 0xffb070, size: 5.2, life: 1.5, opacity: 0.65, spin: 0.5, count: 16 });
     fx.flash(0xffa060, 0.16, 0.35);
-    fx.swirl(_w.copy(feet).setY(0.2), { count: fx.n(22), color: 0xffd27a, color2: FEVER.getHex(), size: 0.8, height: 2.1, radius: 0.9, spin: 4, rise: 2 });
+    fx.swirl(_w.copy(feet).setY(0.2), { count: fx.n(22), color: 0xffd27a, color2: FEVER.getHex(), size: 1.4, height: 2.1, radius: 0.9, spin: 4, rise: 2 });
+    fx.ring(this._behind(_w).setZ(_w.z + 0.5), { color: 0xffb070, from: 0.6, to: 3.2, life: 0.7, opacity: 0.7, width: 0.06, fill: 0.3 });
     fx.ring(_w.copy(feet).setY(0.06), { color: 0xffd27a, from: 0.3, to: 4.8, life: 0.9, flat: true, opacity: 0.7, width: 0.05, fill: 0.7 });
   }
 
@@ -295,7 +301,7 @@ export class Juice {
     const top = ch.rig.metrics.height;
     fx.confetti(_w.copy(feet).setY(top * 0.8), { count: fx.n(confetti), spread: 3.6, ...(colors ? { colors } : {}) });
     fx.burstRays(this._behind(_t), { color: 0xfff1c4, size: rays, life: 1.8, opacity: 0.6, spin: 0.35, count: 16 });
-    fx.swirl(_w.copy(feet).setY(0.2), { count: fx.n(16), color: 0xffffff, color2: 0xffe08a, size: 0.75, height: 2.2, radius: 0.9 });
+    fx.swirl(_w.copy(feet).setY(0.2), { count: fx.n(16), color: 0xffffff, color2: 0xffe08a, size: 1.3, height: 2.2, radius: 0.9 });
     fx.ring(_w.copy(feet).setY(0.06), { color: 0xffe9a8, from: 0.4, to: 4.2, life: 0.8, flat: true, opacity: 0.6, width: 0.06, fill: 0.6 });
     if (flash) fx.flash(0xfff1d6, flash, 0.35);
     const a = ch.animator;
@@ -324,8 +330,8 @@ export class Juice {
     if (ch) {
       const fxu = ch.rig.fx;
       if (fxu.aura) {
-        fxu.aura.value = f * (0.8 + 0.2 * Math.sin(this.t * 5.3)) * (low ? 0.7 : 1);
-        if (f > 0) fxu.auraColor.value.copy(FEVER).lerp(FEVER_CORE, 0.35 + 0.25 * Math.sin(this.t * 2.1));
+        fxu.aura.value = f * (0.85 + 0.15 * Math.sin(this.t * 5.3)) * (low ? 0.8 : 1.1);
+        if (f > 0) fxu.auraColor.value.copy(FEVER).lerp(FEVER_CORE, 0.2 + 0.2 * Math.sin(this.t * 2.1));
       }
     }
     const show = f > 0.005 && !!ch;
@@ -336,13 +342,13 @@ export class Juice {
       this._feet(_v);
       this.aura.position.set(_v.x + ch.rig.pivot.position.x, top * 0.5 + ch.rig.pivot.position.y, _v.z - 0.35);
       this.aura.quaternion.copy(this.stage.camera.quaternion);
-      this.aura.scale.set(top * 0.62, top * 0.72, 1);
+      this.aura.scale.set(top * 0.66, top * 0.74, 1);
       this.auraU.uTime.value = this.t;
-      this.auraU.uLevel.value = f * (low ? 0.55 : 0.85);
+      this.auraU.uLevel.value = f * (low ? 0.5 : 0.75);
       this.dais.position.x = _v.x;
       this.dais.position.z = _v.z;
       this.daisU.uTime.value = this.t;
-      this.daisU.uLevel.value = f * (low ? 0.6 : 0.8);
+      this.daisU.uLevel.value = f * (low ? 0.45 : 0.55);
       // sparkles trailing up round the character
       this.feverSparkT -= dt;
       if (this.feverOn && this.feverSparkT <= 0) {
@@ -350,7 +356,7 @@ export class Juice {
         const a = this.t * 4.2 + Math.random() * 1.2;
         const r = 0.6 + Math.random() * 0.25;
         const y = 0.2 + Math.random() * top * 0.9;
-        fx.spark(_v.x + Math.cos(a) * r, y, _v.z + Math.sin(a) * r * 0.75, -Math.sin(a) * 2.2, 1.2 + Math.random() * 1.2, Math.cos(a) * 1.6, Math.random() < 0.5 ? 0xffe2a0 : 0xff9a52, -(0.55 + Math.random() * 0.35), 0.8 + Math.random() * 0.4, -0.3, 1.6);
+        fx.spark(_v.x + Math.cos(a) * r, y, _v.z + Math.sin(a) * r * 0.75, -Math.sin(a) * 2.2, 1.2 + Math.random() * 1.2, Math.cos(a) * 1.6, Math.random() < 0.5 ? 0xffe2a0 : 0xff9a52, -(0.9 + Math.random() * 0.5), 0.8 + Math.random() * 0.4, -0.3, 1.6);
       }
     }
 
@@ -362,7 +368,7 @@ export class Juice {
         this.goldT = low ? 0.09 : this.tier === 'high' ? 0.022 : 0.035;
         const hw = card.halfWidth;
         const star = Math.random() < 0.35;
-        fx.spark(card.pos.x + (Math.random() * 2 - 1) * hw * 0.95, card.pos.y + card.halfHeight * (0.2 + Math.random() * 0.9), card.pos.z - 0.15, (Math.random() - 0.5) * 0.5, 0.9 + Math.random() * 1.4, -0.2, Math.random() < 0.45 ? 0xffffff : Math.random() < 0.5 ? 0xffd45e : 0xffe9a8, (star ? -1 : 1) * (0.42 + Math.random() * 0.35), 0.6 + Math.random() * 0.5, -1.2, 1.1);
+        fx.spark(card.pos.x + (Math.random() * 2 - 1) * hw * 0.95, card.pos.y + card.halfHeight * (0.2 + Math.random() * 0.9), card.pos.z - 0.15, (Math.random() - 0.5) * 0.5, 0.9 + Math.random() * 1.4, -0.2, Math.random() < 0.45 ? 0xffffff : Math.random() < 0.5 ? 0xffd45e : 0xffe9a8, (star ? -1 : 1) * (0.7 + Math.random() * 0.5), 0.6 + Math.random() * 0.5, -1.2, 1.1);
       }
     }
   }

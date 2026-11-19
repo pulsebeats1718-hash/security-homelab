@@ -257,10 +257,10 @@ float pfPatGlass = 0.0;
 const FRAG_COLOR = /* glsl */ `
 {
   vec3 pn = normalize(vPatN);
-  float flat = step(0.7, abs(pn.y));
+  float pfTop = step(0.7, abs(pn.y));
   vec2 pt = normalize(vec2(pn.z, -pn.x) + vec2(1e-4, 0.0));
-  vec2 puv = mix(vec2(dot(vPatP.xz, pt), vPatP.y), vPatP.xz, flat);
-  pfPat = mix(texture2D(uPat, puv * uPatScale), vec4(0.5, 0.0, 0.0, 1.0), flat * (1.0 - uPatTop));
+  vec2 puv = mix(vec2(dot(vPatP.xz, pt), vPatP.y), vPatP.xz, pfTop);
+  pfPat = mix(texture2D(uPat, puv * uPatScale), vec4(0.5, 0.0, 0.0, 1.0), pfTop * (1.0 - uPatTop));
   pfPatGlass = step(0.015, pfPat.b);
   vec3 pc = diffuseColor.rgb * (0.3 + 1.4 * pfPat.r);
   pc = mix(pc, uPatJoint, pfPat.g);

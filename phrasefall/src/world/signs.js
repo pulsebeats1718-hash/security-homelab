@@ -137,6 +137,23 @@ function wrap(g, text, maxW) {
   return lines;
 }
 
+/**
+ * The largest font size at which `text`, word-wrapped to maxW, fits maxH (lines 1.08 em apart):
+ * returns the lines and the size. Short phrases stay on one line, long ones wrap evenly.
+ */
+function fitWrapped(g, text, maxW, maxH, family, weight) {
+  let px = maxH * 0.9;
+  let parts = [text];
+  for (let i = 0; i < 40; i++) {
+    g.font = font(family, weight, px);
+    parts = wrap(g, text, maxW);
+    const widest = Math.max(...parts.map((p) => g.measureText(p).width));
+    if (parts.length * px * 1.08 <= maxH && widest <= maxW) break;
+    px *= 0.93;
+  }
+  return { parts, px };
+}
+
 const setSpacing = (g, px) => {
   if ('letterSpacing' in g) g.letterSpacing = `${px.toFixed(1)}px`;
 };
@@ -297,9 +314,9 @@ const STYLES = {
     const each = span / lines.length;
     lines.forEach((l, i) => {
       const cy = top + each * (i + 0.5);
-      const parts = wrap((g.font = font(DISPLAY, 500, each * 0.5), g), l.text, (w - 2 * f) * 0.84);
-      const lh = Math.min(each * 0.62, (each * 0.86) / parts.length);
-      parts.forEach((p, k) => line(g, p, w / 2, cy + (k - (parts.length - 1) / 2) * lh * 1.12, (w - 2 * f) * 0.86, lh, { family: DISPLAY, weight: 500, fill: chalkInk[(i + (s.inkShift ?? 0)) % chalkInk.length] }));
+      const { parts, px } = fitWrapped(g, l.text, (w - 2 * f) * 0.86, each * 0.86, DISPLAY, 500);
+      const lh = px * 0.78;
+      parts.forEach((p, k) => line(g, p, w / 2, cy + (k - (parts.length - 1) / 2) * px * 1.08, (w - 2 * f) * 0.88, lh, { family: DISPLAY, weight: 500, fill: chalkInk[(i + (s.inkShift ?? 0)) % chalkInk.length] }));
       if (i < lines.length - 1) {
         g.strokeStyle = 'rgba(255,255,255,0.28)';
         g.lineWidth = Math.max(1, h * 0.005);
@@ -355,6 +372,41 @@ const STYLES = {
     const cy = pad + bh * 0.86 * (hint ? 0.42 : 0.5);
     block(g, lines.length > 3 ? [main] : lines, w / 2, cy, bw * 0.86, boxH, { family: DISPLAY, weight: 700, fill: scheme.ink, gap: 0.18 });
     if (hint) line(g, `(${hint})`, w / 2, pad + bh * 0.86 * 0.82, bw * 0.7, bh * 0.1, { family: BODY, weight: 800, fill: scheme.ink });
+  },
+
+  /** a billboard seen from across the city: the phrase in big bold letters filling the board */
+  billboard(g, w, h, s) {
+    const scheme = s.scheme ?? POSTER_SCHEMES[0];
+    const gr = g.createLinearGradient(0, 0, w, h);
+    gr.addColorStop(0, scheme.bg);
+    gr.addColorStop(1, scheme.accent);
+    g.fillStyle = gr;
+    g.fillRect(0, 0, w, h);
+    const m = Math.min(w, h) * 0.06;
+    g.strokeStyle = 'rgba(255,255,255,0.9)';
+    g.lineWidth = Math.max(2, m * 0.35);
+    g.strokeRect(m, m, w - 2 * m, h - 2 * m);
+    // a little speech bubble in the corner says "a phrase"
+    const r = h * 0.11;
+    g.fillStyle = scheme.bubble;
+    g.beginPath();
+    g.ellipse(w - m - r * 1.6, h - m - r * 1.3, r * 1.2, r * 0.85, 0, 0, Math.PI * 2);
+    g.fill();
+    g.beginPath();
+    g.moveTo(w - m - r * 2.2, h - m - r * 0.75);
+    g.lineTo(w - m - r * 2.6, h - m - r * 0.1);
+    g.lineTo(w - m - r * 1.7, h - m - r * 0.6);
+    g.fill();
+    const raw = sentence(s.text);
+    const hint = raw.match(/\(([^)]*)\)/)?.[1];
+    const main = raw.replace(/\s*\([^)]*\)\s*/g, ' ').trim();
+    g.font = font(DISPLAY, 700, h * 0.4);
+    let lines = wrap(g, main, w * 0.84);
+    if (lines.length > 2) lines = [main];
+    const boxH = h * (hint ? 0.6 : 0.74);
+    const ink = scheme.light ? scheme.ink : '#ffffff';
+    block(g, lines, w / 2, h * (hint ? 0.42 : 0.5), w * 0.86, boxH, { family: DISPLAY, weight: 700, fill: ink, stroke: scheme.light ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.25)', strokeW: h * 0.035, gap: 0.12 });
+    if (hint) line(g, `(${hint})`, w / 2, h * 0.82, w * 0.6, h * 0.12, { family: BODY, weight: 800, fill: ink });
   },
 
   /** a British street-name plate: white, a black keyline, black capitals, the district in red */
@@ -561,10 +613,10 @@ const STYLES = {
 const POSTER_SCHEMES = [
   { bg: '#ff6b5a', accent: '#ffd36b', bubble: '#fffaf0', ink: '#2a1f3d' },
   { bg: '#2f6fd6', accent: '#8fd3ff', bubble: '#ffffff', ink: '#14244a' },
-  { bg: '#ffc83d', accent: '#ff8a3d', bubble: '#fffdf6', ink: '#3a2414' },
+  { bg: '#ffc83d', accent: '#ff8a3d', bubble: '#fffdf6', ink: '#3a2414', light: true },
   { bg: '#2fa36b', accent: '#c8f06b', bubble: '#f8fff2', ink: '#123824' },
   { bg: '#7a5cff', accent: '#ff9ad5', bubble: '#fbf8ff', ink: '#2b1a5c' },
-  { bg: '#ff8fb8', accent: '#fff08f', bubble: '#fffafc', ink: '#4a1630' },
+  { bg: '#ff8fb8', accent: '#fff08f', bubble: '#fffafc', ink: '#4a1630', light: true },
 ];
 export const POSTER = POSTER_SCHEMES;
 

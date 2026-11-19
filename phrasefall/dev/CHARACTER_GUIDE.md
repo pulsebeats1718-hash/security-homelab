@@ -52,6 +52,14 @@ silhouette, palette and personality.
 `k.halo(hex, size, opacity)` (additive glow sprite). Always create materials through
 the kit — that is what makes damage flashes and locked silhouettes work.
 
+Each material has a *finish* (`src/characters/kit/materials.js`), chosen from its roughness unless
+you pass `finish`: `'gloss'` (lacquered: eyes, noses, buttons; below rough 0.3), `'vinyl'` (satin vinyl
+under a thin clear coat; the default up to 0.63), `'satin'` (semi-matt paint), `'fabric'` (felt and
+knit: scarves, jumpers; from 0.73), `'plush'` (flocked: matt, very soft, a fuzzy sheen round the edges —
+used for the bodies of the bear, bunny, panda, lion, corgi, owl and penguin) and `'metal'`. On medium
+and high quality the finish sets how light wraps into the surface, its fuzz, its clear coat and its
+micro-roughness; low quality draws every finish the same.
+
 ## Face
 
 `k.face({ eye, brow, mouth, cheeks, line, radii, center, parent })` — see the header of

@@ -74,8 +74,8 @@ export class Seasons {
     const w = this.w;
     SEASON_U.uSeason.value.set(w.spring, w.summer, w.autumn, w.winter);
     this.weather.setAmounts(w.autumn, w.winter, w.spring);
-    // butterflies through spring and summer (a few less in the summer heat)
-    this.butterflies.setAmount(Math.min(1, w.spring + w.summer * 0.8));
+    // butterflies through spring and summer (the amount grows them in and out)
+    this.butterflies.setAmount(Math.min(1, w.spring + w.summer));
   }
 
   update(t, dt, stage) {

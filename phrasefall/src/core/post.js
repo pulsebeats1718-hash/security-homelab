@@ -6,23 +6,28 @@
  *           depth is resolved into a texture as well, for the passes that need to know how far away
  *           each pixel is
  *   ao      contact shadows (screen-space ambient occlusion from the depth alone): a spiral of samples
- *           at ½ (high) or ¼ (medium) resolution, then a depth-aware blur. It darkens creases and
- *           contacts only (under the character, round the dais, between buildings), never open ground
- *   dof     depth of field from the same depth, at ¼ resolution: a gathered disc blur whose size follows
- *           a thin lens. In play only the far background softens (everything from the character to the
- *           back of the play area, the falling card included, stays sharp); menus open the aperture
- *           wide for the tilt-shift miniature look (foreground and background both soft)
+ *           at ½ (high) or ¼ (medium) resolution, then a depth-aware blur and a depth-aware upsample.
+ *           It darkens creases and contacts (under the character, round the dais, between buildings)
+ *   dof     depth of field from the same depth, at ¼ resolution: a gathered disc blur whose size
+ *           follows a thin lens, smoothed by a small tent. In play the lens is focused on the back of
+ *           the play area, so the character, the falling card and a boss stay sharp and only the far
+ *           background softens; the menus (a shot's `tilt`) soften the foreground too, keep everything
+ *           up to 5 units behind the subject sharp (a city's street front and its signs stay readable)
+ *           and soften the far background. The sky itself is outside the lens: stars, moon and sun stay
+ *           crisp, and blurred things in front of it spill softly over it
  *   rays    sun shafts: the visible sky round the sun, blurred radially towards it at ¼ (high) or ⅛
- *           (medium) resolution, so the light streams past clouds, trees and the character. Added to
+ *           (medium) resolution, so the light streams past clouds, trees and the island. Added to
  *           distant things only, never over the character or the card
  *   bloom   a soft threshold, then a dual-filter down / up chain starting at ½ (high) or ¼ (medium)
  *           resolution. The threshold is high, so only emissive and very bright things glow
  *   final   ONE pass to the screen: contact shadows, depth of field, sun shafts and the warm haze round a
- *           low sun, bloom, white balance and exposure, Neutral tone mapping, then a gentle photographic
- *           grade (lift / gamma / gain, a soft S-curve, saturation), lens vignetting, sRGB and dithering
+ *           low sun (distant things only), bloom, white balance and exposure, Neutral tone mapping, then
+ *           a gentle photographic grade (lift / gamma / gain, a soft S-curve, saturation), lens
+ *           vignetting, sRGB and dithering
  *
  * Every full-screen pass costs bandwidth on a phone, so everything that can run at reduced resolution
- * does, and the whole finish is one full-resolution read and write after the scene.
+ * does, and the whole finish is one full-resolution read and write after the scene. If the depth does
+ * not arrive on a device (checked once), the finish carries on without the depth effects.
  */
 import * as THREE from 'three';
 import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js';
@@ -233,9 +238,8 @@ void main() {
   vec3 col = c0.rgb;
   float tot = 1.0;
   float cov = 0.0;
-  float spin = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) * 6.2831853;
   for (int i = 0; i < TAPS; i++) {
-    float a = float(i) * 2.39996323 + spin;
+    float a = float(i) * 2.39996323;
     float r = sqrt((float(i) + 0.5) / float(TAPS)) * uMaxR;
     vec4 s = texture2D(tSrc, vUv + vec2(cos(a), sin(a)) * r * uTexel);
     float sr = s.a > 999.0 ? 0.0 : abs(s.a);
@@ -244,10 +248,22 @@ void main() {
     float m = smoothstep(r - 0.6, r + 0.6, sr);
     col += mix(col / tot, s.rgb, m);
     tot += 1.0;
-    // how much of this pixel is covered by the blur of things in front of it (soft edges over sharper ground)
-    if (!behind) cov += m;
+    // how much of this pixel is covered by the blur of things clearly in front of it (soft edges over
+    // sharper ground); neighbours at the same depth do not count, so a sharp edge (the card's, the
+    // character's) never picks up the blur of the block it shares with the background
+    if (s.a < c0.a - 0.5) cov += m;
   }
   gl_FragColor = vec4(col / tot, cov / float(TAPS));
+}`;
+
+/** Depth of field, step 3: a 3×3 tent (four bilinear taps) that smooths the gathered blur. */
+const TENT = /* glsl */ `
+uniform sampler2D tSrc;
+uniform vec2 uTexel;
+varying vec2 vUv;
+void main() {
+  vec2 o = uTexel * 0.5;
+  gl_FragColor = (texture2D(tSrc, vUv + vec2(-o.x, -o.y)) + texture2D(tSrc, vUv + vec2(o.x, -o.y)) + texture2D(tSrc, vUv + vec2(-o.x, o.y)) + texture2D(tSrc, vUv + vec2(o.x, o.y))) * 0.25;
 }`;
 
 /** Sun shafts, step 1: the open sky, brightest round the sun (cloud, trees and the island block it). */
@@ -292,6 +308,18 @@ void main() {
   gl_FragColor = vec4(acc / wsum, 1.0);
 }`;
 
+// the largest depth among 16 points of the frame (a one-off check that the depth buffer resolves)
+const PROBE = /* glsl */ `
+uniform sampler2D tDepth;
+varying vec2 vUv;
+void main() {
+  float m = 0.0;
+  for (int y = 0; y < 4; y++) {
+    for (int x = 0; x < 4; x++) m = max(m, texture2D(tDepth, (vec2(float(x), float(y)) + 0.5) / 4.0).r);
+  }
+  gl_FragColor = vec4(m, m, m, 1.0);
+}`;
+
 const FINAL = /* glsl */ `
 uniform sampler2D tScene;
 uniform sampler2D tBloom;
@@ -328,6 +356,7 @@ uniform vec2 uGate;      // shafts and haze fade in between these distances
 uniform vec4 uHaze;      // the sun's direction in view space, strength
 uniform vec3 uHazeColor;
 uniform vec4 uProj;
+uniform vec3 uSunPos;    // the sun on screen (uv) and the aspect ratio
 #endif
 
 // Khronos PBR Neutral, exactly as three applies it when rendering straight to the screen
@@ -387,7 +416,7 @@ void main() {
   {
     float coc = z > uNF.z * 0.999 ? 0.0 : abs(cocOf(z));
     vec4 blur = texture2D(tDOF, vUv);
-    c = mix(c, blur.rgb, max(smoothstep(0.4, 3.0, coc), clamp(blur.a * 3.0, 0.0, 1.0)));
+    c = mix(c, blur.rgb, max(smoothstep(0.4, 3.0, coc), clamp(blur.a * 3.0, 0.0, 1.0)) * step(0.001, uCoc2.y));
   }
   #endif
   #ifdef RAYS
@@ -400,7 +429,8 @@ void main() {
     phase = phase * phase * 0.7 + phase * 0.3;
     float air = (1.0 - exp(-z * 0.012)) * step(z, uNF.z * 0.98);
     c += uHazeColor * (phase * air * uHaze.w * gate);
-    c += texture2D(tRays, vUv).rgb * uRaysColor * gate;
+    vec2 ds = (vUv - uSunPos.xy) * vec2(uSunPos.z, 1.0);
+    c += texture2D(tRays, vUv).rgb * uRaysColor * (gate * exp(-dot(ds, ds) * 3.5));
   }
   #endif
   c += texture2D(tBloom, vUv).rgb * uBloom;
@@ -536,10 +566,12 @@ export class PostFX {
     this.dofPrep = pass(DOF_PREP, this.uDofPrep);
     this.uDof = { tSrc: { value: null }, uTexel: { value: new THREE.Vector2() }, uMaxR: { value: 4 } };
     this.dofPass = pass(DOF, this.uDof);
+    this.uTent = { tSrc: { value: null }, uTexel: { value: new THREE.Vector2() } };
+    this.tent = pass(TENT, this.uTent);
 
     this.uRaysMask = { ...depthU(), tScene: { value: this.scene.texture }, uTexel: { value: new THREE.Vector2() }, uSun: { value: this._sun } };
     this.raysMask = pass(RAYS_MASK, this.uRaysMask);
-    this.uRays = { tSrc: { value: null }, uSun: { value: new THREE.Vector3() }, uDecay: { value: 0.96 } };
+    this.uRays = { tSrc: { value: null }, uSun: { value: new THREE.Vector3() }, uDecay: { value: 0.94 } };
     this.raysPass = pass(RAYS, this.uRays);
 
     const g = GRADE;
@@ -557,6 +589,7 @@ export class PostFX {
       uGate: { value: new THREE.Vector2(20, 40) },
       uHaze: { value: new THREE.Vector4() },
       uHazeColor: { value: new THREE.Color() },
+      uSunPos: { value: this._sun },
       uProj: { value: this._proj },
       uBloom: { value: 0 },
       uExposure: { value: 1 },
@@ -620,7 +653,7 @@ export class PostFX {
     this.final.material.needsUpdate = true;
     this.uFinal.tBloom.value = this.levels[0].texture;
     this.uFinal.tAO.value = this.aoB?.texture ?? null;
-    this.uFinal.tDOF.value = this.dofB?.texture ?? null;
+    this.uFinal.tDOF.value = this.dofA?.texture ?? null;
     this.uFinal.tRays.value = this.raysA?.texture ?? null;
     this.setSize(this.width, this.height);
   }
@@ -681,7 +714,7 @@ export class PostFX {
     // menus the sharp zone reaches 5 units behind the subject, so a city's street front and its signs
     // stay readable; the back rows soften only a little and the distant skyline and sky stay soft
     const zfar = zf + d.back * (1 - t) + 5.0 * t;
-    const A = (13 * d.far * (1 - t) + 16 * t) * px;
+    const A = (10 * d.far * (1 - t) + 16 * t) * px;
     const band = 1 - zf / zfar;
     // near side (menus only), sharp to 0.6 units in front of the subject
     const zfront = Math.max(0.5, zf - 0.6);
@@ -767,7 +800,14 @@ export class PostFX {
         this.uDof.uTexel.value.set(1 / D.width, 1 / D.height);
         this.uDof.uMaxR.value = this._coc2.y / t.dof.div;
         this._draw(this.dofPass, this.dofB);
-      } else this._coc.set(1e6, 0, 0, 0); // nothing blurs
+        this.uTent.tSrc.value = this.dofB.texture;
+        this.uTent.uTexel.value.set(1 / D.width, 1 / D.height);
+        this._draw(this.tent, D);
+      } else {
+        // nothing blurs (and the last blur is not used)
+        this._coc.set(1e6, 0, 0, 0);
+        this._coc2.set(0, 0);
+      }
     }
 
     // sun shafts
@@ -800,7 +840,11 @@ export class PostFX {
     r.autoClear = autoClear;
   }
 
-  /** Is the multisampled half-float target complete on this device? (checked once, after the first frame) */
+  /**
+   * Is the multisampled half-float target complete on this device, and does its depth arrive in the
+   * depth texture? (checked once, after the first frame). Without the depth, the finish carries on
+   * without contact shadows, depth of field and sun shafts rather than guess.
+   */
   check() {
     const r = this.renderer;
     const gl = r.getContext();
@@ -808,7 +852,29 @@ export class PostFX {
     const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
     r.setRenderTarget(null);
     this.ok = status === gl.FRAMEBUFFER_COMPLETE;
+    const t = this.tier;
+    if (this.ok && (t.ao || t.dof || t.rays) && !this._depthArrives()) {
+      console.warn('Phrasefall: the depth buffer does not resolve on this device; the finish runs without its depth effects.');
+      this.setTier({ ...t, ao: null, dof: null, rays: null });
+    }
     return this.ok;
+  }
+
+  _depthArrives() {
+    const r = this.renderer;
+    const rt = new THREE.WebGLRenderTarget(1, 1, { depthBuffer: false });
+    const quad = pass(PROBE, { tDepth: { value: this.depth } });
+    const px = new Uint8Array(4);
+    try {
+      this._draw(quad, rt);
+      r.readRenderTargetPixels(rt, 0, 0, 1, 1, px);
+    } finally {
+      r.setRenderTarget(null);
+      rt.dispose();
+      quad.material.dispose();
+      quad.dispose();
+    }
+    return px[0] > 0;
   }
 
   dispose() {
@@ -816,7 +882,7 @@ export class PostFX {
     this.depth.dispose();
     for (const l of this.levels) l.dispose();
     for (const k of ['aoA', 'aoB', 'dofA', 'dofB', 'raysA', 'raysB']) this[k]?.dispose();
-    for (const q of [this.prefilter, this.down, this.up, this.aoPass, this.aoBlur, this.dofPrep, this.dofPass, this.raysMask, this.raysPass, this.final]) {
+    for (const q of [this.prefilter, this.down, this.up, this.aoPass, this.aoBlur, this.dofPrep, this.dofPass, this.tent, this.raysMask, this.raysPass, this.final]) {
       q.material.dispose();
       q.dispose();
     }

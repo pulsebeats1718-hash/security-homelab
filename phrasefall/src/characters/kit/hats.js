@@ -105,12 +105,12 @@ const FIT = {
 
 /** One material per finish; parts carry their colour as vertex colours. */
 const FINISH = {
-  cloth: { rough: 0.78, rim: 0.32 },
-  felt: { rough: 0.62, rim: 0.38 },
-  satin: { rough: 0.38, rim: 0.45 },
-  gold: { rough: 0.3, metal: 0.55, rim: 0.4 },
-  gem: { rough: 0.14, rim: 0.7, rimPower: 1.8 },
-  straw: { rough: 0.86, rim: 0.28 },
+  cloth: { rough: 0.78, rim: 0.32, finish: 'fabric' },
+  felt: { rough: 0.62, rim: 0.38, finish: 'plush' },
+  satin: { rough: 0.38, rim: 0.45, finish: 'satin' },
+  gold: { rough: 0.3, metal: 0.55, rim: 0.4, finish: 'metal' },
+  gem: { rough: 0.14, rim: 0.7, rimPower: 1.8, finish: 'gloss' },
+  straw: { rough: 0.86, rim: 0.28, finish: 'fabric' },
 };
 
 const AXIS_Y = new THREE.Vector3(0, 1, 0);

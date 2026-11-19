@@ -21,12 +21,12 @@
 import * as THREE from 'three';
 import { mulberry32 } from '../core/utils.js';
 import { ISLAND, groundY, islandR, grassColor } from './places/kit.js';
-import { SEASON_U, NOISE_GLSL, WIND_GLSL, CLOUD_GLSL, SAND_GLSL, TURF_TONES, seasonDetail } from './seasons/shader.js';
+import { SEASON_U, NOISE_GLSL, WIND_GLSL, TURF_TONES, sandEdge, seasonDetail } from './seasons/shader.js';
 
-/** Per tier: grid cell (one clump per cell), blades per clump, segments per blade. */
+/** Per tier: grid cell (one clump per cell), blades per clump, segments per blade, blade width. */
 const TIERS = {
-  high: { cell: 0.128, blades: 4, segs: 3 },
-  medium: { cell: 0.19, blades: 3, segs: 2 },
+  high: { cell: 0.15, blades: 4, segs: 2 },
+  medium: { cell: 0.22, blades: 3, segs: 2, wide: 1.15 },
 };
 const GROW_TIME = 1.1;
 
@@ -62,7 +62,7 @@ function noise2(x, y) {
 }
 
 /** One clump of blades in unit form: y is the height fraction (0 … 1), x/z the layout (scaled per instance). */
-function clumpGeometry(blades, segs, rng) {
+function clumpGeometry(blades, segs, rng, wide = 1) {
   const pos = [];
   const nrm = [];
   const blade = [];
@@ -79,7 +79,7 @@ function clumpGeometry(blades, segs, rng) {
     const lean = 0.1 + rng() * 0.22;
     const lx = Math.cos(a) * lean;
     const lz = Math.sin(a) * lean;
-    const w = 0.016 + rng() * 0.008;
+    const w = (0.016 + rng() * 0.008) * wide;
     const rnd = rng();
     const base = pos.length / 3;
     const ring = (t, half) => {
@@ -115,8 +115,9 @@ function clumpGeometry(blades, segs, rng) {
 
 const VERT_PARS = /* glsl */ `
 attribute vec2 aBlade;  // height fraction along the blade, a random number per blade
-attribute vec4 iPos;    // clump base x, y, z, turn
-attribute vec4 iShape;  // height, spread, seed, dryness
+attribute vec4 iPos;    // clump base x, y, z; distance from summer's sand edge (negative on the sand)
+attribute vec2 iRot;    // the clump's turn as (cos, sin), scaled by its spread
+attribute vec3 iShape;  // height, seed, dryness
 attribute vec3 iCol;    // the turf's colour under the clump
 attribute vec2 iVis;    // shown before / after the last ground change (0 … 1)
 uniform vec4 uSeason;
@@ -128,23 +129,33 @@ varying float vGrassT;
 varying float vGrassCloud;
 ${NOISE_GLSL}
 ${WIND_GLSL}
-${CLOUD_GLSL}
-${SAND_GLSL}
+// cloud shadows as on the turf (seasons/shader.js CLOUD_GLSL), one octave: blades are small
+float gCloud(vec3 w, float t, float strength) {
+  float r = length(w.xz);
+  if (r < 2.3 || strength <= 0.0) return 1.0;
+  float n = pfNoise(w.xz * 0.105 - t * vec2(0.026, -0.009));
+  return 1.0 - strength * smoothstep(0.45, 0.68, n) * smoothstep(2.3, 3.8, r);
+}
 `;
 
 // after <beginnormal_vertex>: everything per clump and per blade, then the normal
 const VERT_NORMAL = /* glsl */ `
 float gT = aBlade.x;
 float gR = aBlade.y;
-float gSeed = iShape.z;
-float gCos = cos(iPos.w);
-float gSin = sin(iPos.w);
-mat2 gRot = mat2(gCos, gSin, -gSin, gCos);
+float gSeed = iShape.y;
+mat2 gRot = mat2(iRot.x, iRot.y, -iRot.y, iRot.x);
 // how much of it shows: the place (growing in or out after a change), summer's beach, winter's snow
 float gU = clamp((uGroundT - gSeed * 0.4) / 0.6, 0.0, 1.0);
 float gVis = mix(iVis.x, iVis.y, gU * gU * (3.0 - 2.0 * gU));
-gVis *= mix(1.0, smoothstep(-0.04, 0.34, pfSandEdge(iPos.xz)), uSeason.y);
+gVis *= mix(1.0, smoothstep(-0.04, 0.34, iPos.w), uSeason.y);
 gVis *= mix(1.0, step(fract(gSeed * 7.13 + gR * 0.61), 0.3) * 0.42, uSeason.w);
+// seen at a glance (the gameplay camera skims the lawn) the far rows overlap: fewer clumps are
+// drawn there, a little wider, and the carpet still reads full (they shrink away smoothly)
+vec3 gEye = cameraPosition - iPos.xyz;
+float gKeep = mix(0.55, 1.0, smoothstep(0.15, 0.42, gEye.y * inversesqrt(dot(gEye, gEye))));
+float gThin = fract(gSeed * 5.37 + 0.13);
+gVis *= smoothstep(gThin - 0.06, gThin, gKeep);
+float gWide = inversesqrt(gKeep);
 float gH = iShape.x * gVis * (0.6 + 0.8 * gR * gR);
 // the wind: gusts rolling across the field, a flutter of each blade
 float gGust = pfGust(iPos.xz, uPfTime);
@@ -152,20 +163,20 @@ float gFl = sin(uPfTime * (2.4 + gR * 1.7) + gSeed * 37.0 + gR * 11.0 + dot(iPos
 float gBend = 0.14 + 0.6 * gGust + 0.08 * gFl;
 vec2 gDir = normalize(PF_WIND + vec2(-0.34, 0.94) * (0.35 * gFl));
 // lit like the ground under it, with a hint of the blade's own facing; tipped over as it bends
-vec2 gNxz = gRot * objectNormal.xz;
+vec2 gNxz = normalize(gRot * objectNormal.xz) * length(objectNormal.xz);
 objectNormal = normalize(mix(vec3(gNxz.x, objectNormal.y, gNxz.y), vec3(0.0, 1.0, 0.0), 0.6) + vec3(gDir.x, 0.0, gDir.y) * (gBend * gT * 0.5));
 `;
 
 // after <begin_vertex>
 const VERT_POS = /* glsl */ `
 {
-  vec2 gXZ = gRot * (position.xz * iShape.y) * min(1.0, gVis * 4.0);
+  vec2 gXZ = gRot * position.xz * (min(1.0, gVis * 4.0) * gWide);
   float gB = gBend * gT * gT;
   transformed = vec3(iPos.x + gXZ.x + gDir.x * gB * gH, iPos.y + gH * (gT - 0.5 * gBend * gB * gT), iPos.z + gXZ.y + gDir.y * gB * gH);
 
   // colour: the turf's, darker deep in the sward, lighter towards the tips
   vec3 c = iCol * mix(vec3(0.9, 0.97, 0.86), vec3(1.08, 1.05, 0.86), fract(gSeed * 13.7 + gR * 3.1));
-  c = mix(c, c * vec3(1.16, 1.08, 0.66), iShape.w * 0.55);
+  c = mix(c, c * vec3(1.16, 1.08, 0.66), iShape.z * 0.55);
   c = mix(vec3(dot(c, vec3(0.3, 0.59, 0.11))), c, 0.8);
   vec3 tip = c * vec3(1.12, 1.1, 0.9) + vec3(0.01, 0.01, 0.0);
   c = mix(c * 0.42, tip, smoothstep(0.0, 1.0, gT));
@@ -179,7 +190,7 @@ const VERT_POS = /* glsl */ `
   c *= 1.0 + 0.2 * gGust * gT;
   vGrassCol = c;
   vGrassT = gT;
-  vGrassCloud = pfCloudLight(iPos.xyz, uPfTime, uPfCloud);
+  vGrassCloud = gCloud(iPos.xyz, uPfTime, uPfCloud);
 }
 `;
 
@@ -204,7 +215,7 @@ export class Grass {
     const tier = TIERS[quality] ?? TIERS.medium;
     this.quality = quality;
     const rng = mulberry32(9071);
-    const geo = clumpGeometry(tier.blades, tier.segs, mulberry32(77));
+    const geo = clumpGeometry(tier.blades, tier.segs, mulberry32(77), tier.wide ?? 1);
 
     // ── where the clumps grow ───────────────────────────────────────────────
     const { radius: R, depth: D } = ISLAND;
@@ -249,7 +260,8 @@ export class Grass {
 
     const n = spots.length;
     const iPos = new Float32Array(n * 4);
-    const iShape = new Float32Array(n * 4);
+    const iRot = new Float32Array(n * 2);
+    const iShape = new Float32Array(n * 3);
     const iCol = new Float32Array(n * 3);
     const iVis = new Float32Array(n * 2).fill(1);
     const c = new THREE.Color();
@@ -258,7 +270,8 @@ export class Grass {
     const detail = seasonDetail();
     spots.forEach(([x, z, t, pd, ir, r], i) => {
       const tall = t < 0;
-      iPos.set([x, groundY(x, z) - 0.012, z, rng() * Math.PI * 2], i * 4);
+      iPos.set([x, groundY(x, z) - 0.012, z, sandEdge(x, z)], i * 4);
+      const turn = rng() * Math.PI * 2;
       // taller in lush patches and out towards the rim, shorter on the trampled edge of the stage,
       // by the path and right at the rim
       const lush = noise2(x * 0.42 + 3.1, z * 0.42 + 3.1);
@@ -267,7 +280,9 @@ export class Grass {
       h *= 0.32 + 0.68 * Math.min(1, Math.max(0, (pd - 0.08) / 0.55));
       h *= ir > 0.92 ? 0.75 : 1;
       if (tall) h = 0.27 + -t * 0.16;
-      iShape.set([h, tall ? 1.6 : 0.85 + rng() * 0.4, rng(), Math.max(0, Math.min(1, (lush - 0.35) * 1.6))], i * 4);
+      const spread = tall ? 1.6 : 0.85 + rng() * 0.4;
+      iRot.set([Math.cos(turn) * spread, Math.sin(turn) * spread], i * 2);
+      iShape.set([h, rng(), Math.max(0, Math.min(1, (lush - 0.35) * 1.6))], i * 3);
       // the turf's own colour and variation at this spot (kit.grassColor and the turf shader)
       grassColor(c, x, 0, z, R, D);
       const n2 = noise2(x * 1.65 + 11.3, z * 1.65 + 11.3);
@@ -290,7 +305,8 @@ export class Grass {
     });
     this.base = { x: Float32Array.from(spots, (s) => s[0]), z: Float32Array.from(spots, (s) => s[1]), col: iCol.slice() };
     geo.setAttribute('iPos', new THREE.InstancedBufferAttribute(iPos, 4));
-    geo.setAttribute('iShape', new THREE.InstancedBufferAttribute(iShape, 4));
+    geo.setAttribute('iRot', new THREE.InstancedBufferAttribute(iRot, 2));
+    geo.setAttribute('iShape', new THREE.InstancedBufferAttribute(iShape, 3));
     this.colAttr = new THREE.InstancedBufferAttribute(iCol, 3);
     this.visAttr = new THREE.InstancedBufferAttribute(iVis, 2);
     geo.setAttribute('iCol', this.colAttr);
@@ -388,7 +404,7 @@ export class Grass {
     const sh = this.mesh.geometry.attributes.iShape.array;
     const g = this.t;
     return (i) => {
-      const u = Math.min(1, Math.max(0, (g - sh[i * 4 + 2] * 0.4) / 0.6));
+      const u = Math.min(1, Math.max(0, (g - sh[i * 3 + 1] * 0.4) / 0.6));
       return vis[i * 2] + (vis[i * 2 + 1] - vis[i * 2]) * u * u * (3 - 2 * u);
     };
   }

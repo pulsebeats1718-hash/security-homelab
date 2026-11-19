@@ -22,6 +22,13 @@ import * as THREE from 'three';
 import { makeGlowTexture } from './sky.js';
 import { G } from '../characters/kit/geo.js';
 
+/**
+ * Glow-over blending for light effects: the shader writes premultiplied colour and an alpha that says
+ * how much of what is behind it to hide. Over a dark sky it is plain additive light; over a bright,
+ * hazy one it still reads, as saturated light with a little body to it (pure additive light vanishes).
+ */
+export const GLOW_BLEND = { blending: THREE.CustomBlending, blendEquation: THREE.AddEquation, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor };
+
 const SPARK_MAX = 560;
 const SHARD_MAX = 110;
 const FOIL_MAX = 260;
@@ -61,14 +68,14 @@ void main() {
   float speed = length(v2);
   vec2 dir = speed > 1e-4 ? v2 / speed : vec2(0.0, 1.0);
   // the shutter: a streak behind the spark as long as the distance it covers while the shutter is open
-  float len = speed * uShutter * (1.0 - star);
+  float len = min(speed * uShutter, hw * 9.0) * (1.0 - star);
   float id = float(gl_InstanceID);
   if (star > 0.5) {
     float a = id * 2.399 + uTime * (0.6 + fract(id * 0.618) * 1.4);
     dir = vec2(cos(a), sin(a));
     hw *= 1.9;
   }
-  vec2 perp = vec2(-dir.y, dir.x);
+  vec2 perp = vec2(dir.y, -dir.x); // (this way round the quad keeps its winding: front-facing)
   mv.xy += perp * position.x * hw + dir * (position.y * (hw + len * 0.5) - len * 0.5);
   gl_Position = projectionMatrix * mv;
   vUv = position.xy;
@@ -94,7 +101,7 @@ void main() {
     float core = exp(-r * r * 26.0);
     float glow = exp(-r * r * 5.0) * 0.35;
     a = (rays * 0.95 + core + glow) * fade * vTwinkle * smoothstep(1.0, 0.7, r);
-    col = vColor * (0.75 + core * 0.9);
+    col = vColor * (0.85 + core * 2.2);
   } else {
     // a capsule along the motion, brightest at the head
     float y = vUv.y * vStretch;
@@ -102,10 +109,10 @@ void main() {
     float glow = smoothstep(1.0, 0.0, d);
     float core = smoothstep(0.32, 0.0, d);
     float head = mix(0.35, 1.0, smoothstep(-vStretch, vStretch * 0.6, y));
-    a = (glow * glow * 0.7 + core) * fade * head / mix(1.0, vStretch, 0.45);
-    col = vColor * (0.7 + core * 0.8);
+    a = (glow * glow * 0.7 + core) * fade * head / mix(1.0, vStretch, 0.22);
+    col = vColor * (0.8 + core * 1.9);
   }
-  gl_FragColor = vec4(col, a);
+  gl_FragColor = vec4(col * a, a * 0.32);
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
 }`;
@@ -128,7 +135,7 @@ void main() {
   float band = exp(-pow((r - 0.84) / uWidth, 2.0));
   float inner = smoothstep(0.84, 0.0, r) * uFill;
   float a = (band + inner * 0.22) * uOpacity * smoothstep(1.0, 0.94, r);
-  gl_FragColor = vec4(uColor * (1.0 + band * 0.6), a);
+  gl_FragColor = vec4(uColor * (1.1 + band * 0.9) * a, a * 0.3);
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
 }`;
@@ -147,7 +154,7 @@ void main() {
   float fall = smoothstep(1.0, 0.05, r);
   float core = exp(-r * r * 18.0);
   float a = (rays * fall * fall + core * 0.9 + fall * 0.12) * uOpacity;
-  gl_FragColor = vec4(uColor * (1.0 + core), a);
+  gl_FragColor = vec4(uColor * (1.1 + core * 1.2) * a, a * 0.22);
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
 }`;
@@ -247,6 +254,8 @@ export class Effects {
     this.stage = stage;
     const scene = stage.scene;
     this.time = 0;
+    /** Other objects that only appear mid-game (the boss's storm, the fever aura …): compiled by prewarm(). */
+    this.warm = [];
 
     // ── sparks ────────────────────────────────────────────────────────────
     const sgeo = quadInstances(SPARK_MAX, { iPos: 3, iVel: 3, iColor: 3, iSize: 1, iLife: 1 });
@@ -267,10 +276,7 @@ export class Effects {
       head: 0,
     };
     this.sparkUniforms = { uShutter: { value: 1 / 45 }, uTime: { value: 0 } };
-    this.sparks = new THREE.Mesh(
-      sgeo,
-      new THREE.ShaderMaterial({ uniforms: this.sparkUniforms, vertexShader: SPARK_VERT, fragmentShader: SPARK_FRAG, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })
-    );
+    this.sparks = new THREE.Mesh(sgeo, new THREE.ShaderMaterial({ uniforms: this.sparkUniforms, vertexShader: SPARK_VERT, fragmentShader: SPARK_FRAG, transparent: true, depthWrite: false, ...GLOW_BLEND }));
     this.sparks.frustumCulled = false;
     this.sparks.renderOrder = 20;
     this.sparks.visible = false;
@@ -329,7 +335,7 @@ export class Effects {
     const plane = new THREE.PlaneGeometry(2, 2);
     for (let i = 0; i < RING_MAX; i++) {
       const u = { uColor: { value: new THREE.Color() }, uOpacity: { value: 0 }, uWidth: { value: 0.07 }, uFill: { value: 0 } };
-      const mesh = new THREE.Mesh(plane, new THREE.ShaderMaterial({ uniforms: u, vertexShader: RING_VERT, fragmentShader: RING_FRAG, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }));
+      const mesh = new THREE.Mesh(plane, new THREE.ShaderMaterial({ uniforms: u, vertexShader: RING_VERT, fragmentShader: RING_FRAG, transparent: true, depthWrite: false, side: THREE.DoubleSide, ...GLOW_BLEND }));
       mesh.visible = false;
       mesh.renderOrder = 19;
       scene.add(mesh);
@@ -340,7 +346,7 @@ export class Effects {
     this.rays = [];
     for (let i = 0; i < RAYS_MAX; i++) {
       const u = { uColor: { value: new THREE.Color() }, uOpacity: { value: 0 }, uSpin: { value: 0 }, uCount: { value: 14 } };
-      const mesh = new THREE.Mesh(plane, new THREE.ShaderMaterial({ uniforms: u, vertexShader: RING_VERT, fragmentShader: RAYS_FRAG, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+      const mesh = new THREE.Mesh(plane, new THREE.ShaderMaterial({ uniforms: u, vertexShader: RING_VERT, fragmentShader: RAYS_FRAG, transparent: true, depthWrite: false, ...GLOW_BLEND }));
       mesh.visible = false;
       mesh.renderOrder = 17;
       scene.add(mesh);
@@ -663,7 +669,7 @@ export class Effects {
 
   /** Compile every effect shader up front so the first burst never stutters. */
   prewarm(renderer, scene, camera) {
-    const hidden = [this.shot.group, this.dizzy.group, this.sparks, this.shardMesh, this.foilMesh, this.puffs, this.flashQuad, ...this.rings.map((r) => r.mesh), ...this.rays.map((r) => r.mesh), ...Object.values(this.shot.meshes)];
+    const hidden = [this.shot.group, this.dizzy.group, this.sparks, this.shardMesh, this.foilMesh, this.puffs, this.flashQuad, ...this.rings.map((r) => r.mesh), ...this.rays.map((r) => r.mesh), ...Object.values(this.shot.meshes), ...this.warm];
     const was = hidden.map((o) => o.visible);
     hidden.forEach((o) => (o.visible = true));
     if (this.stage.compile) this.stage.compile(scene, scene); // for the target the frames really render into

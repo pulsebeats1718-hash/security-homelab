@@ -45,13 +45,15 @@ void main() {
   wrap = wrap * wrap * (3.0 - 2.0 * wrap);
   float top = smoothstep(0.0, 0.75, vH);
   vec3 col = mix(uShade, uLit, wrap * (0.6 + 0.4 * top) + 0.12 * max(n.y, 0.0));
-  col *= 0.9 + 0.1 * top;
-  // undersides catch warm light bounced up from the sunlit cloud sea below
-  col += uLit * max(-n.y, 0.0) * 0.16;
+  // light reaches the flat base through the whole cloud: sunlit tops, soft grey bases
+  col *= 0.8 + 0.2 * top;
+  // undersides catch warm light bounced up from the sunlit cloud sea below, and a low sun's glow
+  float under = max(-n.y, 0.0);
+  col += uLit * under * 0.16 + uGlow * under * 0.45;
   // silver lining: the rims light up where the sun is behind the cloud
   float fres = pow(1.0 - max(dot(n, v), 0.0), 3.0);
   col += uRim * fres * (0.3 + 0.7 * max(dot(-v, uRimDir), 0.0)) * (0.6 + 0.4 * top);
-  col += uGlow * (0.45 + 0.55 * fres);
+  col += uGlow * (0.4 + 0.55 * fres);
   gl_FragColor = vec4(col, 1.0);
   #include <tonemapping_fragment>
   #include <colorspace_fragment>

@@ -23,7 +23,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { mulberry32 } from '../core/utils.js';
 import { groundY, islandR } from './places/kit.js';
 import { STEPPING_STONES } from './island.js';
-import { sandEdge } from './seasons/shader.js';
+import { sandEdge, seasonDetail, trackSeasonMaterial, WIND_GLSL } from './seasons/shader.js';
 
 export const KINDS = ['daisy', 'tulip', 'sunflower', 'bluebell', 'lavender', 'rose'];
 /** Which flower each kind of expression grows. */
@@ -130,13 +130,17 @@ function headGeometry(kind) {
   }
 }
 
-/** A gentle sway for the stems and heads, from each instance's position. */
+/**
+ * A gentle sway for the stems and heads, from each instance's position; on medium and high
+ * quality the gusts rolling over the lawn bow them too (the same breeze as the grass).
+ */
 function swaying(mat, time, lift) {
   mat.onBeforeCompile = (shader) => {
+    const gusts = seasonDetail() > 0;
     shader.uniforms.uTime = time;
     shader.uniforms.uLift = { value: lift };
     shader.vertexShader = shader.vertexShader
-      .replace('#include <common>', '#include <common>\nuniform float uTime;\nuniform float uLift;')
+      .replace('#include <common>', `#include <common>\nuniform float uTime;\nuniform float uLift;\n${gusts ? WIND_GLSL : ''}`)
       .replace(
         '#include <begin_vertex>',
         `#include <begin_vertex>
@@ -145,10 +149,12 @@ function swaying(mat, time, lift) {
           float pfBend = uLift > 0.0 ? uLift : max(0.0, position.y);
           transformed.x += sin(uTime * 1.5 + pfPhase) * 0.05 * pfBend;
           transformed.z += cos(uTime * 1.1 + pfPhase * 1.3) * 0.03 * pfBend;
+          ${gusts ? 'transformed.xz += PF_WIND * (pfGust(instanceMatrix[3].xz, uTime) * 0.09 * pfBend);' : ''}
         #endif`
       );
   };
-  mat.customProgramCacheKey = () => `pf-garden-${lift > 0 ? 'head' : 'stem'}`;
+  mat.customProgramCacheKey = () => `pf-garden-${lift > 0 ? 'head' : 'stem'}-${seasonDetail() > 0 ? 1 : 0}`;
+  trackSeasonMaterial(mat); // recompiled when the quality tier changes
   return mat;
 }
 

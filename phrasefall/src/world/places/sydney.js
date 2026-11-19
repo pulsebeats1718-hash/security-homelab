@@ -1,15 +1,27 @@
 /**
  * Sydney — the island turns into a beach: golden sand around the dais and down the right side,
  * a lagoon with rock-pool boulders, surfboards stuck in the sand, red-and-yellow lifesaver flags,
- * a lifeguard tower, a beach umbrella and towel, a sandcastle, gum trees (with a koala) on the
- * grassy back and a yellow kangaroo road sign. Distant chunks: a steel arch bridge over the harbour
- * with sailing boats, a lighthouse on a cliff, a surf beach with rolling waves and Norfolk pines,
- * a suburb of terracotta roofs and a cluster of towers. All shapes are generic.
+ * a lifeguard tower (with the day's board), a beach umbrella and towel, a sandcastle, gum trees
+ * (with a koala) on the grassy back and a yellow kangaroo road sign.
+ *
+ * Behind it floats the esplanade: a boardwalk with a surf shop, a beach café and its chalkboard,
+ * an ice-cream kiosk and a block of flats with a billboard of the phrases the player is learning,
+ * Norfolk pines either side of a lawn that opens onto the harbour. Out on the harbour: a pavilion
+ * roofed with white sail-like shells on a sandstone podium (an original design), a green-and-gold
+ * ferry crossing, a steel arch bridge and the towers of the city beyond; further out a lighthouse
+ * on a cliff, a surf beach with Norfolk pines, a suburb of terracotta roofs and a harbour cove.
+ * All shapes are generic.
+ *
+ * Low quality keeps the beach and its signs but leaves out the esplanade, the harbour and the city.
  */
 import * as THREE from 'three';
 import { mulberry32 } from '../../core/utils.js';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { Diorama, SHAPE, groundY, addLand, tools, faceted, UNIT } from './kit.js';
 import { KIND } from '../seasons/shader.js';
+import { SignSet } from '../signs.js';
+import { cityMaterials } from './city/materials.js';
+import { cityParts } from './city/parts.js';
 
 const M = 'matte';
 const S = 'satin';
@@ -47,17 +59,56 @@ const sandiness = (x, z) => smooth(-0.3, 0.3, (x - 0.6) * 0.62 + (z + 5.2) * 0.7
 /** the lagoon at the front right */
 const LAGOON = { x: 3.75, z: 2.05, rx: 1.35, rz: 0.78 };
 
+/** One shell of the harbour pavilion's roof: a quarter dome, seen from inside and out. */
+let shellGeo = null;
+function SHELL() {
+  if (!shellGeo) {
+    const a = new THREE.SphereGeometry(0.5, 10, 8, 0, Math.PI / 2, 0, Math.PI / 2).toNonIndexed();
+    a.deleteAttribute('uv');
+    const b = a.clone();
+    const p = b.attributes.position.array;
+    const n = b.attributes.normal.array;
+    for (let i = 0; i < p.length; i += 9) {
+      for (let k = 0; k < 3; k++) {
+        const t = p[i + 3 + k];
+        p[i + 3 + k] = p[i + 6 + k];
+        p[i + 6 + k] = t;
+        const u = n[i + 3 + k];
+        n[i + 3 + k] = n[i + 6 + k];
+        n[i + 6 + k] = u;
+      }
+    }
+    for (let i = 0; i < n.length; i++) n[i] = -n[i];
+    shellGeo = mergeGeometries([a, b], false);
+  }
+  return shellGeo;
+}
+
 export class Sydney extends Diorama {
   constructor(island, quality) {
     super(island, quality);
     this.rng = mulberry32(1788);
+    this.rng2 = mulberry32(17880);
     this.glintT = 0;
+    Object.assign(this.mats, cityMaterials(this));
+    this.signs = new SignSet(this, 'sydney');
     /** beach things Sydney already has (summer adds only the rest), and water to keep off */
     this.has = ['umbrella', 'towel', 'bucket', 'ball'];
     this.avoid = [{ x: LAGOON.x, z: LAGOON.z, r: 1.7 }];
     this.build();
     this.far();
     this.finish();
+  }
+
+  finish() {
+    super.finish();
+    for (const o of this.group.children) if (o.name === 'glowGlass') o.castShadow = false;
+    this.signs.finish();
+  }
+
+  update(t, dt = 0) {
+    super.update(t);
+    this.signs.update(t, dt);
   }
 
   build() {
@@ -155,6 +206,9 @@ export class Sydney extends Diorama {
       slab(0, 1.92, 0.6, 1.5, 0.03, 0.03, C.white);
       for (let i = 0; i < 6; i++) slab(0.95, 0.2 + i * 0.25, 0.75 + i * 0.0, 0.3, 0.04, 0.12, C.white);
       for (const s of [-1, 1]) part(M, SHAPE.box, 0.95 + s * 0.15, 0.85, 0.75, 0.04, 1.75, 0.04, C.white);
+      // the day's board, hung on the rail
+      slab(0, 1.66, 0.64, 0.92, 0.36, 0.03, 0x2b4a8a);
+      this.signs.add(0, 1.84, 0.657, 0.88, 0.32, { style: 'plate', id: 'lovely-day-for-it', text: 'LOVELY DAY FOR IT', bg: '#fbfaf3', ink: '#2b4a8a', keyline: '#e8262c' });
       // a red-and-yellow flag on the roof
       post(0.55, 3.0, -0.12, 0.04, 0.7, C.white);
       b.at(0.57, 3.66, -0.12, 0, 1, () => b.wave({ dir: [0, 0, 1], along: [1, 0, 0], len: 0.4, freq: 3.8, phase: 1 }, () => {
@@ -325,6 +379,96 @@ export class Sydney extends Diorama {
     P(1.55, 2.6, 0.5, 1, beachBall);
 
     this.lagoon = [LAGOON.x, at(LAGOON.x, LAGOON.z) + 0.06, LAGOON.z];
+    if (!this.low) this.esplanade();
+  }
+
+  // ── the esplanade behind the beach: a boardwalk of beach shops, flats and Norfolk pines ──────
+  esplanade() {
+    const b = this.b;
+    const P = cityParts(this, b, this.rng2);
+    const { part, block, slab, post, ball } = P;
+    const k = P.k;
+    const signs = this.signs;
+    const top = (c, x, y, z, r) => {
+      if (y < -0.06) return c.setHex(0xdcb87f);
+      const e = Math.hypot(x, z / 0.36) / r;
+      return c.setHex(e > 0.9 ? 0xf1d6a0 : z > 0.55 ? (Math.sin(x * 4) > 0 ? 0xf1d6a0 : 0xf7e2b2) : Math.sin(x * 2.3 + z) > 0.4 ? 0x86c96a : 0x7ac05c);
+    };
+    const pine = (x, z, s) => b.at(x, 0, z, 0, s, () => {
+      post(0, 0, 0, 0.12, 2.6, 0x7a5a40);
+      b.kind(KIND.EVERGREEN, () => {
+        for (let i = 0; i < 5; i++) part('matte', SHAPE.cone8, 0, 0.8 + i * 0.42, 0, 1.1 - i * 0.18, 0.38, 1.1 - i * 0.18, C.pine[i % 3]);
+      });
+    });
+    b.chunk(2.0, -0.5, -9.8, 0, 1, { delay: 0.7, phase: 2.2, amp: 0.05 }, () => {
+      addLand(b, 5.2, { depthScale: 0.36, top });
+      // the boardwalk along the front
+      b.kind(KIND.PAVED, () => slab(0.0, 0.0, 0.92, 7.4, 0.05, 0.42, 0xb58a5e, k.wood));
+      for (let i = 0; i < 9; i++) post(-3.6 + i * 0.9, -0.3, 1.12, 0.06, 0.34, 0x8a6a48);
+      // the surf shop: aqua weatherboard, boards racked outside
+      b.at(-2.8, 0, 0.1, 0, 1, () => {
+        block(0, 0, 0, 1.15, 1.25, 1.0, 0x7fd6d0, k.wood, 0.03);
+        P.roofSlope(0, 1.22, 0, 1.25, 0.32, 1.05, 0xd0623f, k.tile);
+        const f = P.shopfront(0, 0, 0.5, 1.15, { color: 0xf7f5ef, door: 'right', h: 0.92, fascia: 0.2, glow: 0xffe1b0, lit: 0.15 });
+        signs.add(0, f.y + f.h / 2, f.z, 0.86, f.h * 0.92, { style: 'fascia', id: 'make-waves', text: 'Make Waves', sub: 'Surf shop', bg: '#1d6f9a', ink: '#ffffff', font: 'display', upper: false });
+        const cols = [0xff6b6b, 0xffd21f, 0x2ec4b6, 0xf7f5ef];
+        for (let i = 0; i < 4; i++) part('satin', SHAPE.sphere, -0.42 + i * 0.13, 0.55, 0.66, 0.11, 1.05, 0.03, cols[i], -0.12, 0, 0);
+      });
+      b.at(-2.0, 0, 0.82, 0.3, 1, () => {
+        const a = P.aboard(0.3, 0.42, 0x6b4a32);
+        signs.add(0, a.y, a.z, 0.3, 0.42, { style: 'chalk', head: 'Lessons', lines: [{ id: 'take-the-plunge', text: 'Take the plunge' }, { id: 'go-with-the-flow', text: 'Go with the flow' }] }, { rx: a.rx });
+      });
+      // the beach café, its terrace upstairs, a striped awning and a chalkboard
+      b.at(-1.4, 0, 0.0, 0, 1, () => {
+        block(0, 0, 0, 1.4, 1.62, 1.1, 0xf7f1e6, k.render, 0.03);
+        slab(0, 1.58, 0.05, 1.5, 0.06, 1.2, 0xe9e2d4);
+        for (let i = 0; i < 10; i++) slab(-0.68 + i * 0.151, 1.64, 0.62, 0.02, 0.24, 0.02, 0xf7f5ef);
+        slab(0, 1.86, 0.62, 1.42, 0.03, 0.03, 0xf7f5ef);
+        P.pane(-0.3, 1.0, 0.55, 0.3, 0.36, { frame: 0xf7f5ef });
+        P.pane(0.3, 1.0, 0.55, 0.3, 0.36, { frame: 0xf7f5ef });
+        const f = P.shopfront(0, 0, 0.55, 1.4, { color: 0x2b7a6a, door: 'mid', h: 0.86, fascia: 0.18, glow: 0xffd59a, lit: 0.12 });
+        signs.add(0, f.y + f.h / 2, f.z, 1.1, f.h * 0.92, { style: 'fascia', id: 'the-suns-out', text: "The Sun's Out", sub: 'Café', bg: '#ffd23f', ink: '#1d4a5a', font: 'display', upper: false, trim: 'rgba(29,74,90,0.8)' });
+        P.awning(-0.62, 0.62, f.y - 0.03, 0.6, 0.24, [0xff8a6b, 0xfff6e8]);
+        // a sun umbrella and a table on the terrace
+        post(0.4, 1.64, 0.25, 0.03, 0.6, 0xf7f5ef);
+        for (let i = 0; i < 8; i++) part('matte', SHAPE.wedge, 0.4, 2.2, 0.25, 0.45, 0.16, 0.45, i % 2 ? 0xffffff : 0xff6b6b, 0, (i * Math.PI) / 4, 0);
+      });
+      b.at(-0.55, 0, 0.82, -0.25, 1, () => {
+        const a = P.aboard(0.3, 0.42, 0x6b4a32);
+        signs.add(0, a.y, a.z, 0.3, 0.42, { style: 'chalk', head: 'Today', lines: [{ id: 'brekkie', text: 'Brekkie' }, { id: 'a-fry-up', text: 'A fry-up' }], inkShift: 2 }, { rx: a.rx });
+      });
+      // a lawn with pines, opening onto the harbour
+      pine(-0.25, -0.3, 0.9);
+      pine(1.15, 0.1, 0.75);
+      for (const x of [0.15, 0.75]) {
+        slab(x, 0.18, 0.55, 0.42, 0.04, 0.14, 0xb58a5e);
+        for (const s of [-1, 1]) slab(x + s * 0.18, 0, 0.55, 0.04, 0.18, 0.12, 0x3a3d44, 'satin');
+      }
+      // the ice-cream kiosk: a striped roof and a cone on top
+      b.at(1.75, 0, 0.35, -0.15, 1, () => {
+        block(0, 0, 0, 0.72, 0.72, 0.6, 0xfff0f5, k.render, 0.06);
+        b.lit(0xffe1b0, 0.15, () => slab(0, 0.3, 0.301, 0.5, 0.3, 0.01, 0x5c6d80, k.glass));
+        for (let i = 0; i < 6; i++) part('matte', SHAPE.box, -0.3 + i * 0.12, 0.8, 0.0, 0.12, 0.04, 0.78, i % 2 ? 0xffffff : 0xff8fb8, 0.0, 0, 0);
+        slab(0, 0.72, 0.33, 0.74, 0.16, 0.02, 0xff8fb8);
+        signs.add(0, 0.8, 0.342, 0.72, 0.15, { style: 'awning', id: 'go-on-treat-yourself', text: 'go on, treat yourself', bg: '#ff6fa3' });
+        part('matte', SHAPE.cone, 0, 1.02, 0, 0.2, 0.36, 0.2, 0xe0a15a, Math.PI, 0, 0);
+        ball(0, 1.24, 0, 0.24, 0xffc8dc);
+        ball(0, 1.38, 0, 0.16, 0xfff4e0);
+      });
+      // a block of flats with balconies, a billboard on its roof
+      b.at(3.0, 0, 0.05, -0.1, 1, () => {
+        block(0, 0, 0, 1.4, 2.25, 1.0, 0xf3ece0, k.render, 0.04);
+        for (let s = 0; s < 3; s++) {
+          const y = 0.35 + s * 0.65;
+          slab(0, y - 0.06, 0.56, 1.36, 0.04, 0.16, 0xffffff);
+          for (let i = 0; i < 9; i++) slab(-0.66 + i * 0.165, y - 0.02, 0.63, 0.015, 0.22, 0.015, 0xd9e2e8, 'satin');
+          for (const x of [-0.36, 0.36]) P.pane(x, y + 0.04, 0.5, 0.34, 0.4, { frame: 0xffffff, sill: null, glass: 0x5c7a8c });
+        }
+        const bd = P.roofBoard(0, 2.25, 0.2, 1.3, 0.66);
+        signs.add(bd.x, bd.y, bd.z, 1.3, 0.66, { style: 'billboard', text: '' }, { live: { period: 9 }, res: 230, glow: 0xffffff, lit: 0.35 });
+      });
+      pine(4.3, -0.1, 0.95);
+    });
   }
 
   // ── distant chunks ────────────────────────────────────────────────────────
@@ -345,7 +489,7 @@ export class Sydney extends Diorama {
     };
 
     // A ── a big steel arch bridge over the harbour, boats sailing underneath
-    b.chunk(14, -0.6, -31, -0.3, 1, { delay: 0.86, phase: 0.6, amp: 0.3 }, () => {
+    b.chunk(5.4, -1.5, -34, -0.12, 1, { delay: 0.86, phase: 0.6, amp: 0.3 }, () => {
       addLand(b, 3.9, { depthScale: 0.72, top: beachTop((x) => (Math.abs(x) < 2.6 ? 1 : 0)) });
       const span = 2.6;
       // sandstone pylons at each end
@@ -470,7 +614,66 @@ export class Sydney extends Diorama {
           for (let y = 0.4; y < h - 0.3; y += 0.45) b.lit(WINDOW, 0.2 + rng() * 0.9, () => slab(x, y, z + w / 2 + 0.01, w * 0.7, 0.18, 0.02, 0x5f7591, L));
         }
       });
+      this.harbour();
     }
+  }
+
+  /** The harbour seen past the esplanade: the sail pavilion, a ferry, and the city's towers. */
+  harbour() {
+    const b = this.b;
+    const P = cityParts(this, b, this.rng2);
+    const { part, block, slab, post, ball } = P;
+    const k = P.k;
+    const water = (c, x, y, z, r) => c.setHex(y < -0.06 ? 0xdcb87f : Math.hypot(x + 1.4, z + 0.2) < r * 0.36 ? 0xdcc49a : Math.sin(x * 2.2 + z * 3.1) > 0.75 ? 0x55d0d4 : C.deep);
+
+    // G ── the harbour: a pavilion of white sail-like shells on a sandstone podium (an original
+    //      design: three shells rising one behind another, a fourth over the side hall), a ferry
+    b.chunk(9.6, -1.25, -25, -0.25, 1, { delay: 0.88, phase: 1.1, amp: 0.25 }, () => {
+      addLand(b, 3.9, { depthScale: 0.62, top: water });
+      b.at(-1.4, 0, -0.2, 0.35, 1, () => {
+        // the podium and its broad steps
+        block(0, 0, 0, 2.0, 0.34, 1.3, C.sandstone, k.stone, 0.03);
+        for (let i = 0; i < 3; i++) slab(0.0, 0, 0.66 + i * 0.07, 1.2 - i * 0.1, 0.3 - i * 0.1, 0.08, 0xd9c49f);
+        block(-0.15, 0.34, -0.1, 1.5, 0.22, 0.85, 0x6a5a4a, M, 0.02);
+        // the shells: double-sided quarter domes, tall and pointed, each a little smaller
+        const shell = SHELL();
+        const shells = [[0.55, 1.0, 1.55], [0.05, 0.86, 1.3], [-0.42, 0.7, 1.02]];
+        shells.forEach(([x, s, h], i) => {
+          part('matte', shell, x, 0.5, 0.0, 0.62 * s, h, 0.9 * s, i === 1 ? 0xfdfcf7 : 0xf4f2ea, 0, Math.PI, -0.18);
+          part('matte', shell, x - 0.1, 0.5, 0.0, 0.5 * s, h * 0.8, 0.8 * s, 0xe9e6dc, 0, 0, 0.18);
+        });
+        part('matte', shell, -0.65, 0.5, 0.42, 0.35, 0.66, 0.42, 0xf4f2ea, 0, Math.PI * 0.5, -0.12);
+        b.lit(0xffe1b0, 0.3, () => slab(0.1, 0.36, 0.43, 1.2, 0.16, 0.01, 0x8a6a40, k.glass));
+        this.halo(0.1, 0.6, 0.5, 2.4, 0xffe0b0);
+      });
+      // the ferry: green hull, gold cabin, and her name along the side
+      b.slide(1.6, 0, 0, 0.09, 0.8, () => b.at(0.6, 0.02, 1.15, 0, 0.62, () => {
+        block(0, -0.12, 0, 1.9, 0.34, 0.62, 0x1f6b3a, S, 0.14);
+        block(0, 0.2, 0, 1.4, 0.36, 0.52, 0xf2c94c, M, 0.06);
+        block(0, 0.55, 0, 1.0, 0.18, 0.44, 0xf7f5ef, M, 0.05);
+        post(0.25, 0.72, 0, 0.12, 0.3, 0x1f6b3a);
+        for (let i = 0; i < 5; i++) b.lit(0xffe1b0, 0.3, () => slab(-0.5 + i * 0.25, 0.28, 0.262, 0.16, 0.14, 0.01, 0x56677c, k.glass));
+        slab(0, 0.0, 0.312, 1.5, 0.16, 0.01, 0xf7f5ef);
+        this.signs.add(0, 0.08, 0.32, 1.46, 0.15, { style: 'plate', id: 'plain-sailing', text: 'PLAIN SAILING', bg: '#f7f5ef', ink: '#1f6b3a' }, { res: 260 });
+      }));
+    });
+
+    // H ── the city beyond the bridge: towers wearing window patterns
+    const tower = (x, z, w, d, h, col, key) => {
+      block(x, 0, z, w, h, d, col, key, 0.03);
+      slab(x, h, z, w + 0.06, 0.1, d + 0.06, 0xc9d2da);
+      block(x, h + 0.1, z, w * 0.5, 0.3, d * 0.5, 0xb9c4ce, M, 0.03);
+    };
+    b.chunk(13.8, -3.4, -41, -0.35, 1, { delay: 0.95, phase: 3.3, amp: 0.3 }, () => {
+      addLand(b, 3.8, { depthScale: 0.6 });
+      tower(-2.4, 0.3, 1.1, 1.0, 6.2, 0xd9d2c3, k.office);
+      tower(-1.0, -0.3, 1.3, 1.2, 9.6, 0x8fb7d6, k.office);
+      tower(0.5, 0.4, 1.2, 1.1, 7.6, 0xb9c8d4, k.office);
+      tower(1.8, -0.4, 1.1, 1.0, 10.8, 0x7aa6c8, k.office);
+      tower(3.0, 0.2, 0.9, 0.9, 5.0, 0xe8dcc0, k.flats);
+      post(1.8, 10.9, -0.4, 0.06, 1.0, 0xd8dde4, 'satin');
+      b.lit(0xff3b30, -1, () => ball(1.8, 11.95, -0.4, 0.14, 0xff5a4a, L));
+    });
   }
 
   ambient(fx, dt, quality) {

@@ -163,6 +163,36 @@ vec2 pfCells(vec3 p) {
 `;
 
 /**
+ * The cheap leaf grain (medium quality): 2D cellular noise (a 2×2 search) on the world plane
+ * facing the surface's main axis; where that axis changes the grain jumps, unseen in a random
+ * grain. Returns F1, F2; pfCellDir2 is the vector from the nearest centre to p (in that plane).
+ */
+const CELLS2_GLSL = /* glsl */ `
+vec2 pfCellDir2 = vec2(0.0);
+vec2 pfCells2(vec2 p) {
+  vec2 pi = floor(p);
+  vec2 pf = fract(p);
+  vec2 o = step(0.5, pf) - 1.0;
+  float f1 = 9.0;
+  float f2 = 9.0;
+  for (int i = 0; i < 4; i++) {
+    vec2 cc = o + vec2(float(i & 1), float(i >> 1));
+    float hh = pfHash(pi + cc);
+    vec2 d = cc + 0.2 + 0.6 * fract(hh * vec2(1.0, 7.131) + vec2(0.0, 0.31)) - pf;
+    float dd = dot(d, d);
+    if (dd < f1) {
+      f2 = f1;
+      f1 = dd;
+      pfCellDir2 = -d;
+    } else if (dd < f2) {
+      f2 = dd;
+    }
+  }
+  return vec2(sqrt(f1), sqrt(f2));
+}
+`;
+
+/**
  * The breeze: gusts rolling across the island in long waves, travelling along PF_WIND
  * (world xz, the seasons clock) → 0…1. Shared by the grass, the trees and the wild flowers.
  */
@@ -178,11 +208,11 @@ float pfGust(vec2 p, float t) {
 /** Soft cloud shadows drifting over the island (1 lit … lower in a shadow); needs NOISE_GLSL. */
 export const CLOUD_GLSL = /* glsl */ `
 float pfCloudLight(vec3 w, float t, float strength) {
-  vec2 q = w.xz * 0.105 - t * vec2(0.026, -0.009);
-  float n = pfNoise(q) * 0.62 + pfNoise(q * 2.17 + 9.7) * 0.38;
-  // the stage round the character stays in the sun
-  float s = smoothstep(0.47, 0.66, n) * smoothstep(2.3, 3.8, length(w.xz));
-  return 1.0 - strength * s;
+  // only over the island and just round it (the stage round the character stays in the sun)
+  float r = length(w.xz);
+  if (r < 2.3 || r > 13.0 || strength <= 0.0) return 1.0;
+  float n = pfNoise(w.xz * 0.105 - t * vec2(0.026, -0.009));
+  return 1.0 - strength * smoothstep(0.45, 0.68, n) * smoothstep(2.3, 3.8, r);
 }
 `;
 
@@ -213,7 +243,12 @@ attribute float aPfOcc;
 varying float vPfOcc;
 #endif
 #if PF_DETAIL > 0
+uniform float uPfCloud;
+varying float vPfLandY;
+varying float vPfCloud;
 ${WIND_GLSL}
+${NOISE_GLSL}
+${CLOUD_GLSL}
 #endif
 `;
 
@@ -228,6 +263,10 @@ const VERT_SWAY = /* glsl */ `
   #else
   float pfSK = float(PF_KIND);
   vec3 pfSA = vec3(0.0);
+  #endif
+  #if PF_DETAIL > 0
+  // height above the land's (or prop's) base, before any pop or bob (the islands' cut edges)
+  vPfLandY = transformed.y - pfSA.y;
   #endif
   if ((pfSK > 0.5 && pfSK < 2.5) || (pfSK > 4.5 && pfSK < 5.5)) {
     float pfH = max(transformed.y - pfSA.y, 0.0);
@@ -273,6 +312,10 @@ const VERT_MAIN = /* glsl */ `
   #ifdef PF_OCC
   vPfOcc = aPfOcc;
   #endif
+  #if PF_DETAIL > 0
+  // cloud shadows are several units across: worked out per vertex
+  vPfCloud = pfCloudLight(pfW.xyz, uPfTime, uPfCloud);
+  #endif
 }
 `;
 
@@ -296,6 +339,10 @@ varying float vPfTip;
 #ifdef PF_OCC
 varying float vPfOcc;
 #endif
+#if PF_DETAIL > 0
+varying float vPfLandY;
+varying float vPfCloud;
+#endif
 float pfWobble(vec3 p) { return 0.5 + 0.25 * sin(p.x * 1.7 + sin(p.z * 1.3 + p.y)) + 0.25 * sin(p.z * 1.9 + sin(p.y * 2.1 + p.x * 0.7)); }
 vec3 pfAutumn(float i) {
   return i < 1.0 ? ${lin(0xd9482b)} : i < 2.0 ? ${lin(0xf08a24)} : i < 3.0 ? ${lin(0xf4c43a)} : ${lin(0xb5562a)};
@@ -304,7 +351,7 @@ vec3 pfAutumn(float i) {
 ${NOISE_GLSL}
 ${NOISE3_GLSL}
 ${CELLS_GLSL}
-${CLOUD_GLSL}
+${CELLS2_GLSL}
 float pfSeg(vec2 p, vec2 a, vec2 b) {
   vec2 pa = p - a;
   vec2 ba = b - a;
@@ -329,7 +376,12 @@ const FRAG_MAIN = () => {
   const { pathD, stoneD } = featuresGLSL();
   return /* glsl */ `
 if (dot(uSeason, uSeason) > 0.0) {
+  // a kind given as a define is a constant: the branches for other kinds compile away
+  #ifdef PF_KIND_ATTR
   float k = vPfKind;
+  #else
+  const float k = float(PF_KIND);
+  #endif
   vec3 c = diffuseColor.rgb;
   float lum = dot(c, vec3(0.299, 0.587, 0.114));
   float h = clamp(vPfHash, 0.0, 0.9999);
@@ -343,16 +395,21 @@ if (dot(uSeason, uSeason) > 0.0) {
   if (pfFoliage) {
     // leaf clusters: little domes, each lit on its own, with dark creases between them; on high
     // quality the bigger clumps they gather in swell gently too
-    vec2 pfF = pfCells(vPfWorld * 12.0 + h * 37.0);
-    float pfLeaf = 1.0 - smoothstep(0.05, 0.7, pfF.x);
-    vec3 pfG = -pfCellDir * 0.75;
     #if PF_DETAIL > 1
-    vec4 nd = pfNoised(vPfWorld * 2.1 + h * 23.0);
-    pfG += nd.yzw * 0.42;
-    pfClump = smoothstep(0.2, 0.8, nd.x) * 0.6 + pfLeaf * 0.4;
+    vec2 pfF = pfCells(vPfWorld * 12.0 + h * 37.0);
+    vec3 pfG = -pfCellDir * 0.75;
     #else
-    pfClump = 0.3 + pfLeaf * 0.45;
+    vec3 pfNW = abs((vec4(normal, 0.0) * viewMatrix).xyz);
+    vec3 pfQ = vPfWorld * 12.0 + h * 37.0;
+    vec3 pfU = pfNW.x > pfNW.y && pfNW.x > pfNW.z ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
+    vec3 pfV = pfNW.z > pfNW.y && pfNW.z > pfNW.x ? vec3(0.0, 1.0, 0.0) : vec3(0.0, 0.0, 1.0);
+    vec2 pfF = pfCells2(vec2(dot(pfQ, pfU), dot(pfQ, pfV)));
+    vec3 pfG = -(pfU * pfCellDir2.x + pfV * pfCellDir2.y) * 0.75;
     #endif
+    float pfLeaf = 1.0 - smoothstep(0.05, 0.7, pfF.x);
+    // the bigger clumps the clusters gather in: a soft, cheap swell of light and shade
+    float pfBig = pfWobble(vPfWorld * 2.3 + h * 19.0);
+    pfClump = smoothstep(0.25, 0.75, pfBig) * 0.5 + pfLeaf * 0.5;
     vec3 pfGv = mat3(viewMatrix) * pfG;
     normal = normalize(normal - (pfGv - dot(pfGv, normal) * normal));
   }
@@ -376,30 +433,30 @@ if (dot(uSeason, uSeason) > 0.0) {
     float gw = grass * 0.9;
     c *= mix(vec3(1.0), mix(${lin(TURF_TONES.damp)}, ${lin(TURF_TONES.dry)}, smoothstep(0.25, 0.8, n1)), gw);
     c *= mix(1.0, 0.86 + 0.26 * n2, gw);
-    #if PF_DETAIL > 1
-    float n3 = pfNoise(gp * 6.1 + 5.7);
-    c *= mix(1.0, 0.9 + 0.2 * n3, gw);
-    #else
     float n3 = n2;
-    #endif
     #ifdef PF_SAND
     // the main island: a worn path of flattened, paler grass and bare soil along the stepping
-    // stones, and dark, mossy ground hugging the dais and the stones
-    float pd = ${pathD} + (n2 - 0.5) * 0.3;
-    float worn = smoothstep(0.6, 0.15, pd) * gw;
-    c = mix(c, c * vec3(1.08, 1.05, 0.8), worn * 0.75);
-    float soil = smoothstep(0.5, 0.78, n3 * 0.5 + n2 * 0.3 + smoothstep(0.4, 0.0, pd) * 0.35) * smoothstep(0.45, 0.12, pd);
-    c = mix(c, mix(${lin(0x9a7f5c)}, ${lin(0xb59c78)}, n1), soil * gw * 0.85);
-    float edge = smoothstep(0.24, 0.0, ${stoneD} + (n2 - 0.5) * 0.08);
-    edge = max(edge, smoothstep(2.02, 1.66, length(gp) + (n2 - 0.5) * 0.1));
-    c = mix(c, c * mix(${lin(0xa9c39a)}, ${lin(0xc2b096)}, n3), edge * gw);
-    // the island's cut edge: the turf's fringe over a band of dark soil and roots, down to the rock
-    float cutY = vPfWorld.y + 0.24 + (n2 - 0.5) * 0.12 + (n3 - 0.5) * 0.05;
-    float cut = smoothstep(0.02, -0.06, cutY);
-    vec3 soilC = mix(${lin(0x4a3424)}, ${lin(0x6b4c33)}, n2) * (0.8 + 0.35 * n3);
-    soilC = mix(soilC, ${lin(0x8b6a48)}, smoothstep(0.62, 0.8, pfNoise(vec2(atan(gp.y, gp.x) * 40.0, vPfWorld.y * 3.0))) * 0.6);
-    c = mix(c, soilC, cut);
+    // stones, and dark, mossy ground hugging the dais and the stones (only worked out round them)
+    if (abs(gp.x) < 2.95 && gp.y > 0.45 || dot(gp, gp) < 4.4) {
+      n3 = pfNoise(gp * 6.1 + 5.7);
+      float pd = ${pathD} + (n2 - 0.5) * 0.3;
+      float worn = smoothstep(0.6, 0.15, pd) * gw;
+      c = mix(c, c * vec3(1.08, 1.05, 0.8), worn * 0.75);
+      float soil = smoothstep(0.5, 0.78, n3 * 0.5 + n2 * 0.3 + smoothstep(0.4, 0.0, pd) * 0.35) * smoothstep(0.45, 0.12, pd);
+      c = mix(c, mix(${lin(0x9a7f5c)}, ${lin(0xb59c78)}, n1), soil * gw * 0.85);
+      float edge = smoothstep(0.24, 0.0, ${stoneD} + (n2 - 0.5) * 0.08);
+      edge = max(edge, smoothstep(2.02, 1.66, length(gp) + (n2 - 0.5) * 0.1));
+      c = mix(c, c * mix(${lin(0xa9c39a)}, ${lin(0xc2b096)}, n3), edge * gw);
+    }
     #endif
+    // a floating island's cut edge (this one and the distant ones): the turf's fringe over a band
+    // of dark soil and roots, down to the rock (vPfLandY: height below the land's top)
+    if (vPfLandY < -0.08) {
+      float cut = smoothstep(0.02, -0.06, vPfLandY + 0.17 + (n2 - 0.5) * 0.12 + (n3 - 0.5) * 0.05);
+      vec3 soilC = mix(${lin(0x4a3424)}, ${lin(0x6b4c33)}, n2) * (0.8 + 0.35 * n3);
+      soilC = mix(soilC, ${lin(0x8b6a48)}, smoothstep(0.62, 0.8, pfNoise(vec2(atan(gp.y, gp.x) * 40.0, vPfLandY * 3.0))) * 0.6);
+      c = mix(c, soilC, cut);
+    }
   }
   #endif
 
@@ -463,6 +520,16 @@ if (dot(uSeason, uSeason) > 0.0) {
     roughnessFactor = mix(roughnessFactor, 0.95, uSeason.w * snow);
     #endif
   }
+  #if PF_DETAIL > 0
+  #ifdef STANDARD
+  // open water: smooth enough to mirror the sky at a glancing angle, its body a little deeper
+  if (k > 3.5 && k < 4.5) {
+    float open = 1.0 - uSeason.w;
+    roughnessFactor = mix(roughnessFactor, 0.1, open);
+    c *= 1.0 - 0.18 * open;
+  }
+  #endif
+  #endif
   // water sparkle: little glints of sun dancing on open water (not on ice)
   float pfWet = (k > 3.5 && k < 4.5) ? 1.0 : (ground ? water : 0.0);
   if (pfWet > 0.01 && up > 0.6) {
@@ -476,7 +543,7 @@ if (dot(uSeason, uSeason) > 0.0) {
   if (k < 2.5 || (k > 4.5 && k < 6.5)) c *= mix(0.6, 1.0, smoothstep(-0.02, 0.5, vPfAO));
   #ifdef PF_OCC
   // inner foliage, deep in the canopy, darker (baked by the Batch)
-  c *= 1.0 - 0.62 * vPfOcc;
+  c *= 1.0 - 0.62 * clamp(vPfOcc, 0.0, 1.0);
   #endif
   #if PF_DETAIL > 0
   #if NUM_DIR_LIGHTS > 0
@@ -491,13 +558,13 @@ if (dot(uSeason, uSeason) > 0.0) {
     }
     float pfThin = (0.16 + 0.5 * pfEdge * pfEdge) * (0.55 + 0.45 * smoothstep(0.3, 0.8, pfClump));
     #ifdef PF_OCC
-    pfThin *= 1.0 - vPfOcc;
+    pfThin *= 1.0 - clamp(vPfOcc, 0.0, 1.0);
     #endif
     pfGlint += pfT * c * pfThin * (1.0 - uSeason.w * 0.7);
   }
   #endif
   // cloud shadows (applied to the direct light, after the lights)
-  pfCloud = pfCloudLight(vPfWorld, uPfTime, uPfCloud);
+  pfCloud = vPfCloud;
   #endif
   diffuseColor.rgb = c;
 }
