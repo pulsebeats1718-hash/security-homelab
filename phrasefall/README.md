@@ -258,11 +258,12 @@ correct answer, the number of answers that clears a stage, and the points.
   No samples, nothing to license; a composed, recorded soundtrack would be richer.
 - **Performance.** One WebGL canvas, ~150 draw calls. Quality presets
   (Auto / High / Medium / Low) plus dynamic resolution keep the frame rate steady
-  on phones. High renders into a multisampled half-float target and finishes the frame
-  in one pass (bloom from ½ resolution, the grade, a tilt-shift on menu shots), with
-  softer shadows and clear-coated toys; Medium does the same with bloom from ¼
-  resolution and no tilt-shift; Low draws straight to the screen as it always has (a
-  device without multisampled half-float targets does too). Development screenshots
+  on phones. High renders into a multisampled half-float target, adds a soft bloom built
+  at ½ resolution and finishes the frame in a single full-screen pass (tone mapping, the
+  grade, vignette, dithering, a tilt-shift on menu shots), with softer shadows and
+  clear-coated toys; Medium does the same with bloom from ¼ resolution and no
+  tilt-shift; Low draws straight to the screen as it always has (so does a device that
+  cannot multisample a half-float target). Development screenshots
   were taken with a software renderer, so real frame rates were reasoned about rather
   than measured on physical devices.
 - **Progress is saved in the browser** (`localStorage`). Players who sign in also
