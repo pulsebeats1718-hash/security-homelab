@@ -1,8 +1,8 @@
 /**
  * The village — Home Island's little high street, on a floating islet just behind the island so
  * the island itself keeps its trees, lanterns and garden exactly as they were. A cobbled lane runs
- * past a row of cottage shops: a tea room (its chalkboard on the cobbles), a bakery and the village
- * shop, under slate and thatch, with a street-name plate on the corner. At the end of the lane, a
+ * past a row of cottage shops: the village shop, a thatched tea room (its chalkboard on the cobbles,
+ * a street-name plate on its corner) and a bakery, under slate and thatch. At the end of the lane, a
  * small green with an oak, a bench and the village noticeboard; one of its notes is a poster of what
  * the player is learning (the phrase signs start here, at level 1).
  *
@@ -49,12 +49,12 @@ export class Village extends Diorama {
       if (y < -0.06) return c.setHex(0x5fb455);
       const e = Math.hypot(x, z / 0.42) / r;
       // the cobbled lane along the front, lawn behind
-      return c.setHex(e > 0.92 ? 0x6fc15a : z > 0.62 && z < 1.25 ? (Math.sin(x * 9) * Math.sin(z * 11) > 0 ? 0xb9b2a5 : 0xa8a195) : Math.sin(x * 2.1 + z * 1.3) > 0.5 ? 0x86d06a : 0x7ac65e);
+      return c.setHex(e > 0.92 ? 0x6fc15a : z > 0.8 && z < 1.4 ? (Math.sin(x * 9) * Math.sin(z * 11) > 0 ? 0xb9b2a5 : 0xa8a195) : Math.sin(x * 2.1 + z * 1.3) > 0.5 ? 0x86d06a : 0x7ac65e);
     };
 
     /** a cottage shop on the lane: walls, a roof, a shopfront and its fascia (returns the fascia) */
     const cottage = (x, w, o) => {
-      b.at(x, 0, 0.0, o.ry ?? 0, 1, () => {
+      b.at(x, 0, 0.3, o.ry ?? 0, 1, () => {
         const d = 0.95;
         const h = o.h ?? 1.25;
         block(0, 0, 0, w, h, d, o.wall, o.key ?? k.render, 0.04);
@@ -71,53 +71,56 @@ export class Village extends Diorama {
       });
     };
 
-    b.chunk(0.7, -0.55, -9.3, 0.05, 1, { delay: 0.66, phase: 0.9, amp: 0.05 }, () => {
+    // close behind the island (inside the menu's sharp band), the tea room just left of the character
+    b.chunk(0.6, -0.45, -7.7, 0.04, 1, { delay: 0.66, phase: 0.9, amp: 0.04 }, () => {
       addLand(b, 3.9, { depthScale: 0.42, top });
-      // the cottages, left to right: the tea room, the bakery, the village shop
-      cottage(-2.1, 1.25, {
-        wall: 0xf6eedf,
-        joinery: 0x2f6b5a,
-        thatch: true,
-        door: 'right',
-        sign: { id: 'fancy-a-cuppa', text: 'Fancy a Cuppa?', sub: 'Tea room', bg: '#2f6b5a', ink: '#fff6e0', font: 'display', upper: false },
-      });
-      cottage(-0.78, 1.2, {
-        wall: 0xf3d9c2,
-        joinery: 0x7a3b4a,
-        door: 'left',
-        upper: [0.2],
-        sign: { id: 'sell-like-hot-cakes', text: 'Sell Like Hot Cakes', sub: 'Bakery', bg: '#7a3b4a', ink: '#ffe8c8', font: 'display', upper: false },
-        extra: (z, h) => {
-          // the street-name plate on the corner, beside the upstairs window
-          slab(-0.28, h - 0.46, z + 0.005, 0.56, 0.18, 0.015, 0x151515);
-          signs.add(-0.28, h - 0.37, z + 0.016, 0.54, 0.16, { style: 'street', id: 'a-piece-of-cake', text: 'Piece of Cake Lane', district: '' });
-          // loaves in the window
-          for (let i = 0; i < 3; i++) ball(0.0 + i * 0.16, 0.24, z + 0.05, 0.13, 0xd9a35a, 'matte', 0.6);
-        },
-      });
-      cottage(0.52, 1.25, {
+      // the cottages, left to right: the village shop, the tea room, the bakery
+      cottage(-2.05, 1.25, {
         wall: 0xd9d0c0,
         key: k.stone,
         joinery: 0x24496b,
         door: 'mid',
         sign: { id: 'bits-and-bobs', text: 'Bits and Bobs', sub: 'Village shop', bg: '#24496b', ink: '#fff3d6', upper: false, font: 'display' },
         extra: (z) => {
-          // a crate of apples and a basket of flowers out front
+          // a crate of apples out front
           block(0.38, 0, z + 0.16, 0.26, 0.12, 0.18, 0x9a6a45, 'matte', 0.01);
           for (let i = 0; i < 6; i++) ball(0.3 + (i % 3) * 0.08, 0.14, z + 0.12 + Math.floor(i / 3) * 0.08, 0.07, i % 2 ? 0xe2483a : 0x8ad35a);
         },
       });
+      cottage(-0.78, 1.25, {
+        wall: 0xf6eedf,
+        joinery: 0x2f6b5a,
+        thatch: true,
+        door: 'right',
+        sign: { id: 'fancy-a-cuppa', text: 'Fancy a Cuppa?', sub: 'Tea room', bg: '#2f6b5a', ink: '#fff6e0', font: 'display', upper: false },
+        extra: (z, h) => {
+          // the street-name plate on the corner, beside the upstairs window
+          slab(-0.3, h - 0.47, z + 0.005, 0.58, 0.19, 0.015, 0x151515);
+          signs.add(-0.3, h - 0.375, z + 0.016, 0.56, 0.17, { style: 'street', id: 'a-piece-of-cake', text: 'Piece of Cake Lane', district: '' });
+        },
+      });
+      cottage(0.5, 1.2, {
+        wall: 0xf3d9c2,
+        joinery: 0x7a3b4a,
+        door: 'left',
+        upper: [0.2],
+        sign: { id: 'sell-like-hot-cakes', text: 'Sell Like Hot Cakes', sub: 'Bakery', bg: '#7a3b4a', ink: '#ffe8c8', font: 'display', upper: false },
+        extra: (z) => {
+          // loaves in the window
+          for (let i = 0; i < 3; i++) ball(0.0 + i * 0.16, 0.24, z + 0.05, 0.13, 0xd9a35a, 'matte', 0.6);
+        },
+      });
       // the tea room's chalkboard on the cobbles
-      b.at(-1.5, 0, 0.88, 0.2, 1, () => {
+      b.at(-0.5, 0, 1.12, 0.12, 1, () => {
         const a = P.aboard(0.28, 0.38, 0x6b4a32);
         signs.add(0, a.y, a.z, 0.28, 0.38, { style: 'chalk', head: 'Today', lines: [{ id: 'put-the-kettle-on', text: 'Put the kettle on' }, { id: 'elevenses', text: 'Elevenses' }] }, { rx: a.rx });
       });
       // a lantern on a post at the corner of the lane
-      post(1.35, 0, 0.75, 0.05, 1.05, 0x3a3d44, 'satin');
-      b.lit(WARM, -1, () => part('glow', SHAPE.lantern, 1.35, 1.12, 0.75, 0.12, 0.18, 0.12, 0, 0, 0, 0x5a4630));
-      this.halo(1.35, 1.12, 0.75, 1.3);
+      post(1.35, 0, 1.0, 0.05, 1.05, 0x3a3d44, 'satin');
+      b.lit(WARM, -1, () => part('glow', SHAPE.lantern, 1.35, 1.12, 1.0, 0.12, 0.18, 0.12, 0, 0, 0, 0x5a4630));
+      this.halo(1.35, 1.12, 1.0, 1.3);
       // the green: an oak, a bench and the village noticeboard
-      b.at(2.3, 0, 0.05, -0.2, 1, () => {
+      b.at(2.25, 0, 0.3, -0.2, 1, () => {
         post(0.55, 0, -0.35, 0.18, 0.9, 0x7a5a40);
         b.kind(KIND.FOLIAGE, () => {
           for (const [x, y, z, d] of [[0.55, 1.25, -0.35, 1.0], [0.2, 1.05, -0.2, 0.7], [0.9, 1.1, -0.45, 0.72], [0.55, 1.55, -0.4, 0.66]]) part('matte', SHAPE.sphere, x, y, z, d, d * 0.85, d, 0x5aae4e);

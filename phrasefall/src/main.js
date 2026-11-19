@@ -42,7 +42,8 @@ import { Progress } from './game/progress.js';
 import { currentSeason } from './data/seasons.js';
 import { createAccount } from './ui/account.js';
 import { createOnline } from './online/index.js';
-import { loadExpressions, expressionsReady, whenExpressionsReady } from './data/expressions/index.js';
+import { loadExpressions, expressionsReady, whenExpressionsReady, getExpression } from './data/expressions/index.js';
+import { connectSigns } from './world/signs.js';
 
 const params = new URLSearchParams(location.search);
 
@@ -210,6 +211,14 @@ async function boot() {
   s.party = ui.add('party', createParty(app));
   ui.finish();
   createNotifier(app); // toasts for quests, goals and level-ups
+  // the phrases on signs around town: a tap (in the menu) shows what the expression means
+  connectSigns(app);
+  events.on('sign:tap', ({ id, text }) => {
+    const e = getExpression(id);
+    if (!e) return;
+    audio.play('flip');
+    ui.toast({ icon: 'book', title: `“${text || e.text}”`, sub: e.meaning, tone: 'sky', ms: 4800 });
+  });
   app.achievements = createAchievements(app); // badges for milestones, unlocked from game events
   app.account = createAccount(app); // header chip, account sheet, nickname dialog (online builds only)
 

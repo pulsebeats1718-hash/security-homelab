@@ -1,6 +1,7 @@
 /**
  * Home Island — where every journey starts: blossom and green trees, bushes, rocks, mushrooms,
- * a signpost, two lanterns and a sky full of smaller floating islands.
+ * a signpost, two lanterns and a sky full of smaller floating islands. Just behind it floats the
+ * village (city/village.js): a little high street of cottage shops with the first phrase signs.
  */
 import * as THREE from 'three';
 import { mulberry32 } from '../../core/utils.js';
@@ -8,6 +9,7 @@ import { makeGlowTexture } from '../sky.js';
 import { HOME_DRAWS } from '../island.js';
 import { Batch, UNIT, makeLand, std, popMaterial, popDepth, popU, popK } from './kit.js';
 import { KIND, seasonMaterial } from '../seasons/shader.js';
+import { Village } from './city/village.js';
 
 /** How each of Home's materials reacts to the seasons. */
 const KINDS = { leaf: KIND.FOLIAGE, leaf2: KIND.FOLIAGE, blossom: KIND.BLOSSOM, blossom2: KIND.BLOSSOM };
@@ -42,7 +44,7 @@ function addLantern(b, x, z, facing) {
 const near = (x, z) => Math.min(1, Math.hypot(x, z) / 7);
 
 export class Home {
-  constructor(island) {
+  constructor(island, quality = 'high') {
     this.group = new THREE.Group();
     this.group.name = 'home';
     this.ground = null;
@@ -171,19 +173,27 @@ export class Home {
     });
 
     this.petalT = 1;
+
+    // the village's high street, on its own islet behind the island
+    this.village = new Village(island, quality);
+    this.group.add(this.village.group);
+    this.props.push(...this.village.props);
   }
 
   setPop(p) {
     this.p = p;
     this.u.uPop.value = p;
+    this.village.setPop(p);
   }
 
   apply(v) {
+    this.village.apply(v);
     this.lampMat.emissiveIntensity = 0.15 + v.lamps * 2.6;
     for (const l of this.lamps) l.halo.material.opacity = Math.min(0.85, v.lamps * 0.6);
   }
 
-  update(t) {
+  update(t, dt = 0) {
+    this.village.update(t, dt);
     const sink = this.u.uSink.value;
     for (const f of this.far) {
       const u = popU(this.p, f.delay);

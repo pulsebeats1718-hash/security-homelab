@@ -43,8 +43,8 @@ void main() {
   float r = length(p * vec2(1.0, 0.84));
   float up = smoothstep(-0.4, 1.0, p.y);
   float n = sin(p.x * 8.0 + uTime * 2.1) * 0.5 + sin(p.x * 15.0 - uTime * 3.3 + p.y * 4.0) * 0.3 + sin(p.y * 7.0 - uTime * 7.5 + p.x * 3.0) * 0.35;
-  float edge = 0.86 + 0.16 * n * up;
-  float body = smoothstep(edge, edge - 0.62, r);
+  float edge = 0.8 + 0.16 * n * up;
+  float body = smoothstep(edge, edge - 0.45, r);
   float core = smoothstep(0.62, 0.0, r);
   float flick = 0.86 + 0.14 * sin(uTime * 11.0 + p.y * 5.0);
   vec3 col = mix(uEdge, uCore, core * 0.8 + 0.2);
@@ -344,7 +344,7 @@ export class Juice {
       this.aura.quaternion.copy(this.stage.camera.quaternion);
       this.aura.scale.set(top * 0.66, top * 0.74, 1);
       this.auraU.uTime.value = this.t;
-      this.auraU.uLevel.value = f * (low ? 0.5 : 0.75);
+      this.auraU.uLevel.value = f * (low ? 0.65 : 1.0);
       this.dais.position.x = _v.x;
       this.dais.position.z = _v.z;
       this.daisU.uTime.value = this.t;
