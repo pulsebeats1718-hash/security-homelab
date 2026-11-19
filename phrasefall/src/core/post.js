@@ -663,15 +663,17 @@ export class PostFX {
     const px = this.height / 915; // tuned on a 915 px tall phone screen; scales with the resolution
     const t = Math.min(1, Math.max(0, d.tilt));
     const zf = Math.max(1, d.focus);
-    // far side: a lens focused at zf + back blurs a point at z by A · (1 − (zf + back) / z)
-    const zfar = zf + d.back * (1 - t) + 0.7 * t;
-    const A = (13 * d.far * (1 - t) + 40 * t) * px;
+    // far side: a lens focused at zf + back blurs a point at z by A · (1 − (zf + back) / z). On the
+    // menus the sharp zone reaches 5 units behind the subject, so a city's street front and its signs
+    // stay readable; the back rows soften only a little and the distant skyline and sky stay soft
+    const zfar = zf + d.back * (1 - t) + 5.0 * t;
+    const A = (13 * d.far * (1 - t) + 16 * t) * px;
     const band = 1 - zf / zfar;
     // near side (menus only), sharp to 0.6 units in front of the subject
     const zfront = Math.max(0.5, zf - 0.6);
     const B = 34 * t * px;
     this._coc.set(zf, (A * zfar) / zf, band, (B * zfront) / zf);
-    this._coc2.set(zf / zfront - 1, (12 + 12 * t) * px);
+    this._coc2.set(zf / zfront - 1, (12 + 4 * t) * px);
     return A + B > 0.01;
   }
 
