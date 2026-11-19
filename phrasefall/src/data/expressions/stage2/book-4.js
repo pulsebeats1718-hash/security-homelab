@@ -603,7 +603,7 @@ export default [
     text: 'tag along',
     type: 'phrasal',
     level: 2,
-    meaning: 'go along with others, casually',
+    meaning: 'come with others, in a casual way',
     distractors: ['follow someone to stop them', 'leave a place without telling anyone', 'sit apart from the group'],
     example: 'Do you mind if I tag along?',
     synonyms: ['come along', 'go along'],
