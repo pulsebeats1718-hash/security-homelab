@@ -111,6 +111,7 @@ export class Stage {
     }
     if (this.post) this.post.setTier(tier);
     else this.post = new PostFX(this.renderer, tier);
+    if (!this.post.ok) console.warn('Phrasefall: no multisampling for the post finish on this device; rendering directly.');
     this._postChecked = false;
   }
 

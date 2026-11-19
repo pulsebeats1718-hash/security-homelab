@@ -271,7 +271,7 @@ export class Environment {
     // the sky light carries the sky's own brightness: scale it so a night sky still gives a soft
     // moonlit fill (and a bright noon sky does not flood everything)
     const envLum = 0.4 * lum(v.skyTop) + 0.4 * lum(v.skyHorizon) + 0.2 * lum(v.hemiGround);
-    scene.environmentIntensity = v.env * dim * Math.min(5, Math.max(0.8, ENV_LEVEL / Math.max(envLum, 1e-3)));
+    scene.environmentIntensity = v.env * dim * Math.min(14, Math.max(0.8, ENV_LEVEL / Math.max(envLum, 1e-3)));
     this.stage.renderer.toneMappingExposure = v.exposure * dim;
     this.hemi.color.copy(v.hemiSky);
     this.hemi.groundColor.copy(v.hemiGround);
@@ -284,6 +284,7 @@ export class Environment {
     this.rim.intensity = v.rimIntensity;
     this.rim.position.copy(this._skySun).multiplyScalar(30).setY(Math.max(6, this._skySun.y * 30));
     rimShared.color.value.copy(v.rim);
+    rimShared.boost.value = 1.3; // the rim is directional now (bright on the sun's side): a touch more of it
     this._fitShadow();
     this._grade();
     this.sky.apply(v, this._skySun);
@@ -341,5 +342,5 @@ const _b = new THREE.Vector3();
 const _c3 = new THREE.Vector3();
 const _p = new THREE.Vector3();
 /** How bright the sky light is on average (the themes' `env` values then scale it, as before). */
-const ENV_LEVEL = 0.62;
+const ENV_LEVEL = 0.95;
 const lum = (c) => 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;

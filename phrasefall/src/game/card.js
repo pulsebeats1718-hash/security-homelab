@@ -73,10 +73,16 @@ uniform float uSheen;
 uniform float uGlitter;
 uniform vec3 uSheenColor;
 varying vec3 vCardPos;`).replace(
+        '#include <color_fragment>',
+        // enamel: the face is a touch lighter towards its top edge, like a softly curved, glazed tablet
+        '#include <color_fragment>\ndiffuseColor.rgb *= 0.93 + 0.07 * smoothstep(-0.75, 0.75, vCardPos.y);'
+      ).replace(
         '#include <emissivemap_fragment>',
         `#include <emissivemap_fragment>
 {
   float front = smoothstep(0.02, 0.11, vCardPos.z);
+  float glaze = smoothstep(0.3, 0.72, vCardPos.y);
+  totalEmissiveRadiance += uSheenColor * glaze * glaze * 0.1 * front;
   // a diagonal band of light crosses the face in about two seconds, then rests
   float cross = mix(-5.2, 5.2, smoothstep(0.0, 0.5, fract(uCardTime * 0.2)));
   float d = vCardPos.x + vCardPos.y * 0.8 - cross;

@@ -44,6 +44,8 @@ void main() {
   float top = smoothstep(0.0, 0.75, vH);
   vec3 col = mix(uShade, uLit, wrap * (0.6 + 0.4 * top) + 0.12 * max(n.y, 0.0));
   col *= 0.9 + 0.1 * top;
+  // undersides catch warm light bounced up from the sunlit cloud sea below
+  col += uLit * max(-n.y, 0.0) * 0.16;
   // silver lining: the rims light up where the sun is behind the cloud
   float fres = pow(1.0 - max(dot(n, v), 0.0), 3.0);
   col += uRim * fres * (0.3 + 0.7 * max(dot(-v, uRimDir), 0.0)) * (0.6 + 0.4 * top);
@@ -122,8 +124,9 @@ export class Clouds {
     // middle layer: drifts across behind the island
     for (let i = 0; i < midCount; i++) {
       const z = -10 - rng() * 62;
-      // distinct puffs with sky between them (sized so even the far ones never fill the view)
-      push({ x: (rng() * 2 - 1) * 60, y: -3 + rng() * 22, z, s: 1.1 + rng() * 1.7 + -z * 0.024, speed: 0.25 + rng() * 0.35, wrap: 66, bob: rng() * 6 });
+      // distinct puffs with sky between them (sized so even the far ones never fill the view); the
+      // nearer ones sit lower, so the sky above the island stays open
+      push({ x: (rng() * 2 - 1) * 60, y: -3 + rng() * (9 + (-z - 10) * 0.21), z, s: 1.1 + rng() * 1.7 + -z * 0.024, speed: 0.25 + rng() * 0.35, wrap: 66, bob: rng() * 6 });
     }
     // cloud sea below
     for (let i = 0; i < seaCount; i++) {

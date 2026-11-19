@@ -163,7 +163,7 @@ const pass = (fragmentShader, uniforms, o = {}) =>
 
 const target = (o = {}) => new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, depthBuffer: false, stencilBuffer: false, ...o });
 
-/** The grade every post tier starts from; Environment.setGrade() nudges it per time of day. */
+/** The grade every post tier starts from; the environment nudges it per time of day (Environment._grade). */
 export const GRADE = {
   lift: [0.012, 0.008, 0.024],
   gamma: [1.0, 1.0, 1.0],
@@ -178,7 +178,8 @@ export const GRADE = {
 
 /**
  * Can this device run the post tiers? WebGL 2 with a renderable half-float format. MSAA on that
- * format is checked separately (samples()).
+ * format is checked separately (msaaSamples): without it the finish stays off, so edges never
+ * lose the antialiasing the plain screen has.
  */
 export function postSupported(renderer) {
   return renderer.capabilities.isWebGL2 && (renderer.extensions.has('EXT_color_buffer_float') || renderer.extensions.has('EXT_color_buffer_half_float'));
@@ -260,6 +261,7 @@ export class PostFX {
   setTier(tier) {
     this.tier = tier;
     const samples = msaaSamples(this.renderer, tier.samples);
+    this.ok = samples > 0;
     if (samples !== this.scene.samples) {
       this.scene.samples = samples;
       this.scene.dispose(); // re-created with the new sample count on next use
