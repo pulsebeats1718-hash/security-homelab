@@ -39,7 +39,6 @@ export class Island {
       grass: seasonMaterial(std(0xffffff, { vertexColors: true, roughness: 1 }), { kind: KIND.TURF, sand: true, grassAttr: true }),
       rock: std(0xffffff, { vertexColors: true, flatShading: true }),
       stone: std(0xdcd3c3, { roughness: 0.85 }),
-      leaf2: std(0x3fa65c),
     });
 
     const { radius: RADIUS, depth: DEPTH } = ISLAND;

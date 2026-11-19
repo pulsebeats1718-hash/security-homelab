@@ -53,7 +53,7 @@ function stormMaterial(u) {
     shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vStorm;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvStorm = position;');
     shader.fragmentShader = shader.fragmentShader
       .replace('#include <common>', '#include <common>\nuniform vec3 uStormRim;\nuniform vec3 uStormFlash;\nvarying vec3 vStorm;')
-      .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb *= mix(0.68, 1.12, smoothstep(-0.75, 0.75, vStorm.y));')
+      .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb *= mix(0.6, 1.0, smoothstep(-0.75, 0.75, vStorm.y));')
       .replace(
         '#include <emissivemap_fragment>',
         `#include <emissivemap_fragment>
@@ -257,7 +257,8 @@ export class Boss {
     const hum = (Math.sin(t * 23) > 0.6 ? 0.5 : 0) + Math.sin(t * 7) * 0.15;
     this.boltMat.emissiveIntensity = 1.3 + hum + flick * 4.5;
     this.glowMat.opacity = stormy ? 0.22 + hum * 0.2 + flick * 0.75 : 0;
-    this.storm.uStormFlash.value.copy(this.def ? this._flash.set(this.def.bolt) : this._flash.set(0xffd54a)).multiplyScalar(stormy ? flick * 0.55 : 0);
+    this._flash.set(this.def.bolt);
+    this.storm.uStormFlash.value.copy(this._flash).multiplyScalar(stormy ? flick * 0.55 : 0);
     this.storm.uStormRim.value.setRGB(0.32, 0.34, 0.45).lerp(this._flash, 0.25).multiplyScalar(stormy ? 1 : 1.6);
     for (const e of this.eyes) e.pupil.position.x = Math.sin(t * 0.8) * 0.05;
     void alpha;

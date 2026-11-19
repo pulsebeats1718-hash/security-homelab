@@ -253,7 +253,7 @@ export class Environment {
     u.uVibrance.value = 0.24 + warm * 0.12 - night * 0.05;
     u.uContrast.value = 0.22 - night * 0.13;
     u.uLift.value.set(0.012, 0.008 + night * 0.008, 0.024 + night * 0.02);
-    u.uVignette.value.x = 0.32 + night * 0.06;
+    u.uVignette.value.x = 0.26 + night * 0.08;
     post.bloom.strength = 0.7 + night * 0.25;
   }
 
@@ -285,7 +285,7 @@ export class Environment {
     this.rim.intensity = v.rimIntensity;
     this.rim.position.copy(this._skySun).multiplyScalar(30).setY(Math.max(6, this._skySun.y * 30));
     rimShared.color.value.copy(v.rim);
-    rimShared.boost.value = 1.3; // the rim is directional now (bright on the sun's side): a touch more of it
+    rimShared.boost.value = 1.2; // the rim is directional now (bright on the sun's side): a touch more of it
     this._fitShadow();
     this._grade();
     this.sky.apply(v, this._skySun);

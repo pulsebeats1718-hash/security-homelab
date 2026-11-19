@@ -172,8 +172,8 @@ export const GRADE = {
   contrast: 0.22,
   shadowTint: [-0.014, 0.0, 0.03],
   highTint: [0.026, 0.01, -0.018],
-  vignette: 0.32,
-  vignetteColor: [0.34, 0.27, 0.48],
+  vignette: 0.26,
+  vignetteColor: [0.5, 0.42, 0.6],
 };
 
 /**

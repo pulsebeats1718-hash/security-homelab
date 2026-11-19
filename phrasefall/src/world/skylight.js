@@ -37,7 +37,7 @@ void main() {
   float s = max(dot(d, uSunDir), 0.0);
   c += uSunColor * (pow(s, 5.0) * 0.45 + pow(s, 40.0) * 1.6) * uSun;
   // a little less saturated than the sky itself, so the fill keeps the toys' own colours
-  c = mix(vec3(dot(c, vec3(0.2126, 0.7152, 0.0722))), c, 0.65);
+  c = mix(vec3(dot(c, vec3(0.2126, 0.7152, 0.0722))), c, 0.55);
   gl_FragColor = vec4(c, 1.0);
 }`;
 

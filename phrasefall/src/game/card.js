@@ -61,7 +61,9 @@ export class ExpressionCard {
 
     this.accent = new THREE.Color(0xffc83d);
     this.frameMat = new THREE.MeshStandardMaterial({ color: 0xffc83d, roughness: 0.32, emissive: 0xffc83d, emissiveIntensity: 0.35 });
-    this.faceMat = new THREE.MeshStandardMaterial({ color: 0xfff6e3, roughness: 0.34, emissive: 0xfff1d6, emissiveIntensity: 0.5 });
+    // a little more of its own light and a little less of the sky's: the face keeps its cream colour
+    // under a pink twilight or a blue night (the sky light tints everything else)
+    this.faceMat = new THREE.MeshStandardMaterial({ color: 0xcfc6b6, roughness: 0.34, emissive: 0xfff1d6, emissiveIntensity: 0.62 });
     // the sheen and (golden cards) the glitter, drawn on the face as light of its own
     this.finish = { uCardTime: { value: 0 }, uSheen: { value: 0.3 }, uGlitter: { value: 0 }, uSheenColor: { value: new THREE.Color(1, 0.97, 0.9) } };
     this.faceMat.onBeforeCompile = (shader) => {
@@ -84,8 +86,8 @@ varying vec3 vCardPos;`).replace(
   float glaze = smoothstep(0.3, 0.72, vCardPos.y);
   totalEmissiveRadiance += uSheenColor * glaze * glaze * 0.1 * front;
   // a diagonal band of light crosses the face in about two seconds, then rests
-  float cross = mix(-5.2, 5.2, smoothstep(0.0, 0.5, fract(uCardTime * 0.2)));
-  float d = vCardPos.x + vCardPos.y * 0.8 - cross;
+  float sweep = mix(-5.2, 5.2, smoothstep(0.0, 0.5, fract(uCardTime * 0.2)));
+  float d = vCardPos.x + vCardPos.y * 0.8 - sweep;
   float band = exp(-d * d * 2.6) * 0.75 + exp(-d * d * 22.0) * 0.5;
   totalEmissiveRadiance += uSheenColor * band * uSheen * front;
   // glitter: tiny glints that come and go
@@ -287,9 +289,9 @@ varying vec3 vCardPos;`).replace(
     this.finish.uGlitter.value = golden ? 2.6 : 0;
     // twist cards: a soft tint of their own, so they read as different at a glance
     const face = golden ? 0xffdf86 : (kind && TWIST_FACE[kind]) || 0xfff6e3;
-    this.faceMat.color.set(face);
+    this.faceMat.color.set(face).multiplyScalar(golden ? 1 : 0.8);
     this.faceMat.emissive.set(golden ? 0xffc94a : kind ? face : 0xfff1d6);
-    this.faceMat.emissiveIntensity = golden ? 0.36 : 0.5;
+    this.faceMat.emissiveIntensity = golden ? 0.36 : 0.62;
     this.glow.scale.set(W * (golden ? 2.1 : 1.7), H * (golden ? 4 : 3.2), 1);
     for (const gem of this.gems) gem.rotation.y = 0;
     this.scale = scale;

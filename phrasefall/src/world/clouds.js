@@ -1,11 +1,13 @@
 /**
  * Stylised puffy clouds: a drifting middle layer and a soft "sea" far below the islands.
  *
- * Their look is hand-made rather than PBR (and cheaper than it): a wide, soft terminator like light
- * through cotton wool, cooler and darker undersides, a sky-tinted shadow side, a silver lining where
- * the sun is behind them, and the theme's sunset glow.
+ * Their look is hand-made rather than PBR (and cheaper than it): a soft terminator like light
+ * through cotton wool, a sky-tinted shadow side, undersides warmed by light bounced up from the
+ * cloud sea, a silver lining where the sun is behind them, and the theme's sunset glow.
  */
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { mulberry32 } from '../core/utils.js';
 
 const CLOUD_VERT = /* glsl */ `
 #include <common>
@@ -55,8 +57,6 @@ void main() {
   #include <colorspace_fragment>
   #include <fog_fragment>
 }`;
-import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { mulberry32 } from '../core/utils.js';
 
 function puffGeometry(rng, blobs) {
   const parts = [];
@@ -126,7 +126,7 @@ export class Clouds {
       const z = -10 - rng() * 62;
       // distinct puffs with sky between them (sized so even the far ones never fill the view); the
       // nearer ones sit lower, so the sky above the island stays open
-      push({ x: (rng() * 2 - 1) * 60, y: -3 + rng() * (9 + (-z - 10) * 0.21), z, s: 1.1 + rng() * 1.7 + -z * 0.024, speed: 0.25 + rng() * 0.35, wrap: 66, bob: rng() * 6 });
+      push({ x: (rng() * 2 - 1) * 60, y: -4 + rng() * (8 + (-z - 10) * 0.1), z, s: 1.1 + rng() * 1.7 + -z * 0.024, speed: 0.25 + rng() * 0.35, wrap: 66, bob: rng() * 6 });
     }
     // cloud sea below
     for (let i = 0; i < seaCount; i++) {
