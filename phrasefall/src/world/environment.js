@@ -219,6 +219,8 @@ export class Environment {
   /** Re-read the stage quality (shadows on / off, shadow resolution and softness). */
   setQuality() {
     toyFinish.level = this.stage.qualityName;
+    // the island's lawn, birds and per-tier shader detail follow the tier too
+    this.island.setQuality?.(this.stage.qualityName);
     const size = this.stage.quality.shadow;
     this.sun.castShadow = size > 0;
     this.sun.shadow.radius = this.stage.quality.shadowRadius ?? 1;

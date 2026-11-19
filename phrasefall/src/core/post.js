@@ -190,24 +190,31 @@ uniform sampler2D tScene;
 uniform vec2 uTexel; // full-resolution texel
 uniform float uDiv;
 varying vec2 vUv;
+// the sky is left out of the lens (stars, moon and sun stay crisp): a code above any real blur
+const float SKY = 1000.0;
+float cocAt(vec2 uv) {
+  float d = texture2D(tDepth, uv).r;
+  return d > 0.99999 ? SKY : cocOf(viewDist(d)) / uDiv;
+}
 void main() {
   vec2 o = uTexel * (uDiv * 0.25);
   vec2 u0 = vUv + vec2(-o.x, -o.y);
   vec2 u1 = vUv + vec2(o.x, -o.y);
   vec2 u2 = vUv + vec2(-o.x, o.y);
   vec2 u3 = vUv + vec2(o.x, o.y);
-  float c0 = cocOf(distAt(u0));
-  float c1 = cocOf(distAt(u1));
-  float c2 = cocOf(distAt(u2));
-  float c3 = cocOf(distAt(u3));
-  vec4 w = vec4(abs(c0), abs(c1), abs(c2), abs(c3)) + 0.25;
+  vec4 c = vec4(cocAt(u0), cocAt(u1), cocAt(u2), cocAt(u3));
+  vec4 sky = step(SKY, c);
+  vec4 w = mix(abs(c), vec4(0.0), sky) + 0.25;
   vec3 col = texture2D(tScene, u0).rgb * w.x + texture2D(tScene, u1).rgb * w.y + texture2D(tScene, u2).rgb * w.z + texture2D(tScene, u3).rgb * w.w;
   col /= w.x + w.y + w.z + w.w;
-  // the block's blur is that of its farthest pixel behind the focus and its nearest in front of it
-  float c = max(max(c0, c1), max(c2, c3));
-  float n = min(min(c0, c1), min(c2, c3));
-  c = -n > c ? n : c;
-  gl_FragColor = vec4(min(col, vec3(32.0)), c / uDiv);
+  // the block's blur is that of its farthest pixel behind the focus and its nearest in front of it;
+  // all sky stays sky
+  vec4 cs = mix(c, vec4(-SKY), sky);
+  float far = max(max(cs.x, cs.y), max(cs.z, cs.w));
+  float near = min(min(c.x, c.y), min(c.z, c.w));
+  float coc = -near > far ? near : far;
+  if (sky.x * sky.y * sky.z * sky.w > 0.5) coc = SKY;
+  gl_FragColor = vec4(min(col, vec3(32.0)), coc);
 }`;
 
 /**
@@ -222,21 +229,25 @@ uniform float uMaxR;
 varying vec2 vUv;
 void main() {
   vec4 c0 = texture2D(tSrc, vUv);
-  float r0 = abs(c0.a);
+  float r0 = c0.a > 999.0 ? 0.0 : abs(c0.a);
   vec3 col = c0.rgb;
   float tot = 1.0;
+  float cov = 0.0;
   float spin = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) * 6.2831853;
   for (int i = 0; i < TAPS; i++) {
     float a = float(i) * 2.39996323 + spin;
     float r = sqrt((float(i) + 0.5) / float(TAPS)) * uMaxR;
     vec4 s = texture2D(tSrc, vUv + vec2(cos(a), sin(a)) * r * uTexel);
-    float sr = abs(s.a);
-    if (s.a > c0.a) sr = min(sr, r0 * 2.0);
+    float sr = s.a > 999.0 ? 0.0 : abs(s.a);
+    bool behind = s.a > c0.a;
+    if (behind) sr = min(sr, r0 * 2.0);
     float m = smoothstep(r - 0.6, r + 0.6, sr);
     col += mix(col / tot, s.rgb, m);
     tot += 1.0;
+    // how much of this pixel is covered by the blur of things in front of it (soft edges over sharper ground)
+    if (!behind) cov += m;
   }
-  gl_FragColor = vec4(col / tot, 1.0);
+  gl_FragColor = vec4(col / tot, cov / float(TAPS));
 }`;
 
 /** Sun shafts, step 1: the open sky, brightest round the sun (cloud, trees and the island block it). */
@@ -373,8 +384,11 @@ void main() {
   c *= mix(1.0, aoAt(vUv, z), uAOInfo.z);
   #endif
   #ifdef DOF
-  float coc = abs(cocOf(z));
-  c = mix(c, texture2D(tDOF, vUv).rgb, smoothstep(0.4, 3.0, coc));
+  {
+    float coc = z > uNF.z * 0.999 ? 0.0 : abs(cocOf(z));
+    vec4 blur = texture2D(tDOF, vUv);
+    c = mix(c, blur.rgb, max(smoothstep(0.4, 3.0, coc), clamp(blur.a * 3.0, 0.0, 1.0)));
+  }
   #endif
   #ifdef RAYS
   {
