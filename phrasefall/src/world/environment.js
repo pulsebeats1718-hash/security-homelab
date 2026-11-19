@@ -327,7 +327,7 @@ export class Environment {
     else if (this._envDue) this._env();
     // the characters' rim light comes from the sky's sun side: hand them its direction in view space
     rimShared.dir.value.copy(this._skySun).transformDirection(this.stage.camera.matrixWorldInverse);
-    this.sky.setDither(!this.stage.postActive);
+    this.sky.setFinish(this.stage.postActive);
     this.sky.update(t, this.stage.camera, this.stage.pixelRatio);
     this.island.update(t, dt);
     this.places.update(t, dt);

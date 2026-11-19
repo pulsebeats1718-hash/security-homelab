@@ -20,6 +20,7 @@ uniform vec3 uSunColor;
 uniform float uSunDisc;
 uniform float uTime;
 uniform float uDither;
+uniform float uRays;
 varying vec3 vDir;
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
@@ -59,6 +60,14 @@ void main() {
 
   // the sun: a crisp disc bright enough to glow, a corona, and a wide soft halo
   float s = max(dot(d, S), 0.0);
+  // high and medium quality: soft rays fanning out from a low sun, slowly turning
+  if (uRays > 0.0 && s > 0.2) {
+    vec3 T = normalize(cross(S, vec3(0.0, 1.0, 0.0)) + vec3(1e-4, 0.0, 0.0));
+    vec3 B = cross(T, S);
+    float ang = atan(dot(d, B), dot(d, T));
+    float rays = 0.5 + 0.5 * sin(ang * 11.0 + uTime * 0.04) * sin(ang * 5.0 - uTime * 0.025 + 1.3);
+    col += uSunColor * rays * rays * pow(s, 7.0) * (1.0 - pow(s, 400.0)) * 0.22 * uRays * smoothstep(-0.04, 0.12, h);
+  }
   float disc = smoothstep(0.99945, 0.99975, s) * uSunDisc;
   col += uSunColor * (disc * 4.0 + pow(s, 700.0) * 1.1 * uSunDisc + pow(s, 64.0) * 0.3 * (0.3 + uSunDisc) + pow(s, 8.0) * 0.15 + pow(s, 2.5) * 0.06);
 
@@ -141,6 +150,7 @@ export class Sky {
       uSunDisc: { value: 1 },
       uTime: { value: 0 },
       uDither: { value: 1 },
+      uRays: { value: 0 },
     };
     const dome = new THREE.Mesh(
       new THREE.SphereGeometry(300, 32, 20),
@@ -227,6 +237,8 @@ export class Sky {
     u.uSunColor.value.copy(v.sunColor);
     u.uSunDisc.value = v.sunDisc;
     u.uSunDir.value.copy(sunDir);
+    // rays only while the sun is low and showing (sunrise, golden hour)
+    this.raysAmt = v.sunDisc * Math.max(0, 1 - Math.max(0, sunDir.y) * 3);
     this.starUniforms.uOpacity.value = v.stars;
     this.stars.visible = v.stars > 0.01;
     this.moon.visible = v.moon > 0.01;
@@ -236,13 +248,18 @@ export class Sky {
     for (const a of this.auroraUniforms) a.uOpacity.value = v.aurora * 0.55;
   }
 
-  /** Dither the sky only when it goes straight to the screen (the post finish dithers everything). */
-  setDither(on) {
-    this.uniforms.uDither.value = on ? 1 : 0;
+  /**
+   * Straight to the screen (low quality) the sky dithers itself; through the post finish (which
+   * dithers everything) it gets the sun's rays instead.
+   */
+  setFinish(post) {
+    this.uniforms.uDither.value = post ? 0 : 1;
+    this.rays = post;
   }
 
   update(t, camera, pixelRatio) {
     this.uniforms.uTime.value = t;
+    this.uniforms.uRays.value = this.rays ? this.raysAmt ?? 0 : 0;
     this.starUniforms.uPixel.value = pixelRatio;
     this.group.position.copy(camera.position); // the sky never gets closer
     this.group.position.y = 0;
