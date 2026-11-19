@@ -187,7 +187,7 @@ export default [
     text: 'thinking back on it',
     type: 'set-phrase',
     level: 3,
-    meaning: 'remembering it now, later on',
+    meaning: 'remembering it now, afterwards',
     distractors: ['before it had even happened', 'while it was still going on', "if I'm planning for next time"],
     example: 'Thinking back on it, I should have taken the earlier train.',
     synonyms: ['looking back', 'in hindsight', 'on reflection'],
