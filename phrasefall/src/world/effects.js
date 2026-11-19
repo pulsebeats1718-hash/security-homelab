@@ -262,7 +262,8 @@ export class Effects {
     const hidden = [this.shot.group, this.dizzy.group, ...this.rings.map((r) => r.mesh), ...Object.values(this.shot.meshes)];
     const was = hidden.map((o) => o.visible);
     hidden.forEach((o) => (o.visible = true));
-    renderer.compile(scene, camera);
+    if (this.stage.compile) this.stage.compile(scene, scene); // for the target the frames really render into
+    else renderer.compile(scene, camera);
     hidden.forEach((o, i) => (o.visible = was[i]));
   }
 

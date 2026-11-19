@@ -140,6 +140,8 @@ export class Stage {
         // keep the focus band on the shot's subject wherever the shot puts it on screen
         const p = _v.copy(this._focus).project(this.camera);
         post.tilt.focus = clamp(p.y * 0.5 + 0.5, 0.15, 0.85);
+        // the sharp band covers the character (about 2.6 units tall) whatever the zoom
+        post.tilt.band = clamp(1.3 / this.shot.span, 0.1, 0.4);
       }
       post.render(this.scene, this.camera);
       if (!this._postChecked) {

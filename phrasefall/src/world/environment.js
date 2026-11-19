@@ -105,7 +105,7 @@ export class Environment {
    */
   preparePlace(id) {
     const e = this.places.prepare(id);
-    if (e) this.stage.renderer.compile(e.place.group, this.stage.camera, this.stage.scene);
+    if (e) this.stage.compile(e.place.group);
   }
 
   /**
