@@ -10,7 +10,7 @@
  * driven by Home: setPop, apply and update are passed on.
  */
 import { mulberry32 } from '../../../core/utils.js';
-import { Diorama, SHAPE, addLand } from '../kit.js';
+import { Diorama, SHAPE, addLand, groundY } from '../kit.js';
 import { KIND } from '../../seasons/shader.js';
 import { SignSet } from '../../signs.js';
 import { cityMaterials } from './materials.js';
@@ -138,6 +138,23 @@ export class Village extends Diorama {
         slab(-0.7, 0.2, 0.55, 0.6, 0.03, 0.2, 0xb07444);
         part('matte', SHAPE.box, -0.7, 0.32, 0.46, 0.6, 0.12, 0.02, 0xb07444, -0.15, 0, 0);
       });
+    });
+
+    // ── on the island itself: two boards beside the dais, big enough to read from the menu ──
+    // They stand close in to the trees, where no flower grows, and are not listed as
+    // props, so the garden, the seasonal dressing and the decorations stay exactly where they were.
+    const board = (x, z, ry, fn) => b._scope(fn, b._local(x, groundY(x, z), z, ry, 1.8), { anchor: b.world(x, groundY(x, z), z), delay: 0.55 });
+    // the tea room's chalkboard, by the little tree
+    board(-1.2, -3.68, 0.12, () => {
+      const a = P.aboard(0.3, 0.42, 0x6b4a32);
+      signs.add(0, a.y, a.z, 0.3, 0.42, { style: 'chalk', head: 'Tea room', lines: [{ id: 'fancy-a-cuppa', text: 'Fancy a cuppa?' }, { id: 'tuck-in', text: 'Tuck in!' }] }, { rx: a.rx });
+    });
+    // the village poster board, under the big tree: what the player is learning now
+    board(2.15, -3.3, -0.2, () => {
+      for (const x of [-0.15, 0.15]) post(x, 0, 0, 0.022, 0.72, 0x6b4a32);
+      slab(0, 0.26, 0.02, 0.36, 0.44, 0.03, 0x6b4a32);
+      part('matte', SHAPE.prism, 0, 0.72, 0.02, 0.44, 0.1, 0.14, 0x58606e);
+      signs.add(0, 0.48, 0.037, 0.32, 0.4, { style: 'poster', text: '' }, { live: { period: 9 } });
     });
     this.ground = null;
   }
