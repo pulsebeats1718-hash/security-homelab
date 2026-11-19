@@ -1625,4 +1625,17 @@ export default [
     context: 'British; used for rude or shameless behaviour, often with a smile.',
     mistake: '"Cheek" here means rudeness, not part of your face; "cheeky" is the adjective.',
   },
+  {
+    id: 'great-minds-think-alike',
+    text: 'great minds think alike',
+    type: 'everyday',
+    level: 2,
+    meaning: 'we both had the same smart idea',
+    distractors: ['clever people always disagree on things', 'we both need to rest our thinking', 'you should stop copying my work'],
+    example: "You've brought snacks too? Great minds think alike!",
+    synonyms: ['same here', 'we think the same'],
+    register: 'Informal',
+    context: 'A humorous remark when two people have the same thought or do the same thing.',
+    mistake: 'Don\'t say "great minds thinks alike": it is plural, "think".',
+  },
 ];
