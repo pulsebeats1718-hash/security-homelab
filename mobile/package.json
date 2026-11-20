@@ -43,7 +43,13 @@
     "typecheck": "tsc --noEmit && tsc --noEmit -p tests/tsconfig.json",
     "start:go": "expo start --go",
     "test": "esbuild \"tests/*.test.ts\" --bundle --platform=node --format=esm --outdir=.test-dist --out-extension:.js=.mjs --log-level=warning && node --test \".test-dist/*.test.mjs\"",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "check:secrets": "node scripts/check-env.mjs",
+    "prestart": "node scripts/check-env.mjs",
+    "prestart:go": "node scripts/check-env.mjs",
+    "preandroid": "node scripts/check-env.mjs",
+    "preios": "node scripts/check-env.mjs",
+    "eas-build-pre-install": "node scripts/check-env.mjs"
   },
   "private": true
 }

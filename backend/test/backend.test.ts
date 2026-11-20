@@ -62,3 +62,22 @@ test("Nuance errors map to stable codes without leaking provider details", () =>
   assert.equal(mapNuanceError(422, null).code, "provider_config");
   assert.equal(mapNuanceError(503, null).status, 503);
 });
+
+// ---- secret hygiene ---------------------------------------------------------
+import { readFileSync } from "node:fs";
+
+const SECRET_NAMES = ["NUANCE_API_KEY", "ANTHROPIC_API_KEY", "END_USER_SALT", "APP_CLIENT_KEY"];
+const KEY_SHAPED = /\bnk_[A-Za-z0-9_-]{12,}|\bsk-ant-[A-Za-z0-9_-]{12,}/;
+
+test("wrangler.toml never defines secrets as plain [vars]", () => {
+  const toml = readFileSync("wrangler.toml", "utf8");
+  const vars = toml.split("[vars]")[1]?.split(/\n\[/)[0] ?? "";
+  for (const name of SECRET_NAMES) assert.doesNotMatch(vars, new RegExp(`^\\s*${name}\\s*=`, "m"), `${name} must be a secret`);
+  assert.doesNotMatch(toml, KEY_SHAPED);
+});
+
+test(".env.example holds placeholders only", () => {
+  const example = readFileSync(".env.example", "utf8");
+  assert.doesNotMatch(example, KEY_SHAPED);
+  assert.match(example, /^NUANCE_API_KEY=replace-with-/m);
+});

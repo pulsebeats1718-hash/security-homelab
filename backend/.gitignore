@@ -1,6 +1,12 @@
 node_modules/
 .wrangler/
-.dev.vars
+.test-dist/
 public/live/host.js
 public/live/host.js.map
-.test-dist/
+
+# Secrets for local development — never commit.
+.env
+.env.*
+!.env.example
+.dev.vars
+.dev.vars.*

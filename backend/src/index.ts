@@ -52,7 +52,7 @@ function health(env: Env): Response {
     ok: true,
     apiVersion: API_VERSION,
     integrations: {
-      nuance: Boolean(env.NUANCE_API_KEY),
+      nuance: Boolean(env.NUANCE_API_KEY?.trim()),
       coach: Boolean(env.ANTHROPIC_API_KEY),
     },
   });
@@ -81,7 +81,8 @@ async function createSession(request: Request, env: Env): Promise<Response> {
   const body = parse(SessionRequest, await readJson(request));
   await enforceRateLimit(env.SESSION_LIMITER, `session:${body.deviceId}`);
 
-  if (!env.NUANCE_API_KEY) {
+  const nuanceApiKey = cleanSecret(env.NUANCE_API_KEY);
+  if (!nuanceApiKey) {
     throw new HttpError(
       503,
       "provider_not_configured",
@@ -94,7 +95,7 @@ async function createSession(request: Request, env: Env): Promise<Response> {
   const maxSessionSeconds = clampNumber(env.MAX_SESSION_SECONDS, 900, 60, 3_600);
 
   const minted = await mintNuanceSessionToken({
-    apiKey: env.NUANCE_API_KEY,
+    apiKey: nuanceApiKey,
     host: env.NUANCE_API_HOST,
     systemPrompt: buildSophieSystemPrompt(body),
     personaId,
@@ -128,6 +129,19 @@ async function reviewConversation(request: Request, env: Env): Promise<Response>
     baseURL: env.ANTHROPIC_BASE_URL,
   });
   return json({ report });
+}
+
+/**
+ * Tolerates the usual copy-paste accidents (surrounding spaces, newlines or quotes)
+ * when a secret is entered. Never logs the value itself.
+ */
+function cleanSecret(raw: string | undefined): string | undefined {
+  const value = raw?.trim().replace(/^(["'])(.*)\1$/, "$2").trim();
+  if (!value) return undefined;
+  if (!value.startsWith("nk_")) {
+    console.warn("NUANCE_API_KEY doesn't start with 'nk_'. Check it's the API key, not a session token or another credential.");
+  }
+  return value;
 }
 
 function clampNumber(raw: string | undefined, fallback: number, min: number, max: number): number {

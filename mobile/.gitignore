@@ -40,6 +40,8 @@ yarn-error.*
 /ios
 /android
 
-# local env
+# local env — never commit
 .env
+.env.*
+!.env.example
 .test-dist/

@@ -61,6 +61,7 @@ mobile/                     Expo SDK 58 app (expo-router, TypeScript)
   src/features/learning/    on-device store, mistakes, expressions, progress selectors
   src/services/             API client + config
   tests/                    unit tests (state machine, learning logic)
+docs/credentials.md         which credentials are needed and where they go
 docs/nuance-integration.md  what was verified, what still needs checking
 ```
 
@@ -97,18 +98,23 @@ node --version   # should print v22.x
 
 ### 2. Deploy the backend (Cloudflare Worker)
 
+> 🔐 **Your Nuance API key goes here, as a Cloudflare Worker secret, and nowhere else.** It's never placed in the app, in `wrangler.toml` or in git. Full guide: [docs/credentials.md](docs/credentials.md).
+
 ```powershell
 cd backend
 npm install
 npx wrangler login
 
-# Secrets: you'll be prompted to paste each value. Nothing is written to disk.
-npx wrangler secret put NUANCE_API_KEY          # your nk_… key
-npx wrangler secret put END_USER_SALT           # paste the random value printed below
+# Secrets are typed at a hidden prompt and stored encrypted by Cloudflare. Nothing is written to disk.
+npx wrangler secret put NUANCE_API_KEY          # paste your nk_… key, press Enter
+
 [Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+npx wrangler secret put END_USER_SALT           # paste the random value printed above
+
 npx wrangler secret put ANTHROPIC_API_KEY       # optional: enables post-call reviews
 
-npm run deploy                                  # builds the live page, deploys the Worker
+npm run check:secrets                           # shows which secrets are set (names only)
+npm run deploy                                  # stops if a required secret is missing
 ```
 
 Wrangler prints your URL, for example `https://sophie-backend.<your-subdomain>.workers.dev`. Check it:
@@ -185,8 +191,8 @@ The microphone only works in the WebView from **HTTPS or `localhost`**, so a LAN
 
 ```powershell
 cd backend
-Copy-Item .dev.vars.example .dev.vars
-notepad .dev.vars                # NUANCE_API_KEY, END_USER_SALT, optional ANTHROPIC_API_KEY
+Copy-Item .env.example .env      # local-only secrets file, git-ignored
+notepad .env                     # NUANCE_API_KEY, END_USER_SALT, optional ANTHROPIC_API_KEY
 npm run dev                      # http://localhost:8787
 
 # second terminal, phone on USB:
@@ -279,7 +285,7 @@ Each device can mint 5 sessions and 10 reviews per minute. Adjust this under `[[
 | `EXPO_PUBLIC_API_BASE_URL` | URL of the Worker |
 | `EXPO_PUBLIC_APP_CLIENT_KEY` | Optional. Must match the Worker's `APP_CLIENT_KEY`. |
 
-Never put secrets in `EXPO_PUBLIC_*` variables: they're compiled into the app.
+Never put secrets in `EXPO_PUBLIC_*` variables: they're compiled into the app. `npm start`, `npm run android` and EAS builds refuse to run if a key-like value is found (`npm run check:secrets`).
 
 ## Troubleshooting
 

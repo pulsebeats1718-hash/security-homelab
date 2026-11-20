@@ -49,6 +49,7 @@ enabled = true
 #   ANTHROPIC_API_KEY   Anthropic API key, optional — enables post-call coaching analysis
 #   END_USER_SALT       Random string used to hash device ids before they reach Nuance
 #   APP_CLIENT_KEY      Optional shared value the app sends in X-Sophie-Client (speed bump, not auth)
+# Local dev: put them in backend/.env (copy .env.example; git-ignored). Guide: docs/credentials.md
 
 # Future persistent learning data (milestone 2). Create with:
 #   npx wrangler d1 create sophie-learning
