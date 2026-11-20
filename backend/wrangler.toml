@@ -1,0 +1,60 @@
+# Sophie backend — Cloudflare Worker
+# Docs: https://developers.cloudflare.com/workers/wrangler/configuration/
+name = "sophie-backend"
+main = "src/index.ts"
+compatibility_date = "2026-11-13"
+upload_source_maps = true
+
+# The WebView host page for the live conversation (built by `npm run build:live`).
+# API routes always run the Worker first; everything else is served as a static asset.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/v1/*", "/health"]
+
+[vars]
+# Nuance persona the conversation is drawn as. The official SDK (0.37.1) lists
+# "sam" (default), "sonia" and "mira". Check which one looks/sounds right for Sophie
+# in the Nuance dashboard or playground before shipping — see README.
+NUANCE_PERSONA_ID = "sonia"
+# How expressive the avatar's face/head movement is: 0 (calm) to 2. 1 = persona default.
+NUANCE_EXPRESSIVENESS = "1"
+# Longest a single session may run (seconds). The server also caps this per account.
+MAX_SESSION_SECONDS = "900"
+# Model used for post-conversation coaching analysis.
+COACH_MODEL = "claude-opus-5-5"
+# Comma-separated list of origins allowed to call the API from a browser (dev tools only).
+ALLOWED_ORIGINS = ""
+
+# Abuse protection for token minting: each device may start a few sessions per minute.
+[[ratelimits]]
+name = "SESSION_LIMITER"
+namespace_id = "1001"
+  [ratelimits.simple]
+  limit = 5
+  period = 60
+
+[[ratelimits]]
+name = "COACH_LIMITER"
+namespace_id = "1002"
+  [ratelimits.simple]
+  limit = 10
+  period = 60
+
+[observability]
+enabled = true
+
+# Secrets (never commit these; set with `npx wrangler secret put <NAME>`):
+#   NUANCE_API_KEY      Nuance Labs API key (nk_…), required for live conversations
+#   ANTHROPIC_API_KEY   Anthropic API key, optional — enables post-call coaching analysis
+#   END_USER_SALT       Random string used to hash device ids before they reach Nuance
+#   APP_CLIENT_KEY      Optional shared value the app sends in X-Sophie-Client (speed bump, not auth)
+
+# Future persistent learning data (milestone 2). Create with:
+#   npx wrangler d1 create sophie-learning
+# then uncomment and paste the database_id:
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "sophie-learning"
+# database_id = "<paste-id-here>"
+# migrations_dir = "migrations"

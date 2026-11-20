@@ -1,0 +1,6 @@
+node_modules/
+.wrangler/
+.dev.vars
+public/live/host.js
+public/live/host.js.map
+.test-dist/

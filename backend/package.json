@@ -1,0 +1,25 @@
+{
+  "name": "sophie-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:live": "esbuild live/host.ts --bundle --format=iife --target=chrome100 --minify --sourcemap --outfile=public/live/host.js",
+    "dev": "npm run build:live && wrangler dev --ip 0.0.0.0",
+    "deploy": "npm run build:live && wrangler deploy",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p live/tsconfig.json",
+    "test": "esbuild \"test/*.test.ts\" --bundle --platform=node --format=esm --outdir=.test-dist --out-extension:.js=.mjs --log-level=warning && node --test \".test-dist/*.test.mjs\""
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.11.0",
+    "@nuancelabs/js-sdk": "0.37.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261120.1",
+    "@types/node": "^26.6.6",
+    "esbuild": "^0.28.2",
+    "typescript": "~6.0.3",
+    "wrangler": "^4.165.0"
+  }
+}
